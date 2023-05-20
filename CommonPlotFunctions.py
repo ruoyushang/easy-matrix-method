@@ -386,3 +386,87 @@ def MatplotlibMap2D(hist_map,hist_tone,hist_contour,fig,label_x,label_y,label_z,
     figsize_y = 4.8
     fig.set_figheight(figsize_y)
 
+def Smooth2DMap(Hist_Old,smooth_size,normalized):
+
+    nbins = Hist_Old.GetNbinsX()
+    MapEdge_left = Hist_Old.GetXaxis().GetBinLowEdge(1)
+    MapEdge_right = Hist_Old.GetXaxis().GetBinLowEdge(Hist_Old.GetNbinsX()+1)
+    map_size = (MapEdge_right-MapEdge_left)/2.
+    Hist_Kernel = ROOT.TH2D("Hist_Kernel","",nbins,-map_size,map_size,nbins,-map_size,map_size)
+    Hist_Kernel.Reset()
+    for bx1 in range(1,Hist_Old.GetNbinsX()+1):
+        for by1 in range(1,Hist_Old.GetNbinsY()+1):
+            cell_x = Hist_Kernel.GetXaxis().GetBinCenter(bx1)
+            cell_y = Hist_Kernel.GetYaxis().GetBinCenter(by1)
+            distance = pow(cell_x*cell_x+cell_y*cell_y,0.5)
+            bin_content = ROOT.TMath.Gaus(distance,0,smooth_size)
+            Hist_Kernel.SetBinContent(bx1,by1,bin_content)
+    #print ('Hist_Kernel.Integral() = %s'%(Hist_Kernel.Integral()))
+
+    Hist_Smooth = Hist_Old.Clone()
+
+    bin_size = Hist_Old.GetXaxis().GetBinCenter(2)-Hist_Old.GetXaxis().GetBinCenter(1)
+    nbin_smooth = int(2*smooth_size/bin_size) + 1
+    central_bin = int(nbins/2) + 1
+    for bx1 in range(1,Hist_Old.GetNbinsX()+1):
+        for by1 in range(1,Hist_Old.GetNbinsY()+1):
+            old_content = Hist_Old.GetBinContent(bx1,by1)
+            old_error = Hist_Old.GetBinError(bx1,by1)
+            bin_content = 0
+            bin_error = 0
+            for bx2 in range(bx1-nbin_smooth,bx1+nbin_smooth):
+                for by2 in range(by1-nbin_smooth,by1+nbin_smooth):
+                    if bx2<1: 
+                        continue
+                    if by2<1: 
+                        continue
+                    if bx2>Hist_Old.GetNbinsX(): 
+                        continue
+                    if by2>Hist_Old.GetNbinsY(): 
+                        continue
+                    bin_content += Hist_Kernel.GetBinContent(bx2-bx1+central_bin,by2-by1+central_bin)*Hist_Old.GetBinContent(bx2,by2)
+                    bin_error += Hist_Kernel.GetBinContent(bx2-bx1+central_bin,by2-by1+central_bin)*pow(Hist_Old.GetBinError(bx2,by2),2)
+            Hist_Smooth.SetBinContent(bx1,by1,bin_content)
+            Hist_Smooth.SetBinError(bx1,by1,pow(bin_error,0.5))
+
+    if normalized:
+        Hist_Smooth.Scale(1./Hist_Kernel.Integral())
+
+    return Hist_Smooth
+
+def GetSignificanceMap(Hist_SR,Hist_Bkg):
+
+    Hist_Skymap = Hist_SR.Clone()
+    MapEdge_left = Hist_Skymap.GetXaxis().GetBinLowEdge(1)
+    MapEdge_right = Hist_Skymap.GetXaxis().GetBinLowEdge(Hist_Skymap.GetNbinsX()+1)
+    MapEdge_lower = Hist_Skymap.GetYaxis().GetBinLowEdge(1)
+    MapEdge_upper = Hist_Skymap.GetYaxis().GetBinLowEdge(Hist_Skymap.GetNbinsY()+1)
+    MapCenter_x = (MapEdge_right+MapEdge_left)/2.
+    MapCenter_y = (MapEdge_upper+MapEdge_lower)/2.
+    MapSize_x = (MapEdge_right-MapEdge_left)/2.
+    MapSize_y = (MapEdge_upper-MapEdge_lower)/2.
+    for bx in range(0,Hist_SR.GetNbinsX()):
+        for by in range(0,Hist_SR.GetNbinsY()):
+            if Hist_SR.GetBinContent(bx+1,by+1)==0: continue
+            if Hist_Bkg.GetBinContent(bx+1,by+1)<=0: continue
+            #NSR = Hist_SR.GetBinContent(bx+1,by+1)
+            #NBkg = Hist_Bkg.GetBinContent(bx+1,by+1)
+            #NBkgRaw = Hist_Raw_Bkg.GetBinContent(bx+1,by+1)
+            #Syst_Err = Hist_Syst.GetBinContent(bx+1,by+1)
+            #Syst_Err = 0.
+            #alpha = NBkg/NBkgRaw
+            #delta_alpha = Syst_Err/NBkg
+            #TS = pow((NSR-NBkg)/pow(NSR+pow(Syst_Err*Syst_Err,2),0.5),2)
+            #if NSR<15.:
+            #    TS = 2.*(NSR*math.log((alpha*(delta_alpha+1)+1)/(alpha*(delta_alpha+1))*(NSR/(NSR+NBkgRaw)))+NBkgRaw*math.log((alpha*(delta_alpha+1)+1)*(NBkgRaw/(NSR+NBkgRaw))))
+            #if (NSR-NBkg)>0.:
+            #    Hist_Skymap.SetBinContent(bx+1,by+1,pow(TS,0.5))
+            #else:
+            #    Hist_Skymap.SetBinContent(bx+1,by+1,-1.*pow(TS,0.5))
+            NSR = Hist_SR.GetBinContent(bx+1,by+1)
+            NSR_err = Hist_SR.GetBinError(bx+1,by+1)
+            NBkg = Hist_Bkg.GetBinContent(bx+1,by+1)
+            zscore = (NSR-NBkg)/pow(NSR_err*NSR_err,0.5)
+            Hist_Skymap.SetBinContent(bx+1,by+1,zscore)
+    return Hist_Skymap
+

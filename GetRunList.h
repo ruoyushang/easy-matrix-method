@@ -25,7 +25,7 @@ pair<double,double> GetSourceRaDec(TString source_name)
     return std::make_pair(Source_RA,Source_Dec);
 }
 
-vector<int> GetPairListFromFile(string source, int imposter_idx)
+vector<int> GetPairListFromFile(string source, int onrun_number, int imposter_idx)
 {
 
     // imposter_idx starting from 0
@@ -77,9 +77,16 @@ vector<int> GetPairListFromFile(string source, int imposter_idx)
                     {
                         current_imposter_idx += 1;
                     }
-                    if (current_imposter_idx==imposter_idx)
+                    if (onrun_number==int(this_on_runnumber))
                     {
-                        offrun_list.push_back(int(this_off_runnumber));
+                        if (imposter_idx==-1)
+                        {
+                            offrun_list.push_back(int(this_off_runnumber));
+                        }
+                        else if (current_imposter_idx==imposter_idx)
+                        {
+                            offrun_list.push_back(int(this_off_runnumber));
+                        }
                     }
                 }
             }
@@ -128,15 +135,15 @@ vector<int> GetRunListFromFile(string source)
     return onrun_list;
 }
 
-vector<int> GetOffRunList(string source, int imposter_idx) {
+vector<int> GetOffRunList(string source, int onrun_number, int imposter_idx) {
 
     // imposter_idx starting from 0
-    std::cout << "GetRunList source = " << source << std::endl;
+    std::cout << "GetPairList source = " << source << std::endl;
 
     vector<int> list;
     vector<int> list_temp;
 
-    list_temp = GetPairListFromFile(source,imposter_idx);
+    list_temp = GetPairListFromFile(source, onrun_number,imposter_idx);
     list.insert(list.end(), list_temp.begin(), list_temp.end());
 
     return list;

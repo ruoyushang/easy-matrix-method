@@ -82,10 +82,12 @@ InputFile.Close()
 hist_real_data_skymap = []
 hist_real_bkgd_skymap = []
 hist_real_excess_skymap = []
+hist_real_significance_skymap = []
 for ebin in range(0,len(energy_bin)-1):
     hist_real_data_skymap += [ROOT.TH2D("hist_real_data_skymap_E%s"%(ebin),"",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)]
     hist_real_bkgd_skymap += [ROOT.TH2D("hist_real_bkgd_skymap_E%s"%(ebin),"",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)]
     hist_real_excess_skymap += [ROOT.TH2D("hist_real_excess_skymap_E%s"%(ebin),"",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)]
+    hist_real_significance_skymap += [ROOT.TH2D("hist_real_significance_skymap_E%s"%(ebin),"",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)]
 
 InputFile = ROOT.TFile("/gamma_raid/userspace/rshang/SMI_output/%s/Netflix_%s.root"%(folder_path,sys.argv[1]))
 for ebin in range(0,len(energy_bin)-1):
@@ -98,5 +100,16 @@ for ebin in range(0,len(energy_bin)-1):
 InputFile.Close()
 
 for ebin in range(0,len(energy_bin)-1):
+    smooth_size_spectroscopy = 0.07
+    hist_real_excess_skymap[ebin] = CommonPlotFunctions.Smooth2DMap(hist_real_excess_skymap[ebin],smooth_size_spectroscopy,False)
+    hist_real_data_skymap[ebin] = CommonPlotFunctions.Smooth2DMap(hist_real_data_skymap[ebin],smooth_size_spectroscopy,False)
+    hist_real_bkgd_skymap[ebin] = CommonPlotFunctions.Smooth2DMap(hist_real_bkgd_skymap[ebin],smooth_size_spectroscopy,False)
+    significance_skymap = CommonPlotFunctions.GetSignificanceMap(hist_real_data_skymap[ebin],hist_real_bkgd_skymap[ebin])
+    hist_real_significance_skymap[ebin].Add(significance_skymap)
+
+for ebin in range(0,len(energy_bin)-1):
     hist_real_excess_skymap_reflect = CommonPlotFunctions.reflectXaxis(hist_real_excess_skymap[ebin])
     CommonPlotFunctions.MatplotlibMap2D(hist_real_excess_skymap_reflect,None,[hist_real_excess_skymap_reflect],fig,'RA','Dec','Excess count','SkymapExcess_E%s.png'%(ebin))
+    hist_real_significance_skymap_reflect = CommonPlotFunctions.reflectXaxis(hist_real_significance_skymap[ebin])
+    CommonPlotFunctions.MatplotlibMap2D(hist_real_significance_skymap_reflect,None,[],fig,'RA','Dec','Significance','SkymapSignificance_E%s.png'%(ebin))
+

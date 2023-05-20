@@ -86,8 +86,11 @@ double dec_sky = 0;
 double exposure_hours = 0.;
 double exposure_hours_usable = 0.;
 
-vector<TH2D> Hist_OnData_MSCLW;
 vector<TH2D> Hist_OffData_MSCLW;
+vector<TH2D> Hist_OffData_SR_XYoff;
+vector<TH2D> Hist_OffData_CR_XYoff;
+vector<TH2D> Hist_OffData_Ratio_XYoff;
+vector<TH2D> Hist_OnData_MSCLW;
 vector<TH2D> Hist_OnData_SR_Skymap;
 vector<TH2D> Hist_OnData_CR_Skymap;
 vector<TH2D> Hist_OnData_SR_Skymap_Sum;
@@ -128,6 +131,31 @@ pair<double,double> GetRunElevAzim(int int_run_number)
     return std::make_pair(TelElevation_avg,TelAzimuth_avg);
 }
 
+void RemoveNonExistingRuns(vector<int>& input_list)
+{
+    vector<int> new_list;
+    for (int run=0;run<input_list.size();run++)
+    {
+        char run_number[50];
+        sprintf(run_number, "%i", input_list.at(run));
+        string file_name;
+        file_name = TString(SMI_INPUT+"/"+string(run_number)+".anasum.root");
+        if (gSystem->AccessPathName(file_name.c_str()))
+        {
+            std::cout << "Run " << run_number << " does not exist!!!" << std::endl;
+            //auto it = std::find(input_list.begin(), input_list.end(), run);
+            //input_list.erase(it);
+            std::cout << "Run " << run_number << " removed." << std::endl;
+        }
+        else
+        {
+            new_list.push_back(input_list.at(run));
+        }
+    }
+    input_list.clear();
+    input_list = new_list;
+}
+
 void SortingList(vector<int>* list, vector<double>* list_pointing)
 {
     int temp_list;
@@ -155,7 +183,10 @@ vector<double> GetRunElevationList(vector<int> list)
     for (int run=0;run<list.size();run++)
     {
         double run_elev = GetRunElevAzim(int(list.at(run))).first;
-        list_elev.push_back(run_elev);
+        double run_azim = GetRunElevAzim(int(list.at(run))).second;
+        if (run_azim>180.) run_azim = 360.-run_azim;
+        //list_elev.push_back(run_elev);
+        list_elev.push_back(run_azim);
     }
     return list_elev;
 }
@@ -399,6 +430,7 @@ bool SelectNImages()
     if (NImages<min_NImages) return false;
     if (EmissionHeight<EmissionHeight_cut) return false;
     if (Xcore*Xcore+Ycore*Ycore>max_Rcore*max_Rcore) return false;
+    if (pow(R2off,0.5)>1.6) return false;
     return true;
 }
 
@@ -517,13 +549,21 @@ void TrainingRunAnalysis(int int_run_number)
         if (MSCW<MSCW_plot_lower) continue;
 
         Hist_OffData_MSCLW.at(energy_idx).Fill(MSCL,MSCW);
+        if (MSCL<MSCL_cut_blind && MSCW<MSCW_cut_blind)
+        {
+            Hist_OffData_SR_XYoff.at(energy_idx).Fill(Xoff,Yoff);
+        }
+        else
+        {
+            Hist_OffData_CR_XYoff.at(energy_idx).Fill(Xoff,Yoff);
+        }
 
     }
     input_file->Close();
 
 }
 
-void SingleRunAnalysis(int int_run_number, int idx_xoff_input, int idx_yoff_input)
+void SingleRunAnalysis(int int_run_number)
 {
 
     char run_number[50];
@@ -595,9 +635,6 @@ void SingleRunAnalysis(int int_run_number, int idx_xoff_input, int idx_yoff_inpu
         if (MSCW>MSCW_plot_upper) continue;
         if (MSCW<MSCW_plot_lower) continue;
 
-        if (idx_xoff!=idx_xoff_input) continue;
-        if (idx_yoff!=idx_yoff_input) continue;
-
         double map_right_edge = map_center_x+Skymap_size_x;
         double map_left_edge = map_center_x-Skymap_size_x;
         double map_top_edge = map_center_y+Skymap_size_y;
@@ -614,7 +651,10 @@ void SingleRunAnalysis(int int_run_number, int idx_xoff_input, int idx_yoff_inpu
         }
         else
         {
-            Hist_OnData_CR_Skymap.at(energy_idx).Fill(ra_sky,dec_sky);
+            int xoff_idx = Hist_OffData_Ratio_XYoff.at(energy_idx).GetXaxis()->FindBin(Xoff);
+            int yoff_idx = Hist_OffData_Ratio_XYoff.at(energy_idx).GetYaxis()->FindBin(Yoff);
+            double weight = Hist_OffData_Ratio_XYoff.at(energy_idx).GetBinContent(xoff_idx,yoff_idx);
+            Hist_OnData_CR_Skymap.at(energy_idx).Fill(ra_sky,dec_sky,weight);
         }
 
     }
@@ -676,25 +716,18 @@ void FillHistograms(string target_data, bool isON, bool doImposter)
     map_center_y = mean_tele_point_dec;
 
     vector<int> Data_runlist_init = GetRunList(source_strip);
-    //vector<int> OffData_runlist_init = GetOffRunList(source_strip, 1);
-    vector<int> OffData_runlist_init = GetRunList(source_strip);
+    std::cout << "Data_runlist_init.size() = " << Data_runlist_init.size() << std::endl;
+    RemoveNonExistingRuns(Data_runlist_init);
+    std::cout << "Data_runlist.size() = " << Data_runlist_init.size() << std::endl;
+
     std::cout << "Getting runlist elevation..." << std::endl;
     vector<double> Data_runlist_init_elev = GetRunElevationList(Data_runlist_init);
-    vector<double> OffData_runlist_init_elev = GetRunElevationList(OffData_runlist_init);
-    std::cout << "Data_runlist_init.size() = " << Data_runlist_init.size() << std::endl;
-    std::cout << "OffData_runlist_init.size() = " << OffData_runlist_init.size() << std::endl;
     if (Data_runlist_init.size()==0)
-    {
-        return;
-    }
-    if (OffData_runlist_init.size()==0)
     {
         return;
     }
     std::cout << "Sorting On list by elevation..." << std::endl;
     SortingList(&Data_runlist_init,&Data_runlist_init_elev);
-    std::cout << "Sorting Off list by elevation..." << std::endl;
-    SortingList(&OffData_runlist_init,&OffData_runlist_init_elev);
 
     std::cout <<__LINE__ << std::endl;
 
@@ -714,6 +747,9 @@ void FillHistograms(string target_data, bool isON, bool doImposter)
         Hist_OnData_CR_Skymap.push_back(TH2D("Hist_OnData_CR_Skymap_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",Skymap_nbins_x,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,Skymap_nbins_y,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y));
         Hist_OnData_SR_Skymap_Sum.push_back(TH2D("Hist_OnData_SR_Skymap_Sum_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",Skymap_nbins_x,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,Skymap_nbins_y,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y));
         Hist_OnData_CR_Skymap_Sum.push_back(TH2D("Hist_OnData_CR_Skymap_Sum_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",Skymap_nbins_x,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,Skymap_nbins_y,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y));
+        Hist_OffData_SR_XYoff.push_back(TH2D("Hist_OffData_SR_XYoff_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",20,-2.,2.,20,-2.,2.));
+        Hist_OffData_CR_XYoff.push_back(TH2D("Hist_OffData_CR_XYoff_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",20,-2.,2.,20,-2.,2.));
+        Hist_OffData_Ratio_XYoff.push_back(TH2D("Hist_OffData_Ratio_XYoff_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",20,-2.,2.,20,-2.,2.));
     }
 
     int n_training_samples = 0;
@@ -732,33 +768,56 @@ void FillHistograms(string target_data, bool isON, bool doImposter)
     }
 
     std::cout << __LINE__ << std::endl;
-    std::cout << "Getting training data..." << std::endl;
 
-    exposure_hours_usable = 0.;
-    vector<vector<vector<double>>> unblinded_elements;
     vector<vector<double>> unblinded_elements_per_sample;
     vector<double> unblinded_elements_per_energy;
-    vector<vector<double>> blinded_element;
     vector<double> blinded_element_per_sample;
-    double blinded_element_per_energy;
-    for (int run=0;run<OffData_runlist_init.size();run++)
+    double blinded_element_per_energy = 0.;
+
+    int n_samples = 0;
+
+    for (int run=0;run<Data_runlist_init.size();run++)
     {
 
-        if (!PointingSelection(int(OffData_runlist_init[run])))
+        if (!PointingSelection(int(Data_runlist_init[run])))
         {
             continue;
         }
 
-        TrainingRunAnalysis(int(OffData_runlist_init[run]));
+        std::cout << "Processing " << run << "/" << Data_runlist_init.size() << "..." << std::endl;
+        std::cout << "Getting training data..." << std::endl;
+        vector<int> OffData_runlist_init = GetOffRunList(source_strip,int(Data_runlist_init[run]),-1);
+        RemoveNonExistingRuns(OffData_runlist_init);
 
-        if (exposure_hours_usable>5.)
+        if (OffData_runlist_init.size()<mtx_dim_w*mtx_dim_l)
         {
-            unblinded_elements_per_sample.clear();
-            blinded_element_per_sample.clear();
+            std::cout << "Insufficient training data..." << std::endl;
+            continue;
+        }
+
+        vector<vector<vector<double>>> off_unblinded_elements;
+        vector<vector<double>> off_unblinded_elements_per_sample;
+        vector<double> off_unblinded_elements_per_energy;
+        vector<vector<double>> off_blinded_element;
+        vector<double> off_blinded_element_per_sample;
+        double off_blinded_element_per_energy = 0.;
+
+        for (int offrun=0;offrun<OffData_runlist_init.size();offrun++)
+        {
+
+            if (!PointingSelection(int(OffData_runlist_init[offrun])))
+            {
+                continue;
+            }
+
+            TrainingRunAnalysis(int(OffData_runlist_init[offrun]));
+
+            off_unblinded_elements_per_sample.clear();
+            off_blinded_element_per_sample.clear();
             for (int e=0;e<N_energy_bins;e++) 
             {
-                unblinded_elements_per_energy.clear();
-                blinded_element_per_energy = 0.;
+                off_unblinded_elements_per_energy.clear();
+                off_blinded_element_per_energy = 0.;
                 for (int binx=0;binx<mtx_dim_l;binx++)
                 {
                     for (int biny=0;biny<mtx_dim_w;biny++)
@@ -768,203 +827,184 @@ void FillHistograms(string target_data, bool isON, bool doImposter)
                         double bin_content = Hist_OffData_MSCLW.at(e).GetBinContent(binx+1,biny+1);
                         if (bin_center_x>MSCL_cut_blind || bin_center_y>MSCW_cut_blind)
                         {
-                            unblinded_elements_per_energy.push_back(bin_content);
+                            off_unblinded_elements_per_energy.push_back(bin_content);
                         }
                         else
                         {
-                            blinded_element_per_energy += bin_content;
+                            off_blinded_element_per_energy += bin_content;
                         }
                     }
                 }
-                unblinded_elements_per_sample.push_back(unblinded_elements_per_energy);
-                blinded_element_per_sample.push_back(blinded_element_per_energy);
+                off_unblinded_elements_per_sample.push_back(off_unblinded_elements_per_energy);
+                off_blinded_element_per_sample.push_back(off_blinded_element_per_energy);
             }
-
-            unblinded_elements.push_back(unblinded_elements_per_sample);
-            blinded_element.push_back(blinded_element_per_sample);
+            off_unblinded_elements.push_back(off_unblinded_elements_per_sample);
+            off_blinded_element.push_back(off_blinded_element_per_sample);
 
             for (int e=0;e<N_energy_bins;e++) 
             {
                 Hist_OffData_MSCLW.at(e).Reset();
             }
-            exposure_hours_usable = 0.;
         }
 
-    }
-
-    std::cout <<__LINE__ << std::endl;
-    std::cout << "Using training data to learn conversion..." << std::endl;
-
-    // A * X = B, solve X
-    n_training_samples = blinded_element.size();
-    vector<VectorXcd> convert_unblind_to_blind;
-    for (int e=0;e<N_energy_bins;e++) 
-    {
-        VectorXcd vtr_B = VectorXcd::Zero(n_training_samples);
-        MatrixXcd mtx_A = MatrixXcd::Zero(n_training_samples,nbins_unblind);
-        VectorXcd vtr_X = VectorXcd::Zero(nbins_unblind);
-
-        for (int sample=0;sample<n_training_samples;sample++)
+        for (int e=0;e<N_energy_bins;e++) 
         {
-            vtr_B(sample) = blinded_element.at(sample).at(e);
-            for (int bin=0;bin<nbins_unblind;bin++)
-            {
-                mtx_A(sample,bin) = unblinded_elements.at(sample).at(e).at(bin);
-            }
+            Hist_OffData_Ratio_XYoff.at(e).Add(&Hist_OffData_SR_XYoff.at(e));
+            Hist_OffData_Ratio_XYoff.at(e).Divide(&Hist_OffData_CR_XYoff.at(e));
+            Hist_OffData_SR_XYoff.at(e).Reset();
+            Hist_OffData_CR_XYoff.at(e).Reset();
         }
 
-        BDCSVD<MatrixXcd> bdc_svd(mtx_A, ComputeThinU | ComputeThinV);
-        vtr_X = bdc_svd.solve(vtr_B);
-        convert_unblind_to_blind.push_back(vtr_X);
-    }
+        std::cout << "Using training data to learn conversion..." << std::endl;
 
-    std::cout <<__LINE__ << std::endl;
-    std::cout << "Getting ON data..." << std::endl;
+        n_training_samples = off_blinded_element.size();
+        std::cout << "n_training_samples = " << n_training_samples << std::endl;
+        std::cout << "nbins_unblind = " << nbins_unblind << std::endl;
 
-    int n_samples = 0;
-    exposure_hours_usable = 0.;
-    unblinded_elements.clear();
-    unblinded_elements_per_sample.clear();
-    unblinded_elements_per_energy.clear();
-    blinded_element.clear();
-    blinded_element_per_sample.clear();
-    blinded_element_per_energy = 0.;
-
-    for (int idx_xoff=0;idx_xoff<N_Xoff_bins;idx_xoff++)
-    {
-        for (int idx_yoff=0;idx_yoff<N_Xoff_bins;idx_yoff++)
+        // simple ratio method
+        vector<double> convert_unblind_to_blind_ratio;
+        for (int e=0;e<N_energy_bins;e++) 
         {
-
-            std::cout << "idx_xoff = " << idx_xoff << ", idx_yoff = " << idx_yoff << std::endl;
-
-            for (int run=0;run<Data_runlist_init.size();run++)
+            double CR_count = 0.;
+            double SR_count = 0.;
+            for (int sample=0;sample<n_training_samples;sample++)
             {
-
-                if (!PointingSelection(int(Data_runlist_init[run])))
+                SR_count += off_blinded_element.at(sample).at(e);
+                for (int bin=0;bin<nbins_unblind;bin++)
                 {
-                    continue;
-                }
-
-                SingleRunAnalysis(int(Data_runlist_init[run]),idx_xoff,idx_yoff);
-                if (exposure_hours_usable>0.1)
-                {
-                    n_samples += 1;
-                    unblinded_elements_per_sample.clear();
-                    blinded_element_per_sample.clear();
-                    for (int e=0;e<N_energy_bins;e++) 
-                    {
-                        unblinded_elements_per_energy.clear();
-                        blinded_element_per_energy = 0.;
-                        for (int binx=0;binx<mtx_dim_l;binx++)
-                        {
-                            for (int biny=0;biny<mtx_dim_w;biny++)
-                            {
-                                double bin_center_x = Hist_OnData_MSCLW.at(e).GetXaxis()->GetBinCenter(binx+1);
-                                double bin_center_y = Hist_OnData_MSCLW.at(e).GetYaxis()->GetBinCenter(biny+1);
-                                double bin_content = Hist_OnData_MSCLW.at(e).GetBinContent(binx+1,biny+1);
-                                if (bin_center_x>MSCL_cut_blind || bin_center_y>MSCW_cut_blind)
-                                {
-                                    unblinded_elements_per_energy.push_back(bin_content);
-                                }
-                                else
-                                {
-                                    blinded_element_per_energy += bin_content;
-                                }
-                            }
-                        }
-                        unblinded_elements_per_sample.push_back(unblinded_elements_per_energy);
-                        blinded_element_per_sample.push_back(blinded_element_per_energy);
-                    }
-
-                    unblinded_elements.push_back(unblinded_elements_per_sample);
-                    blinded_element.push_back(blinded_element_per_sample);
-
-                    vector<TH2D> Hist_OnData_SR_Skymap_tmp;
-                    vector<TH2D> Hist_OnData_CR_Skymap_tmp;
-                    for (int e=0;e<N_energy_bins;e++) 
-                    {
-                        char e_low[50];
-                        sprintf(e_low, "%i", int(energy_bins[e]));
-                        char e_up[50];
-                        sprintf(e_up, "%i", int(energy_bins[e+1]));
-                        char char_sample[50];
-                        sprintf(char_sample, "%i", int(n_samples));
-                        Hist_OnData_SR_Skymap_tmp.push_back(TH2D("Hist_OnData_SR_Skymap_ErecS"+TString(e_low)+TString("to")+TString(e_up)+TString("_Sample")+TString(char_sample),"",Skymap_nbins_x,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,Skymap_nbins_y,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y));
-                        Hist_OnData_CR_Skymap_tmp.push_back(TH2D("Hist_OnData_CR_Skymap_ErecS"+TString(e_low)+TString("to")+TString(e_up)+TString("_Sample")+TString(char_sample),"",Skymap_nbins_x,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,Skymap_nbins_y,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y));
-                    }
-                    Hist_OnData_SR_Skymap_per_sample.push_back(Hist_OnData_SR_Skymap_tmp);
-                    Hist_OnData_CR_Skymap_per_sample.push_back(Hist_OnData_CR_Skymap_tmp);
-
-                    for (int e=0;e<N_energy_bins;e++) 
-                    {
-                        Hist_OnData_SR_Skymap_per_sample.at(n_samples-1).at(e).Add(&Hist_OnData_SR_Skymap.at(e));
-                        Hist_OnData_CR_Skymap_per_sample.at(n_samples-1).at(e).Add(&Hist_OnData_CR_Skymap.at(e));
-                    }
-
-                    for (int e=0;e<N_energy_bins;e++) 
-                    {
-                        Hist_OnData_MSCLW.at(e).Reset();
-                        Hist_OnData_SR_Skymap.at(e).Reset();
-                        Hist_OnData_CR_Skymap.at(e).Reset();
-                    }
-                    exposure_hours_usable = 0.;
+                    CR_count += off_unblinded_elements.at(sample).at(e).at(bin);
                 }
             }
-        }
-    }
-
-    std::cout <<__LINE__ << std::endl;
-    std::cout << "Applying conversion to ON data..." << std::endl;
-
-    // A * X = B
-    //int n_samples = 0;
-    //n_samples = blinded_element.size();
-    for (int e=0;e<N_energy_bins;e++) 
-    {
-        MatrixXcd mtx_A = MatrixXcd::Zero(n_samples,nbins_unblind);
-
-        for (int sample=0;sample<n_samples;sample++)
-        {
-            for (int bin=0;bin<nbins_unblind;bin++)
-            {
-                mtx_A(sample,bin) = unblinded_elements.at(sample).at(e).at(bin);
-            }
-        }
-
-        VectorXcd vtr_predict = mtx_A*convert_unblind_to_blind.at(e);
-        VectorXcd vtr_truth = VectorXcd::Zero(n_samples); 
-        for (int sample=0;sample<n_samples;sample++)
-        {
-            vtr_truth(sample) = blinded_element.at(sample).at(e);
-        }
-
-        double total_predict = 0.;
-        double total_truth = 0.;
-        for (int sample=0;sample<n_samples;sample++)
-        {
-            total_predict += vtr_predict(sample).real();
-            total_truth += vtr_truth(sample).real();
-
-            double CR_count = Hist_OnData_CR_Skymap_per_sample.at(sample).at(e).Integral();
-            double SR_predict = vtr_predict(sample).real(); 
+            double SR_CR_ratio = 0.;
             if (CR_count>0.)
             {
-                Hist_OnData_CR_Skymap_per_sample.at(sample).at(e).Scale(SR_predict/CR_count);
+                SR_CR_ratio = SR_count/CR_count;
             }
-            Hist_OnData_CR_Skymap_Sum.at(e).Add(&Hist_OnData_CR_Skymap_per_sample.at(sample).at(e));
-            Hist_OnData_SR_Skymap_Sum.at(e).Add(&Hist_OnData_SR_Skymap_per_sample.at(sample).at(e));
+            convert_unblind_to_blind_ratio.push_back(SR_CR_ratio);
         }
-        std::cout << "=============================================" << std::endl;
-        std::cout << "Energy = " << energy_bins[e] << std::endl;
-        std::cout << "Truth = " << total_truth << std::endl;
-        std::cout << "Predict = " << total_predict << std::endl;
-        std::cout << "Hist_OnData_SR_Skymap_Sum.at(e).Integral() = " << Hist_OnData_SR_Skymap_Sum.at(e).Integral() << std::endl;
-        std::cout << "Hist_OnData_CR_Skymap_Sum.at(e).Integral() = " << Hist_OnData_CR_Skymap_Sum.at(e).Integral() << std::endl;
+        
+
+        // linear regression method
+        // A * X = B, solve X
+        vector<VectorXcd> convert_unblind_to_blind_regression;
+        for (int e=0;e<N_energy_bins;e++) 
+        {
+            VectorXcd vtr_B = VectorXcd::Zero(n_training_samples);
+            MatrixXcd mtx_A = MatrixXcd::Zero(n_training_samples,nbins_unblind);
+            VectorXcd vtr_X = VectorXcd::Zero(nbins_unblind);
+
+            for (int sample=0;sample<n_training_samples;sample++)
+            {
+                vtr_B(sample) = off_blinded_element.at(sample).at(e);
+                for (int bin=0;bin<nbins_unblind;bin++)
+                {
+                    mtx_A(sample,bin) = off_unblinded_elements.at(sample).at(e).at(bin);
+                }
+            }
+
+            BDCSVD<MatrixXcd> bdc_svd(mtx_A, ComputeThinU | ComputeThinV);
+            vtr_X = bdc_svd.solve(vtr_B);
+            convert_unblind_to_blind_regression.push_back(vtr_X);
+        }
+
+        std::cout << "Getting ON data..." << std::endl;
+
+        SingleRunAnalysis(int(Data_runlist_init[run]));
+        n_samples += 1;
+        unblinded_elements_per_sample.clear();
+        blinded_element_per_sample.clear();
+        for (int e=0;e<N_energy_bins;e++) 
+        {
+            unblinded_elements_per_energy.clear();
+            blinded_element_per_energy = 0.;
+            for (int binx=0;binx<mtx_dim_l;binx++)
+            {
+                for (int biny=0;biny<mtx_dim_w;biny++)
+                {
+                    double bin_center_x = Hist_OnData_MSCLW.at(e).GetXaxis()->GetBinCenter(binx+1);
+                    double bin_center_y = Hist_OnData_MSCLW.at(e).GetYaxis()->GetBinCenter(biny+1);
+                    double bin_content = Hist_OnData_MSCLW.at(e).GetBinContent(binx+1,biny+1);
+                    if (bin_center_x>MSCL_cut_blind || bin_center_y>MSCW_cut_blind)
+                    {
+                        unblinded_elements_per_energy.push_back(bin_content);
+                    }
+                    else
+                    {
+                        blinded_element_per_energy += bin_content;
+                    }
+                }
+            }
+            unblinded_elements_per_sample.push_back(unblinded_elements_per_energy);
+            blinded_element_per_sample.push_back(blinded_element_per_energy);
+        }
+
+        std::cout << "Applying conversion to ON data..." << std::endl;
+
+
+        // A * X = B
+        for (int e=0;e<N_energy_bins;e++) 
+        {
+            // linear regression method
+            MatrixXcd mtx_A = MatrixXcd::Zero(1,nbins_unblind);
+
+            for (int bin=0;bin<nbins_unblind;bin++)
+            {
+                mtx_A(0,bin) = unblinded_elements_per_sample.at(e).at(bin);
+            }
+
+            VectorXcd vtr_predict = mtx_A*convert_unblind_to_blind_regression.at(e);
+            VectorXcd vtr_truth = VectorXcd::Zero(1); 
+            vtr_truth(0) = blinded_element_per_sample.at(e);
+
+            double SR_predict_regression = 0.;
+            double total_truth = 0.;
+            SR_predict_regression = vtr_predict(0).real();
+            total_truth = vtr_truth(0).real();
+
+            double CR_count_map = Hist_OnData_CR_Skymap.at(e).Integral();
+            if (CR_count_map>0.)
+            {
+                Hist_OnData_CR_Skymap.at(e).Scale(SR_predict_regression/CR_count_map);
+            }
+
+            // simple ratio method
+            double CR_count = 0.;
+            for (int bin=0;bin<nbins_unblind;bin++)
+            {
+                CR_count += unblinded_elements_per_sample.at(e).at(bin);
+            }
+            double SR_predict_ratio = convert_unblind_to_blind_ratio.at(e)*CR_count; 
+            std::cout << "=============================================" << std::endl;
+            std::cout << "Energy = " << energy_bins[e] << std::endl;
+            std::cout << "Truth = " << total_truth << std::endl;
+            std::cout << "Regression predict = " << SR_predict_regression << std::endl;
+            std::cout << "Ratio predict = " << SR_predict_ratio << std::endl;
+        }
+
+
+        for (int e=0;e<N_energy_bins;e++) 
+        {
+            Hist_OnData_SR_Skymap_Sum.at(e).Add(&Hist_OnData_SR_Skymap.at(e));
+            Hist_OnData_CR_Skymap_Sum.at(e).Add(&Hist_OnData_CR_Skymap.at(e));
+        }
+
+        for (int e=0;e<N_energy_bins;e++) 
+        {
+            Hist_OnData_MSCLW.at(e).Reset();
+            Hist_OnData_SR_Skymap.at(e).Reset();
+            Hist_OnData_CR_Skymap.at(e).Reset();
+        }
+
     }
+
 
     TFile OutputFile(TString(SMI_OUTPUT)+"/Netflix_"+TString(target)+".root","recreate");
     for (int e=0;e<N_energy_bins;e++) 
     {
+        std::cout << "=============================================" << std::endl;
+        std::cout << "Energy = " << energy_bins[e] << std::endl;
+        std::cout << "Hist_OnData_SR_Skymap_Sum.at(e).Integral() = " << Hist_OnData_SR_Skymap_Sum.at(e).Integral() << std::endl;
+        std::cout << "Hist_OnData_CR_Skymap_Sum.at(e).Integral() = " << Hist_OnData_CR_Skymap_Sum.at(e).Integral() << std::endl;
         Hist_OnData_SR_Skymap_Sum.at(e).Write();
         Hist_OnData_CR_Skymap_Sum.at(e).Write();
     }
