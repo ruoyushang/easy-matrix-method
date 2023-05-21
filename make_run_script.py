@@ -35,84 +35,88 @@ def PrepareSource(source_name):
             for_syst += [True]
         for_imposter += [False]
 
-PrepareSource('UrsaMajorIIV6_OFF') 
-PrepareSource('UrsaMinorV6_OFF') 
-PrepareSource('UrsaMinorV5_OFF') 
-PrepareSource('RGB_J0710_p591_V6_OFF') 
-PrepareSource('RGB_J0710_p591_V5_OFF') 
-PrepareSource('Sky_RA38Dec20_V6_OFF') 
-PrepareSource('Sky_RA38Dec20_V5_OFF') 
-PrepareSource('PKS1424V6_OFF') 
-PrepareSource('PKS1424V5_OFF') 
-PrepareSource('PG1553V6_OFF') 
-PrepareSource('PG1553V5_OFF') 
-PrepareSource('3C273V6_OFF') 
-PrepareSource('3C273V5_OFF') 
-PrepareSource('Segue1V6_OFF') 
-PrepareSource('Segue1V5_OFF') 
-PrepareSource('NGC1275V6_OFF') 
-PrepareSource('H1426V6_OFF') 
-PrepareSource('OJ287V6_OFF') 
-PrepareSource('DracoV6_OFF') 
-PrepareSource('DracoV5_OFF') 
-PrepareSource('BLLacV6_OFF') 
-PrepareSource('BLLacV5_OFF') 
-PrepareSource('3C264V6_OFF') 
-PrepareSource('1ES0502V6_OFF') 
-PrepareSource('1ES0502V5_OFF') 
-PrepareSource('M82V6_OFF') 
-PrepareSource('M82V5_OFF') 
-PrepareSource('1ES0414V5_OFF') 
-PrepareSource('1ES1011V6_OFF') 
-PrepareSource('1ES0647V6_OFF') 
+#PrepareSource('UrsaMajorIIV6_OFF') 
+#PrepareSource('UrsaMinorV6_OFF') 
+#PrepareSource('UrsaMinorV5_OFF') 
+#PrepareSource('RGB_J0710_p591_V6_OFF') 
+#PrepareSource('RGB_J0710_p591_V5_OFF') 
+#PrepareSource('Sky_RA38Dec20_V6_OFF') 
+#PrepareSource('Sky_RA38Dec20_V5_OFF') 
+#PrepareSource('PKS1424V6_OFF') 
+#PrepareSource('PKS1424V5_OFF') 
+#PrepareSource('PG1553V6_OFF') 
+#PrepareSource('PG1553V5_OFF') 
+#PrepareSource('3C273V6_OFF') 
+#PrepareSource('3C273V5_OFF') 
+#PrepareSource('Segue1V6_OFF') 
+#PrepareSource('Segue1V5_OFF') 
+#PrepareSource('NGC1275V6_OFF') 
+#PrepareSource('H1426V6_OFF') 
+#PrepareSource('OJ287V6_OFF') 
+#PrepareSource('DracoV6_OFF') 
+#PrepareSource('DracoV5_OFF') 
+#PrepareSource('BLLacV6_OFF') 
+#PrepareSource('BLLacV5_OFF') 
+#PrepareSource('3C264V6_OFF') 
+#PrepareSource('1ES0502V6_OFF') 
+#PrepareSource('1ES0502V5_OFF') 
+#PrepareSource('M82V6_OFF') 
+#PrepareSource('M82V5_OFF') 
+#PrepareSource('1ES0414V5_OFF') 
+#PrepareSource('1ES1011V6_OFF') 
+#PrepareSource('1ES0647V6_OFF') 
 
+PrepareSource('CrabNebula_elev_70_90_V6_OFF')
+PrepareSource('CrabNebula_elev_60_70_V6_OFF')
+PrepareSource('CrabNebula_elev_50_60_V6_OFF')
+PrepareSource('CrabNebula_elev_40_50_V6_OFF')
+PrepareSource('CrabNebula_elev_70_90_V6_ON')
+PrepareSource('CrabNebula_elev_60_70_V6_ON')
+PrepareSource('CrabNebula_elev_50_60_V6_ON')
+PrepareSource('CrabNebula_elev_40_50_V6_ON')
 
 imposter_analyses = []
 
 #imposter_analyses += ['CrabRHV_V6']
 #imposter_analyses += ['LHAASO_J0621_p3755_RHV_V6']
 
-imposter_analyses += ['1ES0647V6']
-imposter_analyses += ['1ES1011V6']
-imposter_analyses += ['1ES0414V5']
-imposter_analyses += ['UrsaMinorV6']
-imposter_analyses += ['UrsaMinorV5']
-imposter_analyses += ['RGB_J0710_p591_V6']
-imposter_analyses += ['RGB_J0710_p591_V5']
-imposter_analyses += ['Sky_RA38Dec20_V6'] #1ES0229
-imposter_analyses += ['Sky_RA38Dec20_V5'] #1ES0229
-imposter_analyses += ['3C273V6']
-imposter_analyses += ['3C273V5']
-imposter_analyses += ['Segue1V6']
-imposter_analyses += ['Segue1V5']
-imposter_analyses += ['H1426V6']
-imposter_analyses += ['NGC1275V6']
-imposter_analyses += ['DracoV6']
-imposter_analyses += ['DracoV5']
-imposter_analyses += ['UrsaMajorIIV6']
-imposter_analyses += ['PKS1424V6']
-imposter_analyses += ['PKS1424V5']
-imposter_analyses += ['PG1553V6']
-imposter_analyses += ['PG1553V5']
-imposter_analyses += ['OJ287V6']
-imposter_analyses += ['BLLacV6']
-imposter_analyses += ['BLLacV5']
-imposter_analyses += ['3C264V6']
-imposter_analyses += ['1ES0502V6']
-imposter_analyses += ['1ES0502V5']
-imposter_analyses += ['M82V6']
-imposter_analyses += ['M82V5']
+#imposter_analyses += ['1ES0647V6']
+#imposter_analyses += ['1ES1011V6']
+#imposter_analyses += ['1ES0414V5']
+#imposter_analyses += ['UrsaMinorV6']
+#imposter_analyses += ['UrsaMinorV5']
+#imposter_analyses += ['RGB_J0710_p591_V6']
+#imposter_analyses += ['RGB_J0710_p591_V5']
+#imposter_analyses += ['Sky_RA38Dec20_V6'] #1ES0229
+#imposter_analyses += ['Sky_RA38Dec20_V5'] #1ES0229
+#imposter_analyses += ['3C273V6']
+#imposter_analyses += ['3C273V5']
+#imposter_analyses += ['Segue1V6']
+#imposter_analyses += ['Segue1V5']
+#imposter_analyses += ['H1426V6']
+#imposter_analyses += ['NGC1275V6']
+#imposter_analyses += ['DracoV6']
+#imposter_analyses += ['DracoV5']
+#imposter_analyses += ['UrsaMajorIIV6']
+#imposter_analyses += ['PKS1424V6']
+#imposter_analyses += ['PKS1424V5']
+#imposter_analyses += ['PG1553V6']
+#imposter_analyses += ['PG1553V5']
+#imposter_analyses += ['OJ287V6']
+#imposter_analyses += ['BLLacV6']
+#imposter_analyses += ['BLLacV5']
+#imposter_analyses += ['3C264V6']
+#imposter_analyses += ['1ES0502V6']
+#imposter_analyses += ['1ES0502V5']
+#imposter_analyses += ['M82V6']
+#imposter_analyses += ['M82V5']
 
-imposter_analyses += ['Crab_Offset_1p0_V6']
-imposter_analyses += ['Crab_Offset_1p5_V6']
-imposter_analyses += ['Crab_Elev70_V6']
-imposter_analyses += ['Crab_Elev70_V5']
-imposter_analyses += ['Crab_Elev60_V6']
-imposter_analyses += ['Crab_Elev60_V5']
-imposter_analyses += ['Crab_Elev50_V6']
-imposter_analyses += ['Crab_Elev50_V5']
-#imposter_analyses += ['Crab_Elev30_V6']
-#imposter_analyses += ['Crab_Elev30_V5']
+#imposter_analyses += ['Crab_Offset_1p0_V6']
+#imposter_analyses += ['Crab_Offset_1p5_V6']
+#imposter_analyses += ['CrabNebula_elev_70_90_V6']
+#imposter_analyses += ['CrabNebula_elev_60_70_V6']
+#imposter_analyses += ['CrabNebula_elev_50_60_V6']
+#imposter_analyses += ['CrabNebula_elev_40_50_V6']
 
 #imposter_analyses += ['IC443HotSpotV6']
 #imposter_analyses += ['IC443HotSpotV5']
@@ -130,34 +134,34 @@ imposter_analyses += ['Crab_Elev50_V5']
 
 #imposter_analyses += ['MGRO_J1908_V6']
 #imposter_analyses += ['MGRO_J1908_V5']
-imposter_analyses += ['SS433_V6']
-imposter_analyses += ['SS433_V5']
+#imposter_analyses += ['SS433_V6']
+#imposter_analyses += ['SS433_V5']
 #imposter_analyses += ['SS433Half1_V6']
 #imposter_analyses += ['SS433Half1_V5']
 #imposter_analyses += ['SS433Half2_V6']
 #imposter_analyses += ['SS433Half2_V5']
-imposter_analyses += ['PSR_J1907_p0602_V6']
-imposter_analyses += ['PSR_J1907_p0602_V5']
-imposter_analyses += ['PSR_J2032_p4127_Fall2017_V6']
-imposter_analyses += ['PSR_J2032_p4127_Baseline_V6']
-imposter_analyses += ['PSR_J2032_p4127_Baseline_V5']
-imposter_analyses += ['PSR_J2032_p4127_All_V6']
-imposter_analyses += ['PSR_J2032_p4127_All_V5']
-imposter_analyses += ['PSR_J2229_p6114_V6'] # boomerang
-imposter_analyses += ['PSR_J2229_p6114_V5']
-imposter_analyses += ['PSR_J2021_p3651_V6'] # Dragonfly
-imposter_analyses += ['PSR_J2021_p3651_V5']
-imposter_analyses += ['PSR_J2021_p4026_V6'] # Gamma Cygni
-imposter_analyses += ['PSR_J2021_p4026_V5']
-imposter_analyses += ['PSR_J1856_p0245_V6']
-imposter_analyses += ['PSR_J1856_p0245_V5']
-imposter_analyses += ['PSR_J1930_p1852_V6']
-imposter_analyses += ['PSR_J1928_p1746_V6']
-imposter_analyses += ['GemingaV6']
-imposter_analyses += ['GemingaV5']
-imposter_analyses += ['SNR_G189_p03_V6'] # IC 443
-imposter_analyses += ['SNR_G189_p03_V5']
-imposter_analyses += ['PSR_J1954_p2836_V6'] # only detected at ~200 GeV, age = 6.94e+04 yr, Edot = 1.0e+36 erg/s
+#imposter_analyses += ['PSR_J1907_p0602_V6']
+#imposter_analyses += ['PSR_J1907_p0602_V5']
+#imposter_analyses += ['PSR_J2032_p4127_Fall2017_V6']
+#imposter_analyses += ['PSR_J2032_p4127_Baseline_V6']
+#imposter_analyses += ['PSR_J2032_p4127_Baseline_V5']
+#imposter_analyses += ['PSR_J2032_p4127_All_V6']
+#imposter_analyses += ['PSR_J2032_p4127_All_V5']
+#imposter_analyses += ['PSR_J2229_p6114_V6'] # boomerang
+#imposter_analyses += ['PSR_J2229_p6114_V5']
+#imposter_analyses += ['PSR_J2021_p3651_V6'] # Dragonfly
+#imposter_analyses += ['PSR_J2021_p3651_V5']
+#imposter_analyses += ['PSR_J2021_p4026_V6'] # Gamma Cygni
+#imposter_analyses += ['PSR_J2021_p4026_V5']
+#imposter_analyses += ['PSR_J1856_p0245_V6']
+#imposter_analyses += ['PSR_J1856_p0245_V5']
+#imposter_analyses += ['PSR_J1930_p1852_V6']
+#imposter_analyses += ['PSR_J1928_p1746_V6']
+#imposter_analyses += ['GemingaV6']
+#imposter_analyses += ['GemingaV5']
+#imposter_analyses += ['SNR_G189_p03_V6'] # IC 443
+#imposter_analyses += ['SNR_G189_p03_V5']
+#imposter_analyses += ['PSR_J1954_p2836_V6'] # only detected at ~200 GeV, age = 6.94e+04 yr, Edot = 1.0e+36 erg/s
 #imposter_analyses += ['PSR_J2238_p5903_V6']
 #imposter_analyses += ['PSR_J0205_p6449_V6']
 
@@ -186,7 +190,7 @@ imposter_analyses += ['PSR_J1954_p2836_V6'] # only detected at ~200 GeV, age = 6
 #imposter_analyses += ['Galactic_RA304Dec36_V6']
 #imposter_analyses += ['Galactic_RA345Dec59_V6']
 #imposter_analyses += ['Galactic_RA09Dec60_V6']
-imposter_analyses += ['Sky_RA55Dec53_V6']
+#imposter_analyses += ['Sky_RA55Dec53_V6']
 
 for analysis in range(0,len(imposter_analyses)):
     PrepareSource('%s_ON'%(imposter_analyses[analysis])) 
@@ -245,7 +249,7 @@ qfile = open("run/qsub_Netflix1.sh","w")
 for s in range(0,len(source)):
     job_counts += 1
     qfile.write('qsub -V -N job_%s run_Netflix1_%s.sh\n'%(source[s],source[s]))
-    qfile.write('sleep 60s\n')
+    qfile.write('sleep 30s\n')
 qfile.close() 
 
 

@@ -43,6 +43,7 @@ energy_bin_cut_low = int(sys.argv[2])
 energy_bin_cut_up = int(sys.argv[3])
 doImposter = int(sys.argv[4])
 
+analysis_method = CommonPlotFunctions.analysis_method
 
 def FillSkyMapHistogram(hist_input,hist_output,scale=1.):
 
@@ -79,6 +80,9 @@ MapEdge_lower = InputFile.Get(HistName).GetYaxis().GetBinLowEdge(1)
 MapEdge_upper = InputFile.Get(HistName).GetYaxis().GetBinLowEdge(InputFile.Get(HistName).GetNbinsY()+1)
 InputFile.Close()
 
+hist_real_data_skymap_sum = ROOT.TH2D("hist_real_data_skymap_sum","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
+hist_real_bkgd_skymap_sum = ROOT.TH2D("hist_real_bkgd_skymap_sum","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
+hist_real_significance_skymap_sum = ROOT.TH2D("hist_real_significance_skymap_sum","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
 hist_real_data_skymap = []
 hist_real_bkgd_skymap = []
 hist_real_excess_skymap = []
@@ -90,16 +94,16 @@ for ebin in range(0,len(energy_bin)-1):
     hist_real_significance_skymap += [ROOT.TH2D("hist_real_significance_skymap_E%s"%(ebin),"",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)]
 
 InputFile = ROOT.TFile("/gamma_raid/userspace/rshang/SMI_output/%s/Netflix_%s.root"%(folder_path,sys.argv[1]))
-for ebin in range(0,len(energy_bin)-1):
+for ebin in range(energy_bin_cut_low,energy_bin_cut_up):
     HistName = "Hist_OnData_SR_Skymap_Sum_ErecS%sto%s"%(int(energy_bin[ebin]),int(energy_bin[ebin+1]))
     FillSkyMapHistogram(InputFile.Get(HistName),hist_real_data_skymap[ebin])
-    HistName = "Hist_OnData_CR_Skymap_Sum_ErecS%sto%s"%(int(energy_bin[ebin]),int(energy_bin[ebin+1]))
+    HistName = "Hist_OnData_CR_Skymap_%s_Sum_ErecS%sto%s"%(analysis_method,int(energy_bin[ebin]),int(energy_bin[ebin+1]))
     FillSkyMapHistogram(InputFile.Get(HistName),hist_real_bkgd_skymap[ebin])
     hist_real_excess_skymap[ebin].Add(hist_real_data_skymap[ebin])
     hist_real_excess_skymap[ebin].Add(hist_real_bkgd_skymap[ebin],-1.)
 InputFile.Close()
 
-for ebin in range(0,len(energy_bin)-1):
+for ebin in range(energy_bin_cut_low,energy_bin_cut_up):
     smooth_size_spectroscopy = 0.07
     hist_real_excess_skymap[ebin] = CommonPlotFunctions.Smooth2DMap(hist_real_excess_skymap[ebin],smooth_size_spectroscopy,False)
     hist_real_data_skymap[ebin] = CommonPlotFunctions.Smooth2DMap(hist_real_data_skymap[ebin],smooth_size_spectroscopy,False)
@@ -107,9 +111,21 @@ for ebin in range(0,len(energy_bin)-1):
     significance_skymap = CommonPlotFunctions.GetSignificanceMap(hist_real_data_skymap[ebin],hist_real_bkgd_skymap[ebin])
     hist_real_significance_skymap[ebin].Add(significance_skymap)
 
-for ebin in range(0,len(energy_bin)-1):
+for ebin in range(energy_bin_cut_low,energy_bin_cut_up):
     hist_real_excess_skymap_reflect = CommonPlotFunctions.reflectXaxis(hist_real_excess_skymap[ebin])
-    CommonPlotFunctions.MatplotlibMap2D(hist_real_excess_skymap_reflect,None,[hist_real_excess_skymap_reflect],fig,'RA','Dec','Excess count','SkymapExcess_E%s.png'%(ebin))
+    CommonPlotFunctions.MatplotlibMap2D(hist_real_excess_skymap_reflect,None,[hist_real_excess_skymap_reflect],fig,'RA','Dec','Excess count','SkymapExcess_E%s_%s.png'%(ebin,analysis_method))
     hist_real_significance_skymap_reflect = CommonPlotFunctions.reflectXaxis(hist_real_significance_skymap[ebin])
-    CommonPlotFunctions.MatplotlibMap2D(hist_real_significance_skymap_reflect,None,[],fig,'RA','Dec','Significance','SkymapSignificance_E%s.png'%(ebin))
+    CommonPlotFunctions.MatplotlibMap2D(hist_real_significance_skymap_reflect,None,[],fig,'RA','Dec','Significance','SkymapSignificance_E%s_%s.png'%(ebin,analysis_method))
 
+for ebin in range(energy_bin_cut_low,energy_bin_cut_up):
+    hist_real_data_skymap_sum.Add(hist_real_data_skymap[ebin])
+    hist_real_bkgd_skymap_sum.Add(hist_real_bkgd_skymap[ebin])
+
+hist_real_data_skymap_sum_reflect = CommonPlotFunctions.reflectXaxis(hist_real_data_skymap_sum)
+hist_real_bkgd_skymap_sum_reflect = CommonPlotFunctions.reflectXaxis(hist_real_bkgd_skymap_sum)
+CommonPlotFunctions.BackgroundSubtractMap(fig,hist_real_data_skymap_sum_reflect,hist_real_bkgd_skymap_sum_reflect,'RA','Dec','Count','SkymapBkgSubtraction_%s'%(analysis_method))
+
+significance_skymap = CommonPlotFunctions.GetSignificanceMap(hist_real_data_skymap_sum,hist_real_bkgd_skymap_sum)
+hist_real_significance_skymap_sum.Add(significance_skymap)
+hist_real_significance_skymap_reflect = CommonPlotFunctions.reflectXaxis(hist_real_significance_skymap_sum)
+CommonPlotFunctions.MatplotlibMap2D(hist_real_significance_skymap_reflect,None,[],fig,'RA','Dec','Significance','SkymapSignificance_Sum_%s.png'%(analysis_method))

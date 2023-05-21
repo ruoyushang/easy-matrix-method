@@ -22,6 +22,91 @@ pair<double,double> GetSourceRaDec(TString source_name)
             Source_RA = 55.34;
             Source_Dec = 52.97;
     }
+    if (source_name.Contains("Crab"))
+    {
+            Source_RA = 83.633;
+            Source_Dec = 22.014;
+    }
+    if (source_name.Contains("PKS1424"))
+    {
+            Source_RA = 216.750;
+            Source_Dec = 23.783;
+    }
+    if (source_name.Contains("1ES0229"))
+    {
+            Source_RA = 38.222;
+            Source_Dec = 20.273;
+    }
+    if (source_name.Contains("H1426"))
+    {
+            Source_RA = 217.136;
+            Source_Dec = 42.673;
+    }
+    if (source_name.Contains("3C264"))
+    {
+            Source_RA = 176.271;
+            Source_Dec = 19.606;
+    }
+    if (source_name.Contains("OJ287"))
+    {
+            Source_RA = 133.705;
+            Source_Dec = 20.100;
+    }
+    if (source_name.Contains("PG1553"))
+    {
+            Source_RA = 238.936;
+            Source_Dec = 11.195;
+    }
+    if (source_name.Contains("Segue1"))
+    {
+            Source_RA = 151.767;
+            Source_Dec = 16.082;
+    }
+    if (source_name.Contains("1ES1011"))
+    {
+            Source_RA = 153.767;
+            Source_Dec = 49.434;
+    }
+    if (source_name.Contains("NGC1275"))
+    {
+            Source_RA = 49.950;
+            Source_Dec = 41.512;
+    }
+    if (source_name.Contains("BLLac"))
+    {
+            Source_RA = 330.680416667;
+            Source_Dec = 42.2777777778;
+    }
+    if (source_name.Contains("UrsaMajorII"))
+    {
+            Source_RA = 132.875;
+            Source_Dec = 63.13;
+    }
+    if (source_name.Contains("UrsaMinor"))
+    {
+            Source_RA = 227.2854167;
+            Source_Dec = 67.2225000;
+    }
+    if (source_name.Contains("RGB_J0710_p591"))
+    {
+            Source_RA = 107.6100000;
+            Source_Dec = 59.1500000;
+    }
+    if (source_name.Contains("3C273"))
+    {
+            Source_RA = 187.277915345;
+            Source_Dec = 2.05238856846;
+    }
+    if (source_name.Contains("1ES0502"))
+    {
+            Source_RA = 76.9839421535;
+            Source_Dec = 67.6234172932;
+    }
+    if (source_name.Contains("Draco"))
+    {
+            Source_RA = 260.059729167;
+            Source_Dec = 57.9212194444;
+    }
     return std::make_pair(Source_RA,Source_Dec);
 }
 

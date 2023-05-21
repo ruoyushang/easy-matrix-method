@@ -37,6 +37,11 @@ from spectral_cube import SpectralCube
 
 folder_path = 'output_nuclear'
 
+#analysis_method = 'FoV'
+#analysis_method = 'Ratio'
+analysis_method = 'Regression'
+#analysis_method = 'Perturbation'
+
 energy_bin = [100.,200.,251.,316.,398.,501.,794.,1259.,1995.,3162.,5011.,7943.]
 
 def reflectXaxis(hist):
@@ -469,4 +474,221 @@ def GetSignificanceMap(Hist_SR,Hist_Bkg):
             zscore = (NSR-NBkg)/pow(NSR_err*NSR_err,0.5)
             Hist_Skymap.SetBinContent(bx+1,by+1,zscore)
     return Hist_Skymap
+
+def FindCountProjection(Hist_Data_input,proj_type="Y"):
+
+    #n_bins_y = Hist_Data_input.GetNbinsY()
+    #n_bins_x = Hist_Data_input.GetNbinsX()
+    n_bins_y = min(50,Hist_Data_input.GetNbinsY())
+    n_bins_x = min(50,Hist_Data_input.GetNbinsX())
+    MapEdge_left = Hist_Data_input.GetXaxis().GetBinLowEdge(1)
+    MapEdge_right = Hist_Data_input.GetXaxis().GetBinLowEdge(Hist_Data_input.GetNbinsX()+1)
+    MapEdge_lower = Hist_Data_input.GetYaxis().GetBinLowEdge(1)
+    MapEdge_upper = Hist_Data_input.GetYaxis().GetBinLowEdge(Hist_Data_input.GetNbinsY()+1)
+
+    MapCenter_x = (MapEdge_left+MapEdge_right)/2.
+    if proj_type=="X":
+        MapCenter_x = (MapEdge_upper+MapEdge_lower)/2.
+
+    hist_nbins = n_bins_y
+    hist_edge_lower = MapEdge_lower
+    hist_edge_upper = MapEdge_upper
+    if proj_type=="X":
+        hist_nbins = n_bins_x
+        hist_edge_lower = MapEdge_left
+        hist_edge_upper = MapEdge_right
+    Hist_Profile_Y = ROOT.TH1D("Hist_Profile_Y","",hist_nbins,hist_edge_lower,hist_edge_upper)
+    for br in range(0,Hist_Profile_Y.GetNbinsX()):
+        range_limit = Hist_Profile_Y.GetBinLowEdge(br+2)
+        range_limit_previous = Hist_Profile_Y.GetBinLowEdge(br+1)
+        slice_data = 0.
+        slice_data_err = 0.
+        total_error_weight = 0.
+        total_cell_size = 0.
+        for bx in range(0,Hist_Data_input.GetNbinsX()):
+            for by in range(0,Hist_Data_input.GetNbinsY()):
+                cell_x = Hist_Data_input.GetXaxis().GetBinCenter(bx+1)
+                cell_y = Hist_Data_input.GetYaxis().GetBinCenter(by+1)
+                if proj_type=="X":
+                    cell_y = Hist_Data_input.GetXaxis().GetBinCenter(bx+1)
+                    cell_x = Hist_Data_input.GetYaxis().GetBinCenter(by+1)
+                data_content = Hist_Data_input.GetBinContent(bx+1,by+1)
+                data_error = Hist_Data_input.GetBinError(bx+1,by+1)
+                if abs(MapCenter_x-cell_x)>2.0: continue
+                if cell_y>=range_limit_previous and cell_y<range_limit:
+                    if not data_error==0.:
+                        total_cell_size += 1.
+                        slice_data += data_content
+                        slice_data_err += data_error*data_error
+        if total_cell_size==0.: 
+            slice_data = 0.
+            slice_data_err = 0.
+        else:
+            slice_data = slice_data
+            slice_data_err = pow(slice_data_err,0.5)
+        Hist_Profile_Y.SetBinContent(br+1,slice_data)
+        Hist_Profile_Y.SetBinError(br+1,slice_data_err)
+
+    profile = []
+    profile_err = []
+    theta2 = []
+    theta2_err = []
+    for binx in range(0,Hist_Profile_Y.GetNbinsX()):
+        center = Hist_Profile_Y.GetBinCenter(binx+1)
+        range_limit = Hist_Profile_Y.GetBinLowEdge(binx+2)
+        range_limit_previous = Hist_Profile_Y.GetBinLowEdge(binx+1)
+        profile_content = Hist_Profile_Y.GetBinContent(binx+1)
+        profile_error = Hist_Profile_Y.GetBinError(binx+1)
+        theta2 += [center]
+        theta2_err += [range_limit-range_limit_previous]
+        profile += [profile_content]
+        profile_err += [profile_error]
+
+    return profile, profile_err, theta2, theta2_err
+
+def BackgroundSubtractMap(fig,hist_data,hist_bkgd,label_x,label_y,label_z,plotname):
+
+    colormap = 'coolwarm'
+    #colormap = 'viridis'
+
+    Old_map_nbins_x = hist_data.GetNbinsX()
+    Old_map_nbins_y = hist_data.GetNbinsY()
+    Old_MapEdge_left = hist_data.GetXaxis().GetBinLowEdge(1)
+    Old_MapEdge_right = hist_data.GetXaxis().GetBinLowEdge(hist_data.GetNbinsX()+1)
+    Old_MapEdge_lower = hist_data.GetYaxis().GetBinLowEdge(1)
+    Old_MapEdge_upper = hist_data.GetYaxis().GetBinLowEdge(hist_data.GetNbinsY()+1)
+    Old_MapEdge_center_x = 0.5*(Old_MapEdge_left+Old_MapEdge_right)
+    Old_MapEdge_center_y = 0.5*(Old_MapEdge_lower+Old_MapEdge_upper)
+    Old_MapEdge_size_x = Old_MapEdge_right-Old_MapEdge_center_x
+    Old_MapEdge_size_y = Old_MapEdge_upper-Old_MapEdge_center_y
+
+    map_bin_size = 2.*Old_MapEdge_size_x/float(Old_map_nbins_x)
+    map_nbins_x = Old_map_nbins_x
+    map_nbins_y = Old_map_nbins_y
+    MapEdge_left = Old_MapEdge_center_x-int(map_nbins_x/2)*map_bin_size
+    MapEdge_right = Old_MapEdge_center_x+int(map_nbins_x/2)*map_bin_size
+    MapEdge_lower = Old_MapEdge_center_y-int(map_nbins_y/2)*map_bin_size
+    MapEdge_upper = Old_MapEdge_center_y+int(map_nbins_y/2)*map_bin_size
+
+    deg_per_bin = (MapEdge_right-MapEdge_left)/map_nbins_x
+    nbins_per_deg = map_nbins_x/(MapEdge_right-MapEdge_left)
+    old_x_axis = np.linspace(Old_MapEdge_left,Old_MapEdge_right,Old_map_nbins_x)
+    old_y_axis = np.linspace(Old_MapEdge_lower,Old_MapEdge_upper,Old_map_nbins_y)
+    x_axis = np.linspace(MapEdge_left,MapEdge_right,map_nbins_x)
+    prelim_x_axis_sparse = np.linspace(MapEdge_left,MapEdge_right,6)
+    x_axis_sparse = []
+    for i in prelim_x_axis_sparse:
+        if int(i)>MapEdge_left and int(i)<MapEdge_right:
+            x_axis_sparse += [int(i)]
+    x_axis_reflect = ["{:6.1f}".format(-1.*i) for i in x_axis_sparse]
+    y_axis = np.linspace(MapEdge_lower,MapEdge_upper,map_nbins_y)
+
+    grid_data = np.zeros((map_nbins_y, map_nbins_x))
+    grid_bkgd = np.zeros((map_nbins_y, map_nbins_x))
+    grid_excs = np.zeros((map_nbins_y, map_nbins_x))
+    for ybin in range(0,len(y_axis)):
+        for xbin in range(0,len(x_axis)):
+            #hist_bin_x = hist_data.GetXaxis().FindBin(x_axis[xbin])
+            #hist_bin_y = hist_data.GetYaxis().FindBin(y_axis[ybin])
+            hist_bin_x = xbin+1
+            hist_bin_y = ybin+1
+            if hist_bin_x<1: continue
+            if hist_bin_y<1: continue
+            if hist_bin_x>hist_data.GetNbinsX(): continue
+            if hist_bin_y>hist_data.GetNbinsY(): continue
+            grid_data[ybin,xbin] = hist_data.GetBinContent(hist_bin_x,hist_bin_y)
+            grid_bkgd[ybin,xbin] = hist_bkgd.GetBinContent(hist_bin_x,hist_bin_y)
+            grid_excs[ybin,xbin] = hist_data.GetBinContent(hist_bin_x,hist_bin_y)-hist_bkgd.GetBinContent(hist_bin_x,hist_bin_y)
+
+    # Define the locations for the axes
+    left, width = 0.12, 0.6
+    bottom, height = 0.12, 0.6
+    bottom_h = bottom+height+0.03
+    left_h = left+width+0.03
+     
+    # Set up the geometry of the three plots
+    rect_temperature = [left, bottom, width, height] # dimensions of temp plot
+    rect_histx = [left, bottom_h, width, 0.20] # dimensions of x-histogram
+    rect_histy = [left_h, bottom, 0.20, height] # dimensions of y-histogram
+
+    # Set up the size of the figure
+    #fig = plt.figure(1, figsize=(9.5,9))
+    fig = plt.figure(1)
+    fig.set_figheight(8)
+    fig.set_figwidth(8)
+
+    fig.clf()
+    # Make the three plots
+    axTemperature = plt.axes(rect_temperature) # temperature plot
+    axHistx = plt.axes(rect_histx) # x histogram
+    axHisty = plt.axes(rect_histy) # y histogram
+
+    # Remove the inner axes numbers of the histograms
+    nullfmt = NullFormatter()
+    axHistx.xaxis.set_major_formatter(nullfmt)
+    axHisty.yaxis.set_major_formatter(nullfmt)
+
+    # Plot the temperature data
+    cax = (axTemperature.imshow(grid_data, extent=(x_axis.min(),x_axis.max(),y_axis.min(),y_axis.max()), origin='lower', cmap=colormap))
+
+    #Plot the axes labels
+    axTemperature.set_xlabel(label_x)
+    axTemperature.set_ylabel(label_y)
+    axTemperature.set_xticks(x_axis_sparse)
+    axTemperature.set_xticklabels(x_axis_reflect)
+
+    x_profile, x_profile_stat_err, x_ax, x_ax_err = FindCountProjection(hist_data,proj_type='X')
+    y_profile, y_profile_stat_err, y_ax, y_ax_err = FindCountProjection(hist_data,proj_type='Y')
+    x_bkgd_profile, x_bkgd_profile_stat_err, x_ax, x_ax_err = FindCountProjection(hist_bkgd,proj_type='X')
+    y_bkgd_profile, y_bkgd_profile_stat_err, y_ax, y_ax_err = FindCountProjection(hist_bkgd,proj_type='Y')
+    #Plot the histograms
+    axHistx.errorbar(x_ax,x_profile,yerr=x_profile_stat_err,color='k',marker='.',ls='none')
+    axHisty.errorbar(y_profile,y_ax,xerr=y_profile_stat_err,color='k',marker='.',ls='none')
+    axHistx.plot(x_ax,x_bkgd_profile,color='r',ls='solid')
+    axHisty.plot(y_bkgd_profile,y_ax,color='r',ls='solid')
+    formatter = ticker.ScalarFormatter(useMathText=True)
+    formatter.set_scientific(True)
+    formatter.set_powerlimits((-1,1))
+    axHistx.yaxis.set_major_formatter(formatter)
+    axHisty.xaxis.set_major_formatter(formatter)
+
+    fig.savefig("output_plots/Before_%s.png"%(plotname),bbox_inches='tight')
+
+    fig.clf()
+    # Make the three plots
+    axTemperature = plt.axes(rect_temperature) # temperature plot
+    axHistx = plt.axes(rect_histx) # x histogram
+    axHisty = plt.axes(rect_histy) # y histogram
+
+    # Remove the inner axes numbers of the histograms
+    nullfmt = NullFormatter()
+    axHistx.xaxis.set_major_formatter(nullfmt)
+    axHisty.yaxis.set_major_formatter(nullfmt)
+
+    # Plot the temperature data
+    cax = (axTemperature.imshow(grid_excs, extent=(x_axis.min(),x_axis.max(),y_axis.min(),y_axis.max()), origin='lower', cmap=colormap))
+
+    #Plot the axes labels
+    axTemperature.set_xlabel(label_x)
+    axTemperature.set_ylabel(label_y)
+    axTemperature.set_xticks(x_axis_sparse)
+    axTemperature.set_xticklabels(x_axis_reflect)
+
+    nbins = hist_data.GetNbinsX()
+    MapEdge_left = hist_data.GetXaxis().GetBinLowEdge(1)
+    MapEdge_right = hist_data.GetXaxis().GetBinLowEdge(hist_data.GetNbinsX()+1)
+    MapEdge_bottom = hist_data.GetYaxis().GetBinLowEdge(1)
+    MapEdge_top = hist_data.GetYaxis().GetBinLowEdge(hist_data.GetNbinsY()+1)
+    hist_excs = ROOT.TH2D("hist_excs","",nbins,MapEdge_left,MapEdge_right,nbins,MapEdge_bottom,MapEdge_top)
+    hist_excs.Reset()
+    hist_excs.Add(hist_data)
+    hist_excs.Add(hist_bkgd,-1.)
+
+    x_profile, x_profile_stat_err, x_ax, x_ax_err = FindCountProjection(hist_excs,proj_type='X')
+    y_profile, y_profile_stat_err, y_ax, y_ax_err = FindCountProjection(hist_excs,proj_type='Y')
+    #Plot the histograms
+    axHistx.errorbar(x_ax,x_profile,yerr=x_profile_stat_err,color='k',marker='.',ls='none')
+    axHisty.errorbar(y_profile,y_ax,xerr=y_profile_stat_err,color='k',marker='.',ls='none')
+
+    fig.savefig("output_plots/After_%s.png"%(plotname),bbox_inches='tight')
 
