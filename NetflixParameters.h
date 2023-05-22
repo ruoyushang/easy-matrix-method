@@ -9,10 +9,10 @@ double source_theta_cut = 0.3;
 double Elev_cut_lower = 45.;
 double Elev_cut_upper = 90.;
 
+int n_samples_per_analysis = 10;
+
 //int mtx_dim_w = 2;
 //int mtx_dim_l = 2;
-//int mtx_dim_w = 3;
-//int mtx_dim_l = 3;
 int mtx_dim_w = 4;
 int mtx_dim_l = 4;
 int mtx_dim_w_fine = 12;
@@ -21,8 +21,6 @@ double MSCW_cut_blind = 0.5;
 double MSCL_cut_blind = 0.7;
 double gamma_hadron_dim_ratio_w = 1.;
 double gamma_hadron_dim_ratio_l = 1.;
-//double gamma_hadron_dim_ratio_w = 2.;
-//double gamma_hadron_dim_ratio_l = 2.;
 
 int min_NImages = 3;
 double EmissionHeight_cut = 6.;

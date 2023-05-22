@@ -39,8 +39,9 @@ folder_path = 'output_nuclear'
 
 #analysis_method = 'FoV'
 #analysis_method = 'Ratio'
-analysis_method = 'Regression'
+#analysis_method = 'Regression'
 #analysis_method = 'Perturbation'
+analysis_method = 'Combined'
 
 energy_bin = [100.,200.,251.,316.,398.,501.,794.,1259.,1995.,3162.,5011.,7943.]
 

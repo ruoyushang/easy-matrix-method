@@ -63,17 +63,17 @@ def PrepareSource(source_name):
 #PrepareSource('M82V6_OFF') 
 #PrepareSource('M82V5_OFF') 
 #PrepareSource('1ES0414V5_OFF') 
-#PrepareSource('1ES1011V6_OFF') 
-#PrepareSource('1ES0647V6_OFF') 
+PrepareSource('1ES1011_V6_OFF') 
+#PrepareSource('1ES0647_V6_OFF') 
 
-PrepareSource('CrabNebula_elev_70_90_V6_OFF')
-PrepareSource('CrabNebula_elev_60_70_V6_OFF')
-PrepareSource('CrabNebula_elev_50_60_V6_OFF')
-PrepareSource('CrabNebula_elev_40_50_V6_OFF')
-PrepareSource('CrabNebula_elev_70_90_V6_ON')
-PrepareSource('CrabNebula_elev_60_70_V6_ON')
-PrepareSource('CrabNebula_elev_50_60_V6_ON')
-PrepareSource('CrabNebula_elev_40_50_V6_ON')
+#PrepareSource('CrabNebula_elev_70_90_V6_OFF')
+#PrepareSource('CrabNebula_elev_60_70_V6_OFF')
+#PrepareSource('CrabNebula_elev_50_60_V6_OFF')
+#PrepareSource('CrabNebula_elev_40_50_V6_OFF')
+#PrepareSource('CrabNebula_elev_70_90_V6_ON')
+#PrepareSource('CrabNebula_elev_60_70_V6_ON')
+#PrepareSource('CrabNebula_elev_50_60_V6_ON')
+#PrepareSource('CrabNebula_elev_40_50_V6_ON')
 
 imposter_analyses = []
 
