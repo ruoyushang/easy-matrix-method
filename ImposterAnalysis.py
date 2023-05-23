@@ -39,14 +39,23 @@ new_nbins_x = 100
 new_nbins_y = 100
 
 energy_bin = CommonPlotFunctions.energy_bin
-energy_bin_cut_low = int(sys.argv[2])
-energy_bin_cut_up = int(sys.argv[3])
-doImposter = int(sys.argv[4])
+energy_bin_cut_low = int(sys.argv[4])
+energy_bin_cut_up = int(sys.argv[5])
+doImposter = int(sys.argv[6])
+source_name = sys.argv[1]
+input_epoch = sys.argv[2] # 'V5' or 'V6' or 'V5V6'
+isON = sys.argv[3]  # 'ON' or 'OFF'
 
 analysis_method = CommonPlotFunctions.analysis_method
 
-plot_tag = sys.argv[1]
+plot_tag = source_name
 plot_tag += '_'+analysis_method
+
+list_epoch = []
+if 'V5' in input_epoch:
+    list_epoch += ['V5']
+if 'V6' in input_epoch:
+    list_epoch += ['V6']
 
 def FillSkyMapHistogram(hist_input,hist_output,scale=1.):
 
@@ -73,7 +82,13 @@ def FillSkyMapHistogram(hist_input,hist_output,scale=1.):
 
 folder_path = CommonPlotFunctions.folder_path
 
-InputFile = ROOT.TFile("/gamma_raid/userspace/rshang/SMI_output/%s/Netflix_%s.root"%(folder_path,sys.argv[1]))
+epoch_idx = 0
+SourceFilePath = "/gamma_raid/userspace/rshang/SMI_output/%s/Netflix_%s_%s_%s_G1.root"%(folder_path,source_name,list_epoch[0],isON)
+if os.path.exists(SourceFilePath):
+    epoch_idx = 0
+else:
+    epoch_idx = 1
+InputFile = ROOT.TFile("/gamma_raid/userspace/rshang/SMI_output/%s/Netflix_%s_%s_%s_G1.root"%(folder_path,source_name,list_epoch[epoch_idx],isON))
 HistName = "Hist_OnData_SR_Skymap_Sum_ErecS100to200"
 nbins_x = InputFile.Get(HistName).GetNbinsX()
 nbins_y = InputFile.Get(HistName).GetNbinsY()
@@ -100,21 +115,41 @@ hist_elev_skymap = ROOT.TH2D("hist_elev_skymap","",nbins_x,MapEdge_left,MapEdge_
 hist_azim_skymap = ROOT.TH2D("hist_azim_skymap","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
 hist_nsb_skymap = ROOT.TH2D("hist_nsb_skymap","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
 
-InputFile = ROOT.TFile("/gamma_raid/userspace/rshang/SMI_output/%s/Netflix_%s.root"%(folder_path,sys.argv[1]))
-HistName = "Hist_Data_Elev_Skymap"
-FillSkyMapHistogram(InputFile.Get(HistName),hist_elev_skymap)
-HistName = "Hist_Data_Azim_Skymap"
-FillSkyMapHistogram(InputFile.Get(HistName),hist_azim_skymap)
-HistName = "Hist_Data_NSB_Skymap"
-FillSkyMapHistogram(InputFile.Get(HistName),hist_nsb_skymap)
-for ebin in range(energy_bin_cut_low,energy_bin_cut_up):
-    HistName = "Hist_OnData_SR_Skymap_Sum_ErecS%sto%s"%(int(energy_bin[ebin]),int(energy_bin[ebin+1]))
-    FillSkyMapHistogram(InputFile.Get(HistName),hist_real_data_skymap[ebin])
-    HistName = "Hist_OnData_CR_Skymap_%s_Sum_ErecS%sto%s"%(analysis_method,int(energy_bin[ebin]),int(energy_bin[ebin+1]))
-    FillSkyMapHistogram(InputFile.Get(HistName),hist_real_bkgd_skymap[ebin])
-    hist_real_excess_skymap[ebin].Add(hist_real_data_skymap[ebin])
-    hist_real_excess_skymap[ebin].Add(hist_real_bkgd_skymap[ebin],-1.)
-InputFile.Close()
+effective_area = ROOT.std.vector("double")(20)
+
+for epoch in list_epoch:
+    n_groups = 1
+    file_exists = True
+    while file_exists:
+        SourceFilePath = "/gamma_raid/userspace/rshang/SMI_output/%s/Netflix_%s_%s_%s_G%d.root"%(folder_path,source_name,epoch,isON,n_groups)
+        print ('Read file: %s'%(SourceFilePath))
+        if os.path.exists(SourceFilePath):
+            n_groups += 1
+            print ('file exists.')
+        else:
+            file_exists = False
+            print ('file does not exist.')
+    
+    for group in range(1,n_groups):
+        InputFile = ROOT.TFile("/gamma_raid/userspace/rshang/SMI_output/%s/Netflix_%s_%s_%s_G%d.root"%(folder_path,source_name,epoch,isON,group))
+        InfoTree = InputFile.Get("InfoTree")
+        InfoTree.SetBranchAddress('effective_area',ROOT.AddressOf(effective_area))
+        InfoTree.GetEntry(0)
+        HistName = "Hist_Data_Elev_Skymap"
+        FillSkyMapHistogram(InputFile.Get(HistName),hist_elev_skymap)
+        HistName = "Hist_Data_Azim_Skymap"
+        FillSkyMapHistogram(InputFile.Get(HistName),hist_azim_skymap)
+        HistName = "Hist_Data_NSB_Skymap"
+        FillSkyMapHistogram(InputFile.Get(HistName),hist_nsb_skymap)
+        for ebin in range(energy_bin_cut_low,energy_bin_cut_up):
+            if effective_area[ebin] < 30000.: continue
+            HistName = "Hist_OnData_SR_Skymap_Sum_ErecS%sto%s"%(int(energy_bin[ebin]),int(energy_bin[ebin+1]))
+            FillSkyMapHistogram(InputFile.Get(HistName),hist_real_data_skymap[ebin])
+            HistName = "Hist_OnData_CR_Skymap_%s_Sum_ErecS%sto%s"%(analysis_method,int(energy_bin[ebin]),int(energy_bin[ebin+1]))
+            FillSkyMapHistogram(InputFile.Get(HistName),hist_real_bkgd_skymap[ebin])
+            hist_real_excess_skymap[ebin].Add(hist_real_data_skymap[ebin])
+            hist_real_excess_skymap[ebin].Add(hist_real_bkgd_skymap[ebin],-1.)
+        InputFile.Close()
 
 for ebin in range(energy_bin_cut_low,energy_bin_cut_up):
     smooth_size_spectroscopy = 0.07

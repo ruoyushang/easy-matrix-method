@@ -12,6 +12,11 @@ pair<double,double> GetSourceRaDec(TString source_name)
 {
     double Source_RA = 0.;
     double Source_Dec = 0.;
+    if (source_name.Contains("M82"))
+    {
+            Source_RA = 148.970;
+            Source_Dec = 69.679;
+    }
     if (source_name.Contains("1ES0647"))
     {
             Source_RA = 102.694;
@@ -107,6 +112,11 @@ pair<double,double> GetSourceRaDec(TString source_name)
             Source_RA = 260.059729167;
             Source_Dec = 57.9212194444;
     }
+    if (source_name.Contains("1ES0414"))
+    {
+            Source_RA = 64.2206666667;
+            Source_Dec = 1.089;
+    }
     return std::make_pair(Source_RA,Source_Dec);
 }
 
@@ -179,7 +189,7 @@ vector<int> GetPairListFromFile(string source, int onrun_number, int imposter_id
         }
         myfile.close();
     }
-    else cout << "Unable to open file"; 
+    else cout << "Unable to open PairList file" << endl; 
 
     return offrun_list;
 }
@@ -215,7 +225,7 @@ vector<int> GetRunListFromFile(string source)
         }
         myfile.close();
     }
-    else cout << "Unable to open file"; 
+    else cout << "Unable to open RunList file" << endl; 
 
     return onrun_list;
 }

@@ -85,6 +85,16 @@ double ra_sky = 0;
 double dec_sky = 0;
 double exposure_hours = 0.;
 double exposure_hours_usable = 0.;
+double NSB_mean = 0.;
+double Elev_mean = 0.;
+double Azim_mean = 0.;
+
+vector<double> effective_area;
+vector<double> data_count;
+vector<double> ratio_bkgd_count;
+vector<double> regression_bkgd_count;
+vector<double> perturbation_bkgd_count;
+vector<double> combined_bkgd_count;
 
 int binx_blind_upper_global;
 int biny_blind_upper_global;
@@ -118,6 +128,70 @@ vector<TH2D> Hist_OnData_CR_Skymap_Perturbation_Sum;
 vector<TH2D> Hist_OnData_CR_Skymap_Combined_Sum;
 
 vector<vector<double>> GammaSource_Data;
+
+TObject* getEffAreaHistogram(string file_name, int runnumber, double offset)
+{
+
+  TFile* fAnasumDataFile = TFile::Open(file_name.c_str());
+
+  double iSlizeY = -9999;
+  //iSlizeY = offset;
+  string dirname = "energyHistograms";
+  string hisname = "herecEffectiveArea_on";
+  if( !fAnasumDataFile )
+  {
+    return 0;
+  }
+  
+  char dx[600];
+  if( runnumber > 1 )
+  {
+    sprintf( dx, "run_%d/stereo/%s", runnumber, dirname.c_str() );
+  }
+  else
+  {
+    if( runnumber == 0 )
+    {
+      sprintf( dx, "total/stereo/%s", dirname.c_str() );
+    }
+    else if( runnumber == 1 )
+    {
+      sprintf( dx, "total_%d/stereo/%s", runnumber, dirname.c_str() );
+    }
+    else
+    {
+      sprintf( dx, "total_%d/stereo/%s", -1 * runnumber, dirname.c_str() );
+    }
+  }
+  
+  fAnasumDataFile->cd( dx );
+  TDirectory* iDir = gDirectory;
+  if( !iDir )
+  {
+    return 0;
+  }
+  
+  TObject* h = ( TObject* )iDir->Get( hisname.c_str() );
+  
+  if( h && iSlizeY < -9998. )
+  {
+    return h->Clone();
+  }
+  else if( h )
+  {
+    string iClassName = h->ClassName();
+    if( iClassName.find( "TH2" ) != string::npos )
+    {
+      TH2* i_h2 = ( TH2* )h;
+      string iN = hisname + "px";
+      TH1* i_h = ( TH1* )i_h2->ProjectionX( iN.c_str(), i_h2->GetYaxis()->FindBin( iSlizeY ), i_h2->GetYaxis()->FindBin( iSlizeY ) );
+      return i_h->Clone();
+    }
+  }
+  
+  
+  return 0;
+}
 
 void GetGammaSources()
 {
@@ -261,7 +335,7 @@ pair<double,double> GetRunElevAzim(int int_run_number)
     return std::make_pair(TelElevation_avg,TelAzimuth_avg);
 }
 
-void RemoveNonExistingRuns(vector<int>& input_list)
+vector<int> RemoveNonExistingRuns(vector<int>& input_list)
 {
     vector<int> new_list;
     for (int run=0;run<input_list.size();run++)
@@ -282,8 +356,8 @@ void RemoveNonExistingRuns(vector<int>& input_list)
             new_list.push_back(input_list.at(run));
         }
     }
-    input_list.clear();
-    input_list = new_list;
+
+    return new_list;
 }
 
 void SortingList(vector<int>* list, vector<double>* list_pointing)
@@ -643,7 +717,6 @@ void TrainingRunAnalysis(int int_run_number)
     exposure_hours += (time_1-time_0)/3600.;
     //std::cout << "Get usable time for run " << run_number << std::endl;
     double exposure_thisrun = GetRunUsableTime(filename,int_run_number)/3600.;
-    exposure_hours_usable += exposure_thisrun;
 
     double MSCW_plot_upper = gamma_hadron_dim_ratio_w*(MSCW_cut_blind-(-1.*MSCW_cut_blind))+MSCW_cut_blind;
     double MSCL_plot_upper = gamma_hadron_dim_ratio_l*(MSCL_cut_blind-(-1.*MSCL_cut_blind))+MSCL_cut_blind;
@@ -718,12 +791,24 @@ void SingleRunAnalysis(int int_run_number)
     //std::cout << "Get elev. and azim. for run " << run_number << std::endl;
     double tele_elev = GetRunElevAzim(int_run_number).first;
     double tele_azim = GetRunElevAzim(int_run_number).second;
+    if (tele_azim>180.) tele_azim = 360.-tele_azim;
     double NSB = GetRunPedestalVar(int_run_number);
+
+    NSB_mean += NSB;
+    Elev_mean += tele_elev;
+    Azim_mean += tele_azim;
 
     //std::cout << "Get telescope pointing RA and Dec for run " << run_number << std::endl;
     std::pair<double,double> tele_point_ra_dec = GetRunRaDec(filename,int_run_number);
     run_tele_point_ra = tele_point_ra_dec.first;
     run_tele_point_dec = tele_point_ra_dec.second;
+
+    TH1* i_hEffAreaP = ( TH1* )getEffAreaHistogram(filename, int_run_number, 0.5);
+    for (int e=0;e<N_energy_bins;e++) 
+    {
+        double eff_area = i_hEffAreaP->GetBinContent( i_hEffAreaP->FindBin( log10(0.5*(energy_bins[e]+energy_bins[e+1])/1000.)));
+        effective_area.at(e) += eff_area;
+    }
 
     Data_tree->GetEntry(0);
     double time_0 = Time;
@@ -1144,7 +1229,7 @@ void FillHistograms(string target_data, bool isON, bool doImposter)
 
     vector<int> Data_runlist_init = GetRunList(source_strip);
     std::cout << "Data_runlist_init.size() = " << Data_runlist_init.size() << std::endl;
-    RemoveNonExistingRuns(Data_runlist_init);
+    Data_runlist_init = RemoveNonExistingRuns(Data_runlist_init);
     std::cout << "Data_runlist.size() = " << Data_runlist_init.size() << std::endl;
 
     std::cout << "Getting runlist elevation..." << std::endl;
@@ -1234,6 +1319,13 @@ void FillHistograms(string target_data, bool isON, bool doImposter)
     double off_blinded_element_per_energy = 0.;
 
     int n_samples = 0;
+    char group_tag[50] = "";
+    int group_idx = 0;
+
+    for (int e=0;e<N_energy_bins;e++) 
+    {
+        effective_area.push_back(0.);
+    }
 
     for (int run=0;run<Data_runlist_init.size();run++)
     {
@@ -1248,7 +1340,7 @@ void FillHistograms(string target_data, bool isON, bool doImposter)
 
         std::cout << "Getting training data..." << std::endl;
         vector<int> OffData_runlist_init = GetOffRunList(source_strip,int(Data_runlist_init[run]),-1);
-        RemoveNonExistingRuns(OffData_runlist_init);
+        OffData_runlist_init = RemoveNonExistingRuns(OffData_runlist_init);
 
         if (OffData_runlist_init.size()<nbins_unblind)
         {
@@ -1322,7 +1414,6 @@ void FillHistograms(string target_data, bool isON, bool doImposter)
 
         if (n_samples>=n_samples_per_analysis || run==Data_runlist_init.size()-1)
         {
-            n_samples = 0;
 
             std::cout << "Using training data to learn conversion..." << std::endl;
 
@@ -1459,14 +1550,15 @@ void FillHistograms(string target_data, bool isON, bool doImposter)
                 CR_count_map = Hist_OnData_CR_Skymap_Regression.at(e).Integral();
                 if (CR_count_map>0.)
                 {
-                    if (matrix_rank[e]==1)
-                    {
-                        Hist_OnData_CR_Skymap_Regression.at(e).Scale(SR_predict_ratio/CR_count_map);
-                    }
-                    else
-                    {
-                        Hist_OnData_CR_Skymap_Regression.at(e).Scale(SR_predict_regression/CR_count_map);
-                    }
+                    //if (matrix_rank[e]==1)
+                    //{
+                    //    Hist_OnData_CR_Skymap_Regression.at(e).Scale(SR_predict_ratio/CR_count_map);
+                    //}
+                    //else
+                    //{
+                    //    Hist_OnData_CR_Skymap_Regression.at(e).Scale(SR_predict_regression/CR_count_map);
+                    //}
+                    Hist_OnData_CR_Skymap_Regression.at(e).Scale(SR_predict_regression/CR_count_map);
                 }
 
                 // perturbation method
@@ -1496,13 +1588,6 @@ void FillHistograms(string target_data, bool isON, bool doImposter)
                         Hist_OnData_CR_Skymap_Perturbation.at(e).Scale(SR_predict_perturbation/CR_count_map);
                     }
                 }
-
-                std::cout << "=============================================" << std::endl;
-                std::cout << "Energy = " << energy_bins[e] << std::endl;
-                std::cout << "Truth = " << total_truth << std::endl;
-                std::cout << "Ratio predict = " << SR_predict_ratio << std::endl;
-                std::cout << "Regression predict = " << SR_predict_regression << std::endl;
-                std::cout << "Perturbation predict = " << SR_predict_perturbation << std::endl;
 
             }
 
@@ -1539,57 +1624,120 @@ void FillHistograms(string target_data, bool isON, bool doImposter)
                 Hist_OnData_CR_Skymap_Regression.at(e).Reset();
                 Hist_OnData_CR_Skymap_Perturbation.at(e).Reset();
             }
+
+            NSB_mean = NSB_mean/double(n_samples);
+            Elev_mean = Elev_mean/double(n_samples);
+            Azim_mean = Azim_mean/double(n_samples);
+            for (int e=0;e<N_energy_bins;e++) 
+            {
+                effective_area.at(e) = effective_area.at(e)/double(n_samples);
+            }
+
+            Hist_Data_Elev_Skymap.Divide(&Hist_Data_Expo_Skymap);
+            Hist_Data_Azim_Skymap.Divide(&Hist_Data_Expo_Skymap);
+            Hist_Data_NSB_Skymap.Divide(&Hist_Data_Expo_Skymap);
+
+            group_idx += 1;
+            sprintf(group_tag, "_G%d", group_idx);
+            TFile OutputFile(TString(SMI_OUTPUT)+"/Netflix_"+TString(target)+group_tag+".root","recreate");
+
+            Hist_Data_Expo_Skymap.Write();
+            Hist_Data_Elev_Skymap.Write();
+            Hist_Data_Azim_Skymap.Write();
+            Hist_Data_NSB_Skymap.Write();
+
+            for (int e=0;e<N_energy_bins;e++) 
+            {
+                double truth = Hist_OnData_SR_Skymap_Sum.at(e).Integral();
+                double ratio_predict = Hist_OnData_CR_Skymap_Ratio_Sum.at(e).Integral();
+                double regression_predict = Hist_OnData_CR_Skymap_Regression_Sum.at(e).Integral();
+                double perturbation_predict = Hist_OnData_CR_Skymap_Perturbation_Sum.at(e).Integral();
+                double combined_predict = Hist_OnData_CR_Skymap_Combined_Sum.at(e).Integral();
+                data_count.push_back(truth);
+                ratio_bkgd_count.push_back(ratio_predict);
+                regression_bkgd_count.push_back(regression_predict);
+                perturbation_bkgd_count.push_back(perturbation_predict);
+                combined_bkgd_count.push_back(combined_predict);
+
+                std::cout << "=============================================" << std::endl;
+                std::cout << "Energy = " << energy_bins[e] << std::endl;
+                std::cout << "Effective area = " << effective_area.at(e) << std::endl;
+                std::cout << 
+                    "truth                = " << truth
+                    << std::endl;
+                std::cout << 
+                    "ratio_predict        = " << ratio_predict 
+                    << ", " << -(ratio_predict-truth)/truth*100. << " %"
+                    << ", " << -(ratio_predict-truth)/pow(truth,0.5) << " sigma"
+                    << std::endl;
+                std::cout << 
+                    "perturbation_predict = " << perturbation_predict 
+                    << ", " << -(perturbation_predict-truth)/truth*100. << " %"
+                    << ", " << -(perturbation_predict-truth)/pow(truth,0.5) << " sigma"
+                    << std::endl;
+                std::cout << 
+                    "regression_predict   = " << regression_predict 
+                    << ", " << -(regression_predict-truth)/truth*100. << " %"
+                    << ", " << -(regression_predict-truth)/pow(truth,0.5) << " sigma"
+                    << std::endl;
+                std::cout << 
+                    "combined_predict   = " << regression_predict 
+                    << ", " << -(combined_predict-truth)/truth*100. << " %"
+                    << ", " << -(combined_predict-truth)/pow(truth,0.5) << " sigma"
+                    << std::endl;
+                Hist_OnData_SR_Skymap_Sum.at(e).Write();
+                Hist_OnData_CR_Skymap_FoV_Sum.at(e).Write();
+                Hist_OnData_CR_Skymap_Ratio_Sum.at(e).Write();
+                Hist_OnData_CR_Skymap_Regression_Sum.at(e).Write();
+                Hist_OnData_CR_Skymap_Perturbation_Sum.at(e).Write();
+                Hist_OnData_CR_Skymap_Combined_Sum.at(e).Write();
+            }
+
+            TTree InfoTree("InfoTree","info tree");
+            InfoTree.Branch("exposure_hours",&exposure_hours_usable,"exposure_hours/D");
+            InfoTree.Branch("NSB_mean",&NSB_mean,"NSB_mean/D");
+            InfoTree.Branch("Elev_mean",&Elev_mean,"Elev_mean/D");
+            InfoTree.Branch("Azim_mean",&Azim_mean,"Azim_mean/D");
+            InfoTree.Branch("effective_area","std::vector<double>",&effective_area);
+            InfoTree.Branch("data_count","std::vector<double>",&data_count);
+            InfoTree.Branch("ratio_bkgd_count","std::vector<double>",&ratio_bkgd_count);
+            InfoTree.Branch("regression_bkgd_count","std::vector<double>",&regression_bkgd_count);
+            InfoTree.Branch("perturbation_bkgd_count","std::vector<double>",&perturbation_bkgd_count);
+            InfoTree.Branch("combined_bkgd_count","std::vector<double>",&combined_bkgd_count);
+            InfoTree.Fill();
+            InfoTree.Write();
+
+            OutputFile.Close();
+
+            exposure_hours_usable = 0.;
+            n_samples = 0;
+            effective_area.clear();
+            for (int e=0;e<N_energy_bins;e++) 
+            {
+                effective_area.push_back(0.);
+            }
+            data_count.clear();
+            ratio_bkgd_count.clear();
+            regression_bkgd_count.clear();
+            perturbation_bkgd_count.clear();
+            combined_bkgd_count.clear();
+
+            Hist_Data_Expo_Skymap.Reset();
+            Hist_Data_Elev_Skymap.Reset();
+            Hist_Data_Azim_Skymap.Reset();
+            Hist_Data_NSB_Skymap.Reset();
+            for (int e=0;e<N_energy_bins;e++) 
+            {
+                Hist_OnData_SR_Skymap_Sum.at(e).Reset();
+                Hist_OnData_CR_Skymap_FoV_Sum.at(e).Reset();
+                Hist_OnData_CR_Skymap_Ratio_Sum.at(e).Reset();
+                Hist_OnData_CR_Skymap_Regression_Sum.at(e).Reset();
+                Hist_OnData_CR_Skymap_Perturbation_Sum.at(e).Reset();
+                Hist_OnData_CR_Skymap_Combined_Sum.at(e).Reset();
+            }
+
         }
 
     }
-
-    Hist_Data_Elev_Skymap.Divide(&Hist_Data_Expo_Skymap);
-    Hist_Data_Azim_Skymap.Divide(&Hist_Data_Expo_Skymap);
-    Hist_Data_NSB_Skymap.Divide(&Hist_Data_Expo_Skymap);
-
-    TFile OutputFile(TString(SMI_OUTPUT)+"/Netflix_"+TString(target)+".root","recreate");
-    Hist_Data_Elev_Skymap.Write();
-    Hist_Data_Azim_Skymap.Write();
-    Hist_Data_NSB_Skymap.Write();
-    for (int e=0;e<N_energy_bins;e++) 
-    {
-        double truth = Hist_OnData_SR_Skymap_Sum.at(e).Integral();
-        double ratio_predict = Hist_OnData_CR_Skymap_Ratio_Sum.at(e).Integral();
-        double regression_predict = Hist_OnData_CR_Skymap_Regression_Sum.at(e).Integral();
-        double perturbation_predict = Hist_OnData_CR_Skymap_Perturbation_Sum.at(e).Integral();
-        double combined_predict = Hist_OnData_CR_Skymap_Combined_Sum.at(e).Integral();
-        std::cout << "=============================================" << std::endl;
-        std::cout << "Energy = " << energy_bins[e] << std::endl;
-        std::cout << 
-            "truth                = " << truth
-            << std::endl;
-        std::cout << 
-            "ratio_predict        = " << ratio_predict 
-            << ", " << -(ratio_predict-truth)/truth*100. << " %"
-            << ", " << -(ratio_predict-truth)/pow(truth,0.5) << " sigma"
-            << std::endl;
-        std::cout << 
-            "perturbation_predict = " << perturbation_predict 
-            << ", " << -(perturbation_predict-truth)/truth*100. << " %"
-            << ", " << -(perturbation_predict-truth)/pow(truth,0.5) << " sigma"
-            << std::endl;
-        std::cout << 
-            "regression_predict   = " << regression_predict 
-            << ", " << -(regression_predict-truth)/truth*100. << " %"
-            << ", " << -(regression_predict-truth)/pow(truth,0.5) << " sigma"
-            << std::endl;
-        std::cout << 
-            "combined_predict   = " << regression_predict 
-            << ", " << -(combined_predict-truth)/truth*100. << " %"
-            << ", " << -(combined_predict-truth)/pow(truth,0.5) << " sigma"
-            << std::endl;
-        Hist_OnData_SR_Skymap_Sum.at(e).Write();
-        Hist_OnData_CR_Skymap_FoV_Sum.at(e).Write();
-        Hist_OnData_CR_Skymap_Ratio_Sum.at(e).Write();
-        Hist_OnData_CR_Skymap_Regression_Sum.at(e).Write();
-        Hist_OnData_CR_Skymap_Perturbation_Sum.at(e).Write();
-        Hist_OnData_CR_Skymap_Combined_Sum.at(e).Write();
-    }
-    OutputFile.Close();
 
 }

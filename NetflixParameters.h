@@ -9,7 +9,7 @@ double source_theta_cut = 0.3;
 double Elev_cut_lower = 45.;
 double Elev_cut_upper = 90.;
 
-int n_samples_per_analysis = 10;
+int n_samples_per_analysis = 40;
 
 //int mtx_dim_w = 2;
 //int mtx_dim_l = 2;
