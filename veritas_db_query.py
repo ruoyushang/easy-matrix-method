@@ -959,16 +959,18 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
             delta_airmass = (1./math.sin(on_run_el*math.pi/180.)-1./math.sin(off_run_el*math.pi/180.));
             delta_elev = off_run_el-on_run_el
 
-            if (sum_off_run_elev-sum_on_run_elev)>0.:
-                if (off_run_el-on_run_el)>0.: continue
+            if is_imposter:
+                if abs(delta_elev)>10.: continue
             else:
-                if (off_run_el-on_run_el)<0.: continue
+                if (sum_off_run_elev-sum_on_run_elev)>0.:
+                    if (off_run_el-on_run_el)>0.: continue
+                else:
+                    if (off_run_el-on_run_el)<0.: continue
+                #if abs(delta_airmass)>0.1: continue
+                if abs(delta_elev)>5.: continue
+                if abs(delta_azim)>10.: continue
 
-            #if abs(delta_airmass)>0.1: continue
-            if abs(delta_elev)>5.: continue
-            if abs(delta_azim)>10.: continue
-
-            list_off_run_ids += [[list_on_run_ids[on_run],all_runs_info[run][0],on_run_el,off_run_el]]
+            list_off_run_ids += [[int(list_on_run_ids[on_run]),int(all_runs_info[run][0]),on_run_el,off_run_el]]
             number_off_runs += 1
             sum_on_run_elev += on_run_el
             sum_off_run_elev += off_run_el

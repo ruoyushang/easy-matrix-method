@@ -47,8 +47,6 @@ double map_center_x = 0.;
 double map_center_y = 0.;
 double mean_tele_point_ra = 0.;
 double mean_tele_point_dec = 0.;
-double run_tele_point_ra = 0.;
-double run_tele_point_dec = 0.;
 
 string SMI_INPUT;
 string SMI_OUTPUT;
@@ -85,6 +83,7 @@ double ra_sky = 0;
 double dec_sky = 0;
 double exposure_hours = 0.;
 double exposure_hours_usable = 0.;
+double total_cr_count = 0.;
 double NSB_mean = 0.;
 double Elev_mean = 0.;
 double Azim_mean = 0.;
@@ -707,8 +706,6 @@ void TrainingRunAnalysis(int int_run_number)
 
     //std::cout << "Get telescope pointing RA and Dec for run " << run_number << std::endl;
     std::pair<double,double> tele_point_ra_dec = GetRunRaDec(filename,int_run_number);
-    run_tele_point_ra = tele_point_ra_dec.first;
-    run_tele_point_dec = tele_point_ra_dec.second;
 
     Data_tree->GetEntry(0);
     double time_0 = Time;
@@ -769,7 +766,7 @@ void TrainingRunAnalysis(int int_run_number)
 
 }
 
-void SingleRunAnalysis(int int_run_number)
+void SingleRunAnalysis(int int_run_number, int int_run_number_real, bool isImposter)
 {
 
     char run_number[50];
@@ -800,8 +797,12 @@ void SingleRunAnalysis(int int_run_number)
 
     //std::cout << "Get telescope pointing RA and Dec for run " << run_number << std::endl;
     std::pair<double,double> tele_point_ra_dec = GetRunRaDec(filename,int_run_number);
-    run_tele_point_ra = tele_point_ra_dec.first;
-    run_tele_point_dec = tele_point_ra_dec.second;
+
+    char run_number_real[50];
+    sprintf(run_number_real, "%i", int_run_number_real);
+    string filename_real;
+    filename_real = TString(SMI_INPUT+"/"+string(run_number_real)+".anasum.root");
+    std::pair<double,double> real_tele_point_ra_dec = GetRunRaDec(filename_real,int_run_number_real);
 
     TH1* i_hEffAreaP = ( TH1* )getEffAreaHistogram(filename, int_run_number, 0.5);
     for (int e=0;e<N_energy_bins;e++) 
@@ -840,8 +841,8 @@ void SingleRunAnalysis(int int_run_number)
         Data_tree->GetEntry(entry);
         R2off = Xoff*Xoff+Yoff*Yoff;
         Phioff = atan2(Yoff,Xoff)+M_PI;
-        ra_sky = tele_point_ra_dec.first+Xoff_derot;
-        dec_sky = tele_point_ra_dec.second+Yoff_derot;
+        ra_sky = real_tele_point_ra_dec.first+Xoff_derot;
+        dec_sky = real_tele_point_ra_dec.second+Yoff_derot;
         theta2 = pow(ra_sky-mean_tele_point_ra,2)+pow(dec_sky-mean_tele_point_dec,2);
         int energy_idx = Hist_ErecS.FindBin(ErecS*1000.)-1;
         int idx_xoff = Hist_Xoff.FindBin(Xoff)-1;
@@ -865,6 +866,12 @@ void SingleRunAnalysis(int int_run_number)
         if (dec_sky<map_bottom_edge) continue;
 
         if (!FoV(ra_sky, dec_sky, true)) continue;
+        if (isImposter)
+        {
+            double imposter_ra_sky = tele_point_ra_dec.first+Xoff_derot;
+            double imposter_dec_sky = tele_point_ra_dec.second+Yoff_derot;
+            if (!FoV(imposter_ra_sky, imposter_dec_sky, true)) continue;
+        }
 
         Hist_OnData_MSCLW.at(energy_idx).Fill(MSCL,MSCW);
         Hist_OnData_MSCLW_Fine.at(energy_idx).Fill(MSCL,MSCW);
@@ -894,6 +901,7 @@ void SingleRunAnalysis(int int_run_number)
             Hist_Data_Elev_Skymap.Fill(ra_sky,dec_sky,tele_elev);
             Hist_Data_Azim_Skymap.Fill(ra_sky,dec_sky,tele_azim);
             Hist_Data_NSB_Skymap.Fill(ra_sky,dec_sky,NSB);
+            total_cr_count += 1.;
         }
 
     }
@@ -1007,8 +1015,9 @@ MatrixXcd MatrixPerturbationMethod(MatrixXcd mtx_init_input, MatrixXcd mtx_data_
     int length_tkn = size_k*size_n;
     int regularization_size = 0;
     regularization_size = length_tkn;
-    VectorXcd vtr_Delta = VectorXcd::Zero(mtx_init_input.rows()*mtx_init_input.cols()+regularization_size);
-    MatrixXcd mtx_A = MatrixXcd::Zero(mtx_init_input.rows()*mtx_init_input.cols()+regularization_size,length_tkn);
+    VectorXcd vtr_Delta = VectorXcd::Zero(mtx_init_input.rows()*mtx_init_input.cols());
+    MatrixXcd mtx_A = MatrixXcd::Zero(mtx_init_input.rows()*mtx_init_input.cols(),length_tkn);
+    MatrixXcd mtx_W = MatrixXcd::Zero(mtx_init_input.rows()*mtx_init_input.cols(),mtx_init_input.rows()*mtx_init_input.cols());
     MatrixXcd mtx_Constraint = MatrixXcd::Zero(regularization_size,length_tkn);
     VectorXcd vtr_Constraint_Delta = VectorXcd::Zero(regularization_size);
 
@@ -1022,13 +1031,14 @@ MatrixXcd MatrixPerturbationMethod(MatrixXcd mtx_init_input, MatrixXcd mtx_data_
             double sigma_data = max(1.,pow(mtx_init_input(idx_i,idx_j).real(),0.5));
             double stat_weight = 1./pow(sigma_data*sigma_data,0.5);
             double weight = 1.;
-            //weight = stat_weight;
-            vtr_Delta(idx_u) = weight*(mtx_data_input-mtx_init_input)(idx_i,idx_j);
+            weight = stat_weight;
+            mtx_W(idx_u,idx_u) = weight;
+            vtr_Delta(idx_u) = (mtx_data_input-mtx_init_input)(idx_i,idx_j);
             if (isBlind)
             {
                 if (idx_i<binx_blind_upper_global && idx_j<biny_blind_upper_global)
                 {
-                    continue;
+                    mtx_W(idx_u,idx_u) = 0.;
                 }
             }
             available_bins += 1.;
@@ -1044,14 +1054,7 @@ MatrixXcd MatrixPerturbationMethod(MatrixXcd mtx_init_input, MatrixXcd mtx_data_
                     if (nth_entry>entry_size) continue;
                     if (kth_entry==nth_entry) continue;
                     int idx_v = idx_k*size_n + idx_n;
-                    mtx_A(idx_u,idx_v) = weight*mtx_U_init(idx_i,idx_k)*mtx_V_init(idx_j,idx_n);
-                    if (isBlind)
-                    {
-                        if (idx_i<binx_blind_upper_global && idx_j<biny_blind_upper_global)
-                        {
-                            continue;
-                        }
-                    }
+                    mtx_A(idx_u,idx_v) = mtx_U_init(idx_i,idx_k)*mtx_V_init(idx_j,idx_n);
                 }
             }
         }
@@ -1079,9 +1082,14 @@ MatrixXcd MatrixPerturbationMethod(MatrixXcd mtx_init_input, MatrixXcd mtx_data_
     //mtx_Constraint(idx_u1,idx_v1) = 1.;
 
     VectorXcd vtr_t = VectorXcd::Zero(length_tkn);
-    BDCSVD<MatrixXcd> bdc_svd(mtx_A, ComputeThinU | ComputeThinV);
+    //BDCSVD<MatrixXcd> bdc_svd(mtx_A, ComputeThinU | ComputeThinV);
 
-    vtr_t = SolutionWithConstraints(mtx_A, mtx_Constraint, vtr_Delta, vtr_Constraint_Delta);
+    VectorXcd vtr_Delta_weighted = mtx_A.transpose()*mtx_W*vtr_Delta;
+    MatrixXcd mtx_A_weighted = mtx_A.transpose()*mtx_W*mtx_A; 
+    BDCSVD<MatrixXcd> bdc_svd(mtx_A_weighted, ComputeThinU | ComputeThinV);
+
+    //vtr_t = SolutionWithConstraints(mtx_A, mtx_Constraint, vtr_Delta, vtr_Constraint_Delta);
+    vtr_t = bdc_svd.solve(vtr_Delta_weighted);
 
     MatrixXcd mtx_t = MatrixXcd::Zero(mtx_init_input.rows(),mtx_init_input.cols());
     MatrixXcd mtx_C = MatrixXcd::Zero(mtx_init_input.rows(),mtx_init_input.cols());
@@ -1174,7 +1182,7 @@ MatrixXcd fillMatrix(TH2D* hist)
     return matrix;
 }
 
-void FillHistograms(string target_data, bool isON, bool doImposter)
+void FillHistograms(string target_data, bool isON, int doImposter)
 {
 
     sprintf(target, "%s", target_data.c_str());
@@ -1202,7 +1210,6 @@ void FillHistograms(string target_data, bool isON, bool doImposter)
     std::istringstream ss_input;
     ss_input.str(target);
     std::string source_strip("");
-    std::string source_off_strip("");
     std::string segment;
     std::vector<std::string> seglist;
     while(std::getline(ss_input, segment, '_'))
@@ -1214,12 +1221,9 @@ void FillHistograms(string target_data, bool isON, bool doImposter)
         if (s>0)
         {
             source_strip.append("_");
-            source_off_strip.append("_");
         }
         source_strip.append(seglist.at(s));
-        source_off_strip.append(seglist.at(s));
     }
-    source_off_strip.append("_OFF");
 
     pair<double,double> source_ra_dec = GetSourceRaDec(TString(target));
     mean_tele_point_ra = source_ra_dec.first;
@@ -1251,10 +1255,10 @@ void FillHistograms(string target_data, bool isON, bool doImposter)
     double MSCL_plot_lower = -MSCL_cut_blind;
 
 
-    Hist_Data_Expo_Skymap = TH2D("Hist_Data_Expo_Skymap","",Skymap_nbins_x,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,Skymap_nbins_y,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y);
-    Hist_Data_Elev_Skymap = TH2D("Hist_Data_Elev_Skymap","",Skymap_nbins_x,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,Skymap_nbins_y,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y);
-    Hist_Data_Azim_Skymap = TH2D("Hist_Data_Azim_Skymap","",Skymap_nbins_x,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,Skymap_nbins_y,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y);
-    Hist_Data_NSB_Skymap = TH2D("Hist_Data_NSB_Skymap","",Skymap_nbins_x,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,Skymap_nbins_y,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y);
+    Hist_Data_Expo_Skymap = TH2D("Hist_Data_Expo_Skymap","",20,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,20,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y);
+    Hist_Data_Elev_Skymap = TH2D("Hist_Data_Elev_Skymap","",20,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,20,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y);
+    Hist_Data_Azim_Skymap = TH2D("Hist_Data_Azim_Skymap","",20,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,20,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y);
+    Hist_Data_NSB_Skymap = TH2D("Hist_Data_NSB_Skymap","",20,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,20,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y);
 
     for (int e=0;e<N_energy_bins;e++) 
     {
@@ -1319,6 +1323,8 @@ void FillHistograms(string target_data, bool isON, bool doImposter)
     double off_blinded_element_per_energy = 0.;
 
     int n_samples = 0;
+    exposure_hours_usable = 0.;
+    total_cr_count = 0.;
     char group_tag[50] = "";
     int group_idx = 0;
 
@@ -1339,7 +1345,27 @@ void FillHistograms(string target_data, bool isON, bool doImposter)
         std::cout << "Processing " << run << "/" << Data_runlist_init.size() << "..." << std::endl;
 
         std::cout << "Getting training data..." << std::endl;
-        vector<int> OffData_runlist_init = GetOffRunList(source_strip,int(Data_runlist_init[run]),-1);
+
+        int ON_RunID = int(Data_runlist_init[run]);
+        if (doImposter>0)
+        {
+            int ImposterRunID = GetImposterRunID(source_strip, int(Data_runlist_init[run]), doImposter);
+            ON_RunID = ImposterRunID;
+            if (ImposterRunID==0)
+            {
+                std::cout << "Cannot find imposter data for run " << int(Data_runlist_init[run]) << std::endl;
+                analyze_this_run = false;
+            }
+        }
+        vector<int> OffData_runlist_init;
+        if (doImposter>0)
+        {
+            OffData_runlist_init = GetImposterOffRunList(source_strip,ON_RunID);
+        }
+        else
+        {
+            OffData_runlist_init = GetOffRunList(source_strip,ON_RunID);
+        }
         OffData_runlist_init = RemoveNonExistingRuns(OffData_runlist_init);
 
         if (OffData_runlist_init.size()<nbins_unblind)
@@ -1348,10 +1374,10 @@ void FillHistograms(string target_data, bool isON, bool doImposter)
             analyze_this_run = false;
         }
 
-        n_samples += 1;
-
         if (analyze_this_run)
         {
+
+            n_samples += 1;
             for (int offrun=0;offrun<OffData_runlist_init.size();offrun++)
             {
 
@@ -1408,11 +1434,19 @@ void FillHistograms(string target_data, bool isON, bool doImposter)
             }
 
             std::cout << "Getting ON data..." << std::endl;
-            SingleRunAnalysis(int(Data_runlist_init[run]));
+            if (doImposter>0)
+            {
+                SingleRunAnalysis(ON_RunID, int(Data_runlist_init[run]), true);
+            }
+            else
+            {
+                SingleRunAnalysis(ON_RunID, int(Data_runlist_init[run]), false);
+            }
 
         }
 
-        if (n_samples>=n_samples_per_analysis || run==Data_runlist_init.size()-1)
+        //if (exposure_hours_usable>=expo_hour_per_analysis || run==Data_runlist_init.size()-1)
+        if (total_cr_count>min_CR_count || run==Data_runlist_init.size()-1)
         {
 
             std::cout << "Using training data to learn conversion..." << std::endl;
@@ -1455,20 +1489,27 @@ void FillHistograms(string target_data, bool isON, bool doImposter)
             for (int e=0;e<N_energy_bins;e++) 
             {
                 VectorXcd vtr_B = VectorXcd::Zero(n_training_samples);
+                MatrixXcd mtx_W = MatrixXcd::Zero(n_training_samples,n_training_samples);
                 MatrixXcd mtx_A = MatrixXcd::Zero(n_training_samples,nbins_unblind);
                 VectorXcd vtr_X = VectorXcd::Zero(nbins_unblind);
 
                 for (int sample=0;sample<n_training_samples;sample++)
                 {
                     vtr_B(sample) = off_blinded_element.at(sample).at(e);
+                    if (off_blinded_element.at(sample).at(e)>0.)
+                    {
+                        mtx_W(sample,sample) = 1./pow(off_blinded_element.at(sample).at(e),0.5);
+                    }
                     for (int bin=0;bin<nbins_unblind;bin++)
                     {
                         mtx_A(sample,bin) = off_unblinded_elements.at(sample).at(e).at(bin);
                     }
                 }
 
-                BDCSVD<MatrixXcd> bdc_svd(mtx_A, ComputeThinU | ComputeThinV);
-                vtr_X = bdc_svd.solve(vtr_B);
+                VectorXcd vtr_B_weighted = mtx_A.transpose()*mtx_W*vtr_B;
+                MatrixXcd mtx_A_weighted = mtx_A.transpose()*mtx_W*mtx_A; 
+                BDCSVD<MatrixXcd> bdc_svd(mtx_A_weighted, ComputeThinU | ComputeThinV);
+                vtr_X = bdc_svd.solve(vtr_B_weighted);
                 convert_unblind_to_blind_regression.push_back(vtr_X);
             }
 
@@ -1637,9 +1678,9 @@ void FillHistograms(string target_data, bool isON, bool doImposter)
             Hist_Data_Azim_Skymap.Divide(&Hist_Data_Expo_Skymap);
             Hist_Data_NSB_Skymap.Divide(&Hist_Data_Expo_Skymap);
 
-            group_idx += 1;
             sprintf(group_tag, "_G%d", group_idx);
             TFile OutputFile(TString(SMI_OUTPUT)+"/Netflix_"+TString(target)+group_tag+".root","recreate");
+            group_idx += 1;
 
             Hist_Data_Expo_Skymap.Write();
             Hist_Data_Elev_Skymap.Write();
@@ -1694,6 +1735,7 @@ void FillHistograms(string target_data, bool isON, bool doImposter)
             }
 
             TTree InfoTree("InfoTree","info tree");
+            InfoTree.Branch("total_cr_count",&total_cr_count,"total_cr_count/D");
             InfoTree.Branch("exposure_hours",&exposure_hours_usable,"exposure_hours/D");
             InfoTree.Branch("NSB_mean",&NSB_mean,"NSB_mean/D");
             InfoTree.Branch("Elev_mean",&Elev_mean,"Elev_mean/D");
@@ -1710,6 +1752,7 @@ void FillHistograms(string target_data, bool isON, bool doImposter)
             OutputFile.Close();
 
             exposure_hours_usable = 0.;
+            total_cr_count = 0.;
             n_samples = 0;
             effective_area.clear();
             for (int e=0;e<N_energy_bins;e++) 

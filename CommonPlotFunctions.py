@@ -45,6 +45,8 @@ analysis_method = 'Combined'
 
 energy_bin = [100.,200.,251.,316.,398.,501.,794.,1259.,1995.,3162.,5011.,7943.]
 
+calibration_radius = 0.3 # need to be larger than the PSF and smaller than the integration radius
+
 def reflectXaxis(hist):
 
     # taken from VPlotAnasumHistograms.cpp
@@ -269,6 +271,13 @@ def MatplotlibMap2D(hist_map,hist_tone,hist_contour,fig,label_x,label_y,label_z,
             high_class_z = high_class_z/high_class_z_bins
         min_z = low_class_z-2.*(mid_class_z-low_class_z)
         max_z = max(high_class_z*1.1,mid_class_z+2.*(mid_class_z-low_class_z))
+
+        #skymap_mean = hist_tone.GetMean()
+        #skymap_rms = hist_tone.GetRMS()
+        #print ('skymap_mean = %s'%(skymap_mean))
+        #print ('skymap_rms = %s'%(skymap_rms))
+        #min_z = skymap_mean-2.*skymap_rms
+        #max_z = skymap_mean+2.*skymap_rms
 
     list_levels = []
     list_levels += [np.arange(0.5, 1.0, 0.3)]
@@ -692,4 +701,72 @@ def BackgroundSubtractMap(fig,hist_data,hist_bkgd,label_x,label_y,label_z,plotna
     axHisty.errorbar(y_profile,y_ax,xerr=y_profile_stat_err,color='k',marker='.',ls='none')
 
     fig.savefig("output_plots/After_%s.png"%(plotname),bbox_inches='tight')
+
+def FindExtension(Hist_Data_input,roi_x,roi_y,integration_range):
+
+    global calibration_radius
+
+    n_bins_2d = Hist_Data_input.GetNbinsX()
+    n_bins_1d = int(integration_range/0.2)
+
+    n_bins_y = Hist_Data_input.GetNbinsY()
+    n_bins_x = Hist_Data_input.GetNbinsX()
+    MapEdge_left = Hist_Data_input.GetXaxis().GetBinLowEdge(1)
+    MapEdge_right = Hist_Data_input.GetXaxis().GetBinLowEdge(Hist_Data_input.GetNbinsX()+1)
+    MapEdge_lower = Hist_Data_input.GetYaxis().GetBinLowEdge(1)
+    MapEdge_upper = Hist_Data_input.GetYaxis().GetBinLowEdge(Hist_Data_input.GetNbinsY()+1)
+    cell_size = (MapEdge_right-MapEdge_left)/float(n_bins_x)*(MapEdge_upper-MapEdge_lower)/float(n_bins_y)
+
+    Hist_Profile_Theta2 = ROOT.TH1D("Hist_Profile_Theta2","",n_bins_1d,0,integration_range)
+    for br in range(0,Hist_Profile_Theta2.GetNbinsX()):
+        range_limit = Hist_Profile_Theta2.GetBinLowEdge(br+2)
+        range_limit_previous = Hist_Profile_Theta2.GetBinLowEdge(br+1)
+        slice_data = 0.
+        slice_data_err = 0.
+        total_error_weight = 0.
+        total_cell_size = 0.
+        for bx in range(0,Hist_Data_input.GetNbinsX()):
+            for by in range(0,Hist_Data_input.GetNbinsY()):
+                cell_x = Hist_Data_input.GetXaxis().GetBinCenter(bx+1)
+                cell_y = Hist_Data_input.GetYaxis().GetBinCenter(by+1)
+                distance_sq = pow(cell_x-roi_x,2)+pow(cell_y-roi_y,2)
+                #data_content = Hist_Data_input.GetBinContent(bx+1,by+1)/cell_size
+                #data_error = Hist_Data_input.GetBinError(bx+1,by+1)/cell_size
+                data_content = Hist_Data_input.GetBinContent(bx+1,by+1)
+                data_error = Hist_Data_input.GetBinError(bx+1,by+1)
+                if distance_sq>=pow(range_limit_previous,2) and distance_sq<pow(range_limit,2):
+                    if not data_error==0.:
+                        #error_weight = 1./(data_error*data_error)
+                        #slice_data += data_content*error_weight
+                        #total_error_weight += error_weight
+                        #slice_data_err += 1.
+                        slice_data += data_content
+                        slice_data_err += data_error*data_error
+                        total_cell_size += cell_size
+        if total_cell_size==0.: 
+            slice_data = 0.
+            slice_data_err = 0.
+        else:
+            slice_data = slice_data/total_cell_size
+            slice_data_err = pow(slice_data_err,0.5)/total_cell_size
+        Hist_Profile_Theta2.SetBinContent(br+1,slice_data)
+        Hist_Profile_Theta2.SetBinError(br+1,slice_data_err)
+
+    profile = []
+    profile_err = []
+    theta2 = []
+    theta2_err = []
+    for binx in range(0,Hist_Profile_Theta2.GetNbinsX()):
+        center = Hist_Profile_Theta2.GetBinCenter(binx+1)
+        range_limit = Hist_Profile_Theta2.GetBinLowEdge(binx+2)
+        range_limit_previous = Hist_Profile_Theta2.GetBinLowEdge(binx+1)
+        profile_content = Hist_Profile_Theta2.GetBinContent(binx+1)
+        profile_error = Hist_Profile_Theta2.GetBinError(binx+1)
+        if center>integration_range: continue
+        theta2 += [center]
+        theta2_err += [range_limit-range_limit_previous]
+        profile += [profile_content]
+        profile_err += [profile_error]
+
+    return profile, profile_err, theta2, theta2_err
 

@@ -120,10 +120,144 @@ pair<double,double> GetSourceRaDec(TString source_name)
     return std::make_pair(Source_RA,Source_Dec);
 }
 
-vector<int> GetPairListFromFile(string source, int onrun_number, int imposter_idx)
+int GetImposterIDFromFile(string source, int onrun_number, int imposter_idx)
 {
 
-    // imposter_idx starting from 0
+    // imposter_idx starting from 1
+    string line;
+    char delimiter = ' ';
+    string txt_on_runnumber = "";
+    string txt_off_runnumber = "";
+    int nth_line = 0;
+    int nth_delimiter = 0;
+    std::string::size_type sz;
+
+    string SMI_DIR;
+    SMI_DIR = string(std::getenv("SMI_DIR"));
+    ifstream myfile (SMI_DIR+"/runlist/ImposterList_"+source+".txt");
+    if (myfile.is_open())
+    {
+        int current_imposter_idx = 0;
+        int current_on_runnumber = 0;
+        while ( getline(myfile,line) )
+        {
+            txt_on_runnumber = "";
+            txt_off_runnumber = "";
+            nth_delimiter = 0;
+            for(int i = 0; i < line.size(); i++)
+            {
+                if(line[i] == delimiter)
+                {
+                    nth_delimiter += 1;
+                }
+                else if (nth_delimiter==1)
+                {
+                    txt_off_runnumber += line[i];
+                }
+                else if (nth_delimiter==0)
+                {
+                    txt_on_runnumber += line[i];
+                }
+                if (i==line.size()-1)
+                {
+                    double this_on_runnumber = std::stod(txt_on_runnumber,&sz);
+                    double this_off_runnumber = std::stod(txt_off_runnumber,&sz);
+                    if (this_on_runnumber!=current_on_runnumber)
+                    {
+                        current_on_runnumber = this_on_runnumber;
+                        current_imposter_idx = 0;
+                    }
+                    else
+                    {
+                        current_imposter_idx += 1;
+                    }
+                    if (onrun_number==int(this_on_runnumber))
+                    {
+                        if (current_imposter_idx==imposter_idx)
+                        {
+                            return int(this_off_runnumber);
+                        }
+                    }
+                }
+            }
+            nth_line += 1;
+        }
+        myfile.close();
+    }
+    else cout << "Unable to open PairList file" << endl; 
+
+    return 0;
+}
+
+vector<int> GetImposterPairListFromFile(string source, int onrun_number)
+{
+
+    string line;
+    char delimiter = ' ';
+    string txt_on_runnumber = "";
+    string txt_off_runnumber = "";
+    int nth_line = 0;
+    int nth_delimiter = 0;
+    std::string::size_type sz;
+    vector<int> offrun_list;
+
+    string SMI_DIR;
+    SMI_DIR = string(std::getenv("SMI_DIR"));
+    ifstream myfile (SMI_DIR+"/runlist/ImposterPairList_"+source+".txt");
+    if (myfile.is_open())
+    {
+        int current_imposter_idx = 0;
+        int current_on_runnumber = 0;
+        while ( getline(myfile,line) )
+        {
+            txt_on_runnumber = "";
+            txt_off_runnumber = "";
+            nth_delimiter = 0;
+            for(int i = 0; i < line.size(); i++)
+            {
+                if(line[i] == delimiter)
+                {
+                    nth_delimiter += 1;
+                }
+                else if (nth_delimiter==1)
+                {
+                    txt_off_runnumber += line[i];
+                }
+                else if (nth_delimiter==0)
+                {
+                    txt_on_runnumber += line[i];
+                }
+                if (i==line.size()-1)
+                {
+                    double this_on_runnumber = std::stod(txt_on_runnumber,&sz);
+                    double this_off_runnumber = std::stod(txt_off_runnumber,&sz);
+                    if (this_on_runnumber!=current_on_runnumber)
+                    {
+                        current_on_runnumber = this_on_runnumber;
+                        current_imposter_idx = 0;
+                    }
+                    else
+                    {
+                        current_imposter_idx += 1;
+                    }
+                    if (onrun_number==int(this_on_runnumber))
+                    {
+                        offrun_list.push_back(int(this_off_runnumber));
+                    }
+                }
+            }
+            nth_line += 1;
+        }
+        myfile.close();
+    }
+    else cout << "Unable to open PairList file" << endl; 
+
+    return offrun_list;
+}
+
+vector<int> GetPairListFromFile(string source, int onrun_number)
+{
+
     string line;
     char delimiter = ' ';
     string txt_on_runnumber = "";
@@ -174,14 +308,7 @@ vector<int> GetPairListFromFile(string source, int onrun_number, int imposter_id
                     }
                     if (onrun_number==int(this_on_runnumber))
                     {
-                        if (imposter_idx==-1)
-                        {
-                            offrun_list.push_back(int(this_off_runnumber));
-                        }
-                        else if (current_imposter_idx==imposter_idx)
-                        {
-                            offrun_list.push_back(int(this_off_runnumber));
-                        }
+                        offrun_list.push_back(int(this_off_runnumber));
                     }
                 }
             }
@@ -230,18 +357,37 @@ vector<int> GetRunListFromFile(string source)
     return onrun_list;
 }
 
-vector<int> GetOffRunList(string source, int onrun_number, int imposter_idx) {
+vector<int> GetOffRunList(string source, int onrun_number) {
 
-    // imposter_idx starting from 0
     std::cout << "GetPairList source = " << source << std::endl;
 
     vector<int> list;
     vector<int> list_temp;
 
-    list_temp = GetPairListFromFile(source, onrun_number,imposter_idx);
+    list_temp = GetPairListFromFile(source, onrun_number);
     list.insert(list.end(), list_temp.begin(), list_temp.end());
 
     return list;
+
+}
+
+vector<int> GetImposterOffRunList(string source, int onrun_number) {
+
+    std::cout << "GetPairList source = " << source << std::endl;
+
+    vector<int> list;
+    vector<int> list_temp;
+
+    list_temp = GetImposterPairListFromFile(source, onrun_number);
+    list.insert(list.end(), list_temp.begin(), list_temp.end());
+
+    return list;
+
+}
+
+int GetImposterRunID(string source, int onrun_number, int imposter_idx) {
+
+    return GetImposterIDFromFile(source, onrun_number, imposter_idx);
 
 }
 

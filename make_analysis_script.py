@@ -19,21 +19,21 @@ rank = 3
 MSCW_cut = 0.3
 MSCL_cut = 0.3
 
-def PrepareSource(source_name):
+def PrepareSource(source_name, imposter_idx=0):
     global source
     global for_syst
     global for_imposter
-    if 'Imposter' in source_name:
+    if imposter_idx>0:
         source += [source_name]
         for_syst += [False]
-        for_imposter += [True]
+        for_imposter += [imposter_idx]
     else:
         source += [source_name]
         if '_ON' in source_name:
             for_syst += [False]
         else:
             for_syst += [True]
-        for_imposter += [False]
+        for_imposter += [0]
 
 PrepareSource('UrsaMajorII_V6_OFF') 
 PrepareSource('UrsaMajorII_V5_OFF') 
@@ -87,22 +87,24 @@ PrepareSource('CrabNebula_elev_40_50_V5_OFF')
 
 imposter_analyses = []
 
-imposter_analyses += ['CrabNebula_elev_80_90_V6']
-imposter_analyses += ['CrabNebula_elev_70_80_V6']
-imposter_analyses += ['CrabNebula_elev_60_70_V6']
-imposter_analyses += ['CrabNebula_elev_50_60_V6']
-imposter_analyses += ['CrabNebula_elev_40_50_V6']
-imposter_analyses += ['CrabNebula_elev_80_90_V5']
-imposter_analyses += ['CrabNebula_elev_70_80_V5']
-imposter_analyses += ['CrabNebula_elev_60_70_V5']
-imposter_analyses += ['CrabNebula_elev_50_60_V5']
-imposter_analyses += ['CrabNebula_elev_40_50_V5']
+#imposter_analyses += ['1ES0647_V6']
+
+#imposter_analyses += ['CrabNebula_elev_80_90_V6']
+#imposter_analyses += ['CrabNebula_elev_70_80_V6']
+#imposter_analyses += ['CrabNebula_elev_60_70_V6']
+#imposter_analyses += ['CrabNebula_elev_50_60_V6']
+#imposter_analyses += ['CrabNebula_elev_40_50_V6']
+#imposter_analyses += ['CrabNebula_elev_80_90_V5']
+#imposter_analyses += ['CrabNebula_elev_70_80_V5']
+#imposter_analyses += ['CrabNebula_elev_60_70_V5']
+#imposter_analyses += ['CrabNebula_elev_50_60_V5']
+#imposter_analyses += ['CrabNebula_elev_40_50_V5']
 
 
 for analysis in range(0,len(imposter_analyses)):
     PrepareSource('%s_ON'%(imposter_analyses[analysis])) 
     for imposter in range(0,5):
-        PrepareSource('%s_Imposter%d'%(imposter_analyses[analysis],imposter+1))
+        PrepareSource('%s_Imposter%s'%(imposter_analyses[analysis],imposter+1),imposter_idx=imposter+1)
 
 
 
@@ -143,19 +145,16 @@ for s in range(0,len(source)):
     file.write('cd %s/%s\n'%(folder,source[s]))
     file.write('rm *_C*\n')
     if for_syst[s]:
-        file.write("root -b -l -q 'FillHistograms.C+(\"%s\",false,false)'\n"%(source[s])) 
+        file.write("root -b -l -q 'FillHistograms.C+(\"%s\",false,0)'\n"%(source[s])) 
     else:
-        if for_imposter[s]:
-            file.write("root -b -l -q 'FillHistograms.C+(\"%s\",true,true)'\n"%(source[s])) 
-        else:
-            file.write("root -b -l -q 'FillHistograms.C+(\"%s\",true,false)'\n"%(source[s])) 
+        file.write("root -b -l -q 'FillHistograms.C+(\"%s\",true,%s)'\n"%(source[s],for_imposter[s])) 
     file.close() 
 
 job_counts = 0
 qfile = open("run/qsub_Netflix1.sh","w") 
 for s in range(0,len(source)):
     job_counts += 1
-    qfile.write('qsub -V -N job_%s run_Netflix1_%s.sh\n'%(source[s],source[s]))
+    qfile.write('qsub -V -N job_ana_%s run_Netflix1_%s.sh\n'%(source[s],source[s]))
     qfile.write('sleep 30s\n')
 qfile.close() 
 

@@ -61,7 +61,7 @@ job_counts = 0
 qfile = open("run/qsub_vts_db.sh","w") 
 for s in range(0,len(input_params)):
     job_counts += 1
-    qfile.write('qsub -V -N job_%s vts_db_%s.sh\n'%(input_params[s][0],input_params[s][0]))
+    qfile.write('qsub -V -N job_vts_%s vts_db_%s.sh\n'%(input_params[s][0],input_params[s][0]))
     qfile.write('sleep 10s\n')
 qfile.close() 
 
