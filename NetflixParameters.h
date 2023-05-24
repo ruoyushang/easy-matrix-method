@@ -11,14 +11,15 @@ double Elev_cut_upper = 90.;
 
 double expo_hour_per_analysis = 5.;
 //double min_CR_count = 50000.;
-double min_CR_count = 200000.;
+double min_CR_count = 100000.;
+//double min_CR_count = 200000.;
 
 //int mtx_dim_w = 2;
 //int mtx_dim_l = 2;
 int mtx_dim_w = 4;
 int mtx_dim_l = 4;
-int mtx_dim_w_fine = 12;
-int mtx_dim_l_fine = 12;
+int mtx_dim_w_fine = 8;
+int mtx_dim_l_fine = 8;
 double MSCW_cut_blind = 0.5;
 double MSCL_cut_blind = 0.7;
 double gamma_hadron_dim_ratio_w = 1.;

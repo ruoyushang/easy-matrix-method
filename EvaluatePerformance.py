@@ -30,6 +30,7 @@ import CommonPlotFunctions
 
 folder_path = CommonPlotFunctions.folder_path
 energy_bin = CommonPlotFunctions.energy_bin
+n_xoff_bins = CommonPlotFunctions.n_xoff_bins
 
 fig, ax = plt.subplots()
 figsize_x = 8
@@ -46,6 +47,8 @@ np.set_printoptions(precision=4)
 measurement_rebin = 10
 
 total_data_expo = 0.
+expo_sum_all_energies = 0.
+total_n_measurements = 0.
 
 def GetRunInfo(file_path):
 
@@ -154,6 +157,17 @@ sample_list += ['1ES0414_V5_OFF'] # north
 sample_list += ['1ES1011_V5_OFF'] # north
 sample_list += ['1ES0647_V5_OFF']
 
+sample_list += ['CrabNebula_elev_80_90_V6_OFF']
+sample_list += ['CrabNebula_elev_70_80_V6_OFF']
+sample_list += ['CrabNebula_elev_60_70_V6_OFF']
+sample_list += ['CrabNebula_elev_50_60_V6_OFF']
+sample_list += ['CrabNebula_elev_40_50_V6_OFF']
+sample_list += ['CrabNebula_elev_80_90_V5_OFF']
+sample_list += ['CrabNebula_elev_70_80_V5_OFF']
+sample_list += ['CrabNebula_elev_60_70_V5_OFF']
+sample_list += ['CrabNebula_elev_50_60_V5_OFF']
+sample_list += ['CrabNebula_elev_40_50_V5_OFF']
+
 nbins = 21
 hist_limit = 0.2
 Hist_SystErrDist_Ratio = []
@@ -168,6 +182,7 @@ array_syst_err_ratio = []
 array_syst_err_regression = []
 array_syst_err_perturbation = []
 array_syst_err_combined = []
+array_rebin_stat_err = []
 array_rebin_syst_err_ratio = []
 array_rebin_syst_err_regression = []
 array_rebin_syst_err_perturbation = []
@@ -187,66 +202,72 @@ for energy_idx in range(0,len(energy_bin)-1):
     array_syst_err_per_energy_regression = []
     array_syst_err_per_energy_perturbation = []
     array_syst_err_per_energy_combined = []
+    array_rebin_stat_err_per_energy = []
     array_rebin_syst_err_per_energy_ratio = []
     array_rebin_syst_err_per_energy_regression = []
     array_rebin_syst_err_per_energy_perturbation = []
     array_rebin_syst_err_per_energy_combined = []
     for src in range(0,len(sample_list)):
-        n_groups = 0
-        file_exists = True
-        while file_exists:
-            SourceFilePath = "/gamma_raid/userspace/rshang/SMI_output/%s/Netflix_%s_G%d.root"%(folder_path,sample_list[src],n_groups)
-            print ('Read file: %s'%(SourceFilePath))
-            if os.path.exists(SourceFilePath):
-                n_groups += 1
-                print ('file exists.')
-            else:
-                file_exists = False
-                print ('file does not exist.')
-        total_data_truth = 0.
-        total_ratio_bkgd = 0.
-        total_regression_bkgd = 0.
-        total_perturbation_bkgd = 0.
-        total_combined_bkgd = 0.
-        n_rebin = 0
-        for group in range(0,n_groups):
-            SourceFilePath = "/gamma_raid/userspace/rshang/SMI_output/%s/Netflix_%s_G%d.root"%(folder_path,sample_list[src],group)
-            eff_area, data_truth, ratio_bkgd, regression_bkgd, perturbation_bkgd, combined_bkgd = GetGammaCounts(SourceFilePath,energy_idx)
-            data_expo, total_cr_count, elev_mean, azim_mean, nsb_mean = GetRunInfo(SourceFilePath)
-            if energy_idx==0:
-                total_data_expo += data_expo
-            if eff_area<10000.: continue
-            if data_truth<10.: continue
-            print ('data_truth = %s'%(data_truth))
-            total_data_truth += data_truth
-            total_ratio_bkgd += ratio_bkgd
-            total_regression_bkgd += regression_bkgd
-            total_perturbation_bkgd += perturbation_bkgd
-            total_combined_bkgd += combined_bkgd
-            array_per_energy_cr_count += [total_cr_count]
-            array_per_energy_elev_mean += [elev_mean]
-            array_per_energy_azim_mean += [azim_mean]
-            array_per_energy_nsb_mean += [nsb_mean]
-            array_syst_err_per_energy_ratio += [(ratio_bkgd-data_truth)/data_truth]
-            array_syst_err_per_energy_regression += [(regression_bkgd-data_truth)/data_truth]
-            array_syst_err_per_energy_perturbation += [(perturbation_bkgd-data_truth)/data_truth]
-            array_syst_err_per_energy_combined += [(combined_bkgd-data_truth)/data_truth]
-            n_rebin += 1
-            if n_rebin == measurement_rebin:
-                Hist_SystErrDist_Ratio[energy_idx].Fill((total_ratio_bkgd-total_data_truth)/total_data_truth)
-                Hist_SystErrDist_Regression[energy_idx].Fill((total_regression_bkgd-total_data_truth)/total_data_truth)
-                Hist_SystErrDist_Perturbation[energy_idx].Fill((total_perturbation_bkgd-total_data_truth)/total_data_truth)
-                Hist_SystErrDist_Combined[energy_idx].Fill((total_combined_bkgd-total_data_truth)/total_data_truth)
-                array_rebin_syst_err_per_energy_ratio += [(total_ratio_bkgd-total_data_truth)/total_data_truth]
-                array_rebin_syst_err_per_energy_regression += [(total_regression_bkgd-total_data_truth)/total_data_truth]
-                array_rebin_syst_err_per_energy_perturbation += [(total_perturbation_bkgd-total_data_truth)/total_data_truth]
-                array_rebin_syst_err_per_energy_combined += [(total_combined_bkgd-total_data_truth)/total_data_truth]
+        for xoff_idx in range(0,n_xoff_bins):
+            for yoff_idx in range(0,n_xoff_bins):
+                n_groups = 0
+                file_exists = True
+                while file_exists:
+                    SourceFilePath = "/gamma_raid/userspace/rshang/SMI_output/%s/Netflix_%s_G%d_X%d_Y%d.root"%(folder_path,sample_list[src],n_groups,xoff_idx,yoff_idx)
+                    print ('Read file: %s'%(SourceFilePath))
+                    if os.path.exists(SourceFilePath):
+                        n_groups += 1
+                        print ('file exists.')
+                    else:
+                        file_exists = False
+                        print ('file does not exist.')
                 total_data_truth = 0.
                 total_ratio_bkgd = 0.
                 total_regression_bkgd = 0.
                 total_perturbation_bkgd = 0.
                 total_combined_bkgd = 0.
                 n_rebin = 0
+                for group in range(0,n_groups):
+                    SourceFilePath = "/gamma_raid/userspace/rshang/SMI_output/%s/Netflix_%s_G%d_X%d_Y%d.root"%(folder_path,sample_list[src],group,xoff_idx,yoff_idx)
+                    eff_area, data_truth, ratio_bkgd, regression_bkgd, perturbation_bkgd, combined_bkgd = GetGammaCounts(SourceFilePath,energy_idx)
+                    data_expo, total_cr_count, elev_mean, azim_mean, nsb_mean = GetRunInfo(SourceFilePath)
+                    expo_sum_all_energies += data_expo
+                    if energy_idx==0:
+                        total_data_expo += data_expo
+                    if eff_area<10000.: continue
+                    if data_truth<10.: continue
+                    print ('data_truth = %s'%(data_truth))
+                    total_data_truth += data_truth
+                    total_ratio_bkgd += ratio_bkgd
+                    total_regression_bkgd += regression_bkgd
+                    total_perturbation_bkgd += perturbation_bkgd
+                    total_combined_bkgd += combined_bkgd
+                    array_per_energy_cr_count += [total_cr_count]
+                    array_per_energy_elev_mean += [elev_mean]
+                    array_per_energy_azim_mean += [azim_mean]
+                    array_per_energy_nsb_mean += [nsb_mean]
+                    array_syst_err_per_energy_ratio += [(ratio_bkgd-data_truth)/data_truth]
+                    array_syst_err_per_energy_regression += [(regression_bkgd-data_truth)/data_truth]
+                    array_syst_err_per_energy_perturbation += [(perturbation_bkgd-data_truth)/data_truth]
+                    array_syst_err_per_energy_combined += [(combined_bkgd-data_truth)/data_truth]
+                    n_rebin += 1
+                    if n_rebin == measurement_rebin:
+                        Hist_SystErrDist_Ratio[energy_idx].Fill((total_ratio_bkgd-total_data_truth)/total_data_truth)
+                        Hist_SystErrDist_Regression[energy_idx].Fill((total_regression_bkgd-total_data_truth)/total_data_truth)
+                        Hist_SystErrDist_Perturbation[energy_idx].Fill((total_perturbation_bkgd-total_data_truth)/total_data_truth)
+                        Hist_SystErrDist_Combined[energy_idx].Fill((total_combined_bkgd-total_data_truth)/total_data_truth)
+                        array_rebin_stat_err_per_energy += [pow(total_data_truth,0.5)/total_data_truth]
+                        array_rebin_syst_err_per_energy_ratio += [(total_ratio_bkgd-total_data_truth)/total_data_truth]
+                        array_rebin_syst_err_per_energy_regression += [(total_regression_bkgd-total_data_truth)/total_data_truth]
+                        array_rebin_syst_err_per_energy_perturbation += [(total_perturbation_bkgd-total_data_truth)/total_data_truth]
+                        array_rebin_syst_err_per_energy_combined += [(total_combined_bkgd-total_data_truth)/total_data_truth]
+                        total_data_truth = 0.
+                        total_ratio_bkgd = 0.
+                        total_regression_bkgd = 0.
+                        total_perturbation_bkgd = 0.
+                        total_combined_bkgd = 0.
+                        n_rebin = 0
+                        total_n_measurements += 1.
     array_cr_count += [array_per_energy_cr_count]
     array_elev_mean += [array_per_energy_elev_mean]
     array_azim_mean += [array_per_energy_azim_mean]
@@ -255,12 +276,14 @@ for energy_idx in range(0,len(energy_bin)-1):
     array_syst_err_regression += [array_syst_err_per_energy_regression]
     array_syst_err_perturbation += [array_syst_err_per_energy_perturbation]
     array_syst_err_combined += [array_syst_err_per_energy_combined]
+    array_rebin_stat_err += [array_rebin_stat_err_per_energy]
     array_rebin_syst_err_ratio += [array_rebin_syst_err_per_energy_ratio]
     array_rebin_syst_err_regression += [array_rebin_syst_err_per_energy_regression]
     array_rebin_syst_err_perturbation += [array_rebin_syst_err_per_energy_perturbation]
     array_rebin_syst_err_combined += [array_rebin_syst_err_per_energy_combined]
 
 for energy_idx in range(0,len(energy_bin)-1):
+    array_stat_err_mean = np.mean(array_rebin_stat_err[energy_idx])
     array_syst_err_ratio_mean = np.mean(array_rebin_syst_err_ratio[energy_idx])
     array_syst_err_regression_mean = np.mean(array_rebin_syst_err_regression[energy_idx])
     array_syst_err_perturbation_mean = np.mean(array_rebin_syst_err_perturbation[energy_idx])
@@ -271,6 +294,7 @@ for energy_idx in range(0,len(energy_bin)-1):
     array_syst_err_combined_rms = np.sqrt(np.mean(np.square(array_rebin_syst_err_combined[energy_idx])))
     print ('================================================================================================')
     print ('Energy = %s'%(energy_bin[energy_idx]))
+    print ('mean of stat. error of data = %0.3f'%(array_stat_err_mean))
     print ('rms of syst. error of simple scaling method = %0.3f'%(array_syst_err_ratio_rms))
     print ('rms of syst. error of regression method = %0.3f'%(array_syst_err_regression_rms))
     print ('rms of syst. error of perturbation method = %0.3f'%(array_syst_err_perturbation_rms))
@@ -401,3 +425,4 @@ for energy_idx in range(0,len(energy_bin)-1):
 #    axbig.remove()
 
 print ('total_data_expo = %0.1f hrs'%(total_data_expo))
+print ('avg expo per measurement = %0.1f'%(expo_sum_all_energies/total_n_measurements))

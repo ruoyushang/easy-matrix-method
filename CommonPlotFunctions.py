@@ -40,12 +40,13 @@ folder_path = 'output_nuclear'
 #analysis_method = 'FoV'
 #analysis_method = 'Ratio'
 #analysis_method = 'Regression'
-#analysis_method = 'Perturbation'
-analysis_method = 'Combined'
+analysis_method = 'Perturbation'
+#analysis_method = 'Combined'
 
 energy_bin = [100.,200.,251.,316.,398.,501.,794.,1259.,1995.,3162.,5011.,7943.]
 
 calibration_radius = 0.3 # need to be larger than the PSF and smaller than the integration radius
+n_xoff_bins = 1
 
 def reflectXaxis(hist):
 
@@ -403,6 +404,8 @@ def MatplotlibMap2D(hist_map,hist_tone,hist_contour,fig,label_x,label_y,label_z,
 
 def Smooth2DMap(Hist_Old,smooth_size,normalized):
 
+    #return Hist_Old
+
     nbins = Hist_Old.GetNbinsX()
     MapEdge_left = Hist_Old.GetXaxis().GetBinLowEdge(1)
     MapEdge_right = Hist_Old.GetXaxis().GetBinLowEdge(Hist_Old.GetNbinsX()+1)
@@ -480,6 +483,7 @@ def GetSignificanceMap(Hist_SR,Hist_Bkg):
             #    Hist_Skymap.SetBinContent(bx+1,by+1,-1.*pow(TS,0.5))
             NSR = Hist_SR.GetBinContent(bx+1,by+1)
             NSR_err = Hist_SR.GetBinError(bx+1,by+1)
+            NSR_err = max(1.,NSR_err)
             NBkg = Hist_Bkg.GetBinContent(bx+1,by+1)
             zscore = (NSR-NBkg)/pow(NSR_err*NSR_err,0.5)
             Hist_Skymap.SetBinContent(bx+1,by+1,zscore)
@@ -736,10 +740,6 @@ def FindExtension(Hist_Data_input,roi_x,roi_y,integration_range):
                 data_error = Hist_Data_input.GetBinError(bx+1,by+1)
                 if distance_sq>=pow(range_limit_previous,2) and distance_sq<pow(range_limit,2):
                     if not data_error==0.:
-                        #error_weight = 1./(data_error*data_error)
-                        #slice_data += data_content*error_weight
-                        #total_error_weight += error_weight
-                        #slice_data_err += 1.
                         slice_data += data_content
                         slice_data_err += data_error*data_error
                         total_cell_size += cell_size
@@ -769,4 +769,41 @@ def FindExtension(Hist_Data_input,roi_x,roi_y,integration_range):
         profile_err += [profile_error]
 
     return profile, profile_err, theta2, theta2_err
+
+def GetRegionIntegral(hist_data_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r):
+
+    flux_sum = 0.
+    flux_stat_err = 0.
+    for bx in range(0,hist_data_skymap.GetNbinsX()):
+        for by in range(0,hist_data_skymap.GetNbinsY()):
+            bin_ra = hist_data_skymap.GetXaxis().GetBinCenter(bx+1)
+            bin_dec = hist_data_skymap.GetYaxis().GetBinCenter(by+1)
+            distance = pow(pow(bin_ra-roi_x,2) + pow(bin_dec-roi_y,2),0.5)
+            excl_distance = pow(pow(bin_ra-excl_roi_x,2) + pow(bin_dec-excl_roi_y,2),0.5)
+            if distance>roi_r: 
+                continue
+            if excl_distance<excl_roi_r: 
+                continue
+            flux_sum += hist_data_skymap.GetBinContent(bx+1,by+1)
+            flux_stat_err += pow(hist_data_skymap.GetBinError(bx+1,by+1),2)
+    flux_stat_err = pow(flux_stat_err,0.5)
+    return flux_sum, flux_stat_err
+
+def GetRegionSpectrum(hist_data_skymap,ebin_low,ebin_up,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r):
+
+    x_axis = []
+    x_error = []
+    y_axis = []
+    y_error = []
+    for ebin in range(ebin_low,ebin_up):
+        flux_sum = 0.
+        flux_stat_err = 0.
+        flux_syst_err = 0.
+        flux_sum, flux_stat_err = GetRegionIntegral(hist_data_skymap[ebin],roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
+        x_axis += [0.5*(energy_bin[ebin]+energy_bin[ebin+1])]
+        x_error += [0.5*(energy_bin[ebin+1]-energy_bin[ebin])]
+        y_axis += [flux_sum]
+        y_error += [flux_stat_err]
+
+    return x_axis, x_error, y_axis, y_error
 
