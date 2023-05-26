@@ -98,7 +98,8 @@ vector<double> combined_bkgd_count;
 int binx_blind_upper_global;
 int biny_blind_upper_global;
 
-TH2D Hist_Data_Expo_Skymap;
+TH2D Hist_Data_AreaTime_Skymap;
+TH2D Hist_Data_Norm_Skymap;
 TH2D Hist_Data_Elev_Skymap;
 TH2D Hist_Data_Azim_Skymap;
 TH2D Hist_Data_NSB_Skymap;
@@ -237,7 +238,7 @@ bool FoV(double evt_ra, double evt_dec, bool isON) {
     if (source_theta_cut>(pow(x*x+y*y,0.5))) return false;
     if (!isON)
     {
-        if (CoincideWithGammaSources(evt_ra,evt_dec,source_theta_cut)) return false;
+        if (CoincideWithGammaSources(evt_ra,evt_dec,0.25)) return false;
     }
 
     return true;
@@ -832,6 +833,8 @@ void SingleRunAnalysis(int int_run_number, int int_run_number_real, int input_xo
 
     TH1D Hist_ErecS = TH1D("Hist_ErecS","",N_energy_bins,energy_bins);
     TH1D Hist_Xoff = TH1D("Hist_Xoff","",N_Xoff_bins,-2.,2.);
+    TH1D Hist_Expo_Roff = TH1D("Hist_Expo_Roff","",4,0.,2.);
+    TH2D Hist_SingleRun_AreaTime_Skymap = TH2D("Hist_SingleRun_AreaTime_Skymap","",Skymap_nbins_x,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,Skymap_nbins_x,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y);
     for (int entry=0;entry<Data_tree->GetEntries();entry++) 
     {
         ErecS = 0;
@@ -877,8 +880,10 @@ void SingleRunAnalysis(int int_run_number, int int_run_number_real, int input_xo
         {
             double imposter_ra_sky = tele_point_ra_dec.first+Xoff_derot;
             double imposter_dec_sky = tele_point_ra_dec.second+Yoff_derot;
-            if (!FoV(imposter_ra_sky, imposter_dec_sky, true)) continue;
+            if (!FoV(imposter_ra_sky, imposter_dec_sky, false)) continue;
         }
+
+        double evt_eff_area = i_hEffAreaP->GetBinContent( i_hEffAreaP->FindBin( log10(ErecS)));
 
         Hist_OnData_MSCLW.at(energy_idx).Fill(MSCL,MSCW);
         Hist_OnData_MSCLW_Fine.at(energy_idx).Fill(MSCL,MSCW);
@@ -903,8 +908,10 @@ void SingleRunAnalysis(int int_run_number, int int_run_number_real, int input_xo
             {
                 Hist_OnData_CR_Skymap_Mask.at(energy_idx).Fill(ra_sky,dec_sky,weight);
             }
+            Hist_Expo_Roff.Fill(pow(R2off,0.5),exposure_thisrun*weight);
+            Hist_SingleRun_AreaTime_Skymap.Fill(ra_sky,dec_sky,evt_eff_area*exposure_thisrun*weight);
 
-            Hist_Data_Expo_Skymap.Fill(ra_sky,dec_sky);
+            Hist_Data_Norm_Skymap.Fill(ra_sky,dec_sky);
             Hist_Data_Elev_Skymap.Fill(ra_sky,dec_sky,tele_elev);
             Hist_Data_Azim_Skymap.Fill(ra_sky,dec_sky,tele_azim);
             Hist_Data_NSB_Skymap.Fill(ra_sky,dec_sky,NSB);
@@ -912,6 +919,8 @@ void SingleRunAnalysis(int int_run_number, int int_run_number_real, int input_xo
         }
 
     }
+    double expo_scaling = exposure_thisrun/Hist_Expo_Roff.GetBinContent(1);
+    Hist_Data_AreaTime_Skymap.Add(&Hist_SingleRun_AreaTime_Skymap,expo_scaling);
     input_file->Close();
 
 }
@@ -1262,10 +1271,11 @@ void FillHistograms(string target_data, bool isON, int doImposter)
     double MSCL_plot_lower = -MSCL_cut_blind;
 
 
-    Hist_Data_Expo_Skymap = TH2D("Hist_Data_Expo_Skymap","",20,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,20,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y);
-    Hist_Data_Elev_Skymap = TH2D("Hist_Data_Elev_Skymap","",20,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,20,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y);
-    Hist_Data_Azim_Skymap = TH2D("Hist_Data_Azim_Skymap","",20,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,20,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y);
-    Hist_Data_NSB_Skymap = TH2D("Hist_Data_NSB_Skymap","",20,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,20,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y);
+    Hist_Data_AreaTime_Skymap = TH2D("Hist_Data_AreaTime_Skymap","",Skymap_nbins_x,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,Skymap_nbins_x,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y);
+    Hist_Data_Norm_Skymap = TH2D("Hist_Data_Norm_Skymap","",Skymap_nbins_x,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,Skymap_nbins_x,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y);
+    Hist_Data_Elev_Skymap = TH2D("Hist_Data_Elev_Skymap","",Skymap_nbins_x,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,Skymap_nbins_x,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y);
+    Hist_Data_Azim_Skymap = TH2D("Hist_Data_Azim_Skymap","",Skymap_nbins_x,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,Skymap_nbins_x,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y);
+    Hist_Data_NSB_Skymap = TH2D("Hist_Data_NSB_Skymap","",Skymap_nbins_x,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,Skymap_nbins_x,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y);
 
     for (int e=0;e<N_energy_bins;e++) 
     {
@@ -1292,9 +1302,11 @@ void FillHistograms(string target_data, bool isON, int doImposter)
         Hist_OnData_CR_Skymap_Regression_Sum.push_back(TH2D("Hist_OnData_CR_Skymap_Regression_Sum_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",Skymap_nbins_x,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,Skymap_nbins_y,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y));
         Hist_OnData_CR_Skymap_Perturbation_Sum.push_back(TH2D("Hist_OnData_CR_Skymap_Perturbation_Sum_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",Skymap_nbins_x,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,Skymap_nbins_y,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y));
         Hist_OnData_CR_Skymap_Combined_Sum.push_back(TH2D("Hist_OnData_CR_Skymap_Combined_Sum_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",Skymap_nbins_x,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,Skymap_nbins_y,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y));
-        Hist_OffData_SR_XYoff.push_back(TH2D("Hist_OffData_SR_XYoff_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",20,-2.,2.,20,-2.,2.));
-        Hist_OffData_CR_XYoff.push_back(TH2D("Hist_OffData_CR_XYoff_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",20,-2.,2.,20,-2.,2.));
-        Hist_OffData_Ratio_XYoff.push_back(TH2D("Hist_OffData_Ratio_XYoff_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",20,-2.,2.,20,-2.,2.));
+
+        int XYoff_bins = cr_correction_xyoff_bins[e];
+        Hist_OffData_SR_XYoff.push_back(TH2D("Hist_OffData_SR_XYoff_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",XYoff_bins,-2.,2.,XYoff_bins,-2.,2.));
+        Hist_OffData_CR_XYoff.push_back(TH2D("Hist_OffData_CR_XYoff_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",XYoff_bins,-2.,2.,XYoff_bins,-2.,2.));
+        Hist_OffData_Ratio_XYoff.push_back(TH2D("Hist_OffData_Ratio_XYoff_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",XYoff_bins,-2.,2.,XYoff_bins,-2.,2.));
     }
 
     binx_blind_upper_global = Hist_OnData_MSCLW_Fine.at(0).GetXaxis()->FindBin(MSCL_cut_blind+0.01)-1;
@@ -1689,15 +1701,16 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         effective_area.at(e) = effective_area.at(e)/double(n_samples);
                     }
 
-                    Hist_Data_Elev_Skymap.Divide(&Hist_Data_Expo_Skymap);
-                    Hist_Data_Azim_Skymap.Divide(&Hist_Data_Expo_Skymap);
-                    Hist_Data_NSB_Skymap.Divide(&Hist_Data_Expo_Skymap);
+                    Hist_Data_Elev_Skymap.Divide(&Hist_Data_Norm_Skymap);
+                    Hist_Data_Azim_Skymap.Divide(&Hist_Data_Norm_Skymap);
+                    Hist_Data_NSB_Skymap.Divide(&Hist_Data_Norm_Skymap);
 
                     sprintf(group_tag, "_G%d_X%d_Y%d", group_idx, xoff_idx, yoff_idx);
                     TFile OutputFile(TString(SMI_OUTPUT)+"/Netflix_"+TString(target)+group_tag+".root","recreate");
                     group_idx += 1;
 
-                    Hist_Data_Expo_Skymap.Write();
+                    Hist_Data_AreaTime_Skymap.Write();
+                    Hist_Data_Norm_Skymap.Write();
                     Hist_Data_Elev_Skymap.Write();
                     Hist_Data_Azim_Skymap.Write();
                     Hist_Data_NSB_Skymap.Write();
@@ -1780,7 +1793,8 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                     perturbation_bkgd_count.clear();
                     combined_bkgd_count.clear();
 
-                    Hist_Data_Expo_Skymap.Reset();
+                    Hist_Data_AreaTime_Skymap.Reset();
+                    Hist_Data_Norm_Skymap.Reset();
                     Hist_Data_Elev_Skymap.Reset();
                     Hist_Data_Azim_Skymap.Reset();
                     Hist_Data_NSB_Skymap.Reset();

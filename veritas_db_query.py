@@ -505,8 +505,9 @@ def get_run_ra_dec(run_id):
     source_dec = res2[0]['decl']
     run_ra = (source_ra + res[0]['offsetRA'])*180./math.pi
     run_dec = (source_dec + res[0]['offsetDEC'])*180./math.pi
-    print ('source_name = %s, source_ra = %s, source_dec = %s'%(source_name,source_ra*180./math.pi,source_dec*180./math.pi))
-    print ('run_id = %s, run_ra = %s, run_dec = %s'%(run_id,run_ra,run_dec))
+    #print ('source_name = %s, source_ra = %s, source_dec = %s'%(source_name,source_ra*180./math.pi,source_dec*180./math.pi))
+    #print ('run_id = %s, run_ra = %s, run_dec = %s'%(run_id,run_ra,run_dec))
+    return run_ra, run_dec
 
 def get_run_weather(run_id):
 
@@ -810,20 +811,28 @@ def find_on_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_range
         if on_run_el<elev_range[0]: continue
         if on_run_el>elev_range[1]: continue
 
-        file_path = '/gamma_raid/userspace/rshang/analysis/Results/v487/%s.anasum.root'%(int(x['run_id']))
-        root_folder = "run_%s/stereo/DL3EventTree"%(int(x['run_id']))
-        if os.path.exists(file_path):
-            InputFile = ROOT.TFile(file_path)
-            mytree = InputFile.Get(root_folder)
-            if InputFile.IsZombie():
-                #print ('%s, something very wrong, cannot use this file'%(int(x['run_id']))
+        on_run_ra, on_run_dec = get_run_ra_dec(x['run_id'])
+        run_offset = pow(pow(obs_ra-on_run_ra,2)+pow(obs_dec-on_run_dec,2),0.5)
+        if '1p0wobble' in obs_name:
+            if run_offset>1.2 or run_offset<0.6: continue
+        if '1p5wobble' in obs_name:
+            if run_offset>1.8 or run_offset<1.2: continue
+
+        if use_local_data:
+            file_path = '/gamma_raid/userspace/rshang/analysis/Results/v487/%s.anasum.root'%(int(x['run_id']))
+            root_folder = "run_%s/stereo/DL3EventTree"%(int(x['run_id']))
+            if os.path.exists(file_path):
+                InputFile = ROOT.TFile(file_path)
+                mytree = InputFile.Get(root_folder)
+                if InputFile.IsZombie():
+                    #print ('%s, something very wrong, cannot use this file'%(int(x['run_id']))
+                    continue
+                elif InputFile.TestBit(ROOT.TFile.kRecovered):
+                    #print ('%s, the Recover procedure has been run when opening the file'%(int(x['run_id']))
+                    continue
+                InputFile.Close()
+            else:
                 continue
-            elif InputFile.TestBit(ROOT.TFile.kRecovered):
-                #print ('%s, the Recover procedure has been run when opening the file'%(int(x['run_id']))
-                continue
-            InputFile.Close()
-        else:
-            continue
 
         print ('run_id = %s, source_name = %s'%(x['run_id'],x['source_id']))
         out_file.write('run_id = %s, source_name = %s \n'%(x['run_id'],x['source_id']))
@@ -905,20 +914,21 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
 
             if all_runs_info[run][0]==list_on_run_ids[on_run]: continue
 
-            file_path = '/gamma_raid/userspace/rshang/analysis/Results/v487/%s.anasum.root'%(all_runs_info[run][0])
-            root_folder = "run_%s/stereo/DL3EventTree"%(all_runs_info[run][0])
-            if os.path.exists(file_path):
-                InputFile = ROOT.TFile(file_path)
-                mytree = InputFile.Get(root_folder)
-                if InputFile.IsZombie():
-                    print ('%s, something very wrong, cannot use this file'%(all_runs_info[run][0]))
+            if use_local_data:
+                file_path = '/gamma_raid/userspace/rshang/analysis/Results/v487/%s.anasum.root'%(all_runs_info[run][0])
+                root_folder = "run_%s/stereo/DL3EventTree"%(all_runs_info[run][0])
+                if os.path.exists(file_path):
+                    InputFile = ROOT.TFile(file_path)
+                    mytree = InputFile.Get(root_folder)
+                    if InputFile.IsZombie():
+                        print ('%s, something very wrong, cannot use this file'%(all_runs_info[run][0]))
+                        continue
+                    elif InputFile.TestBit(ROOT.TFile.kRecovered):
+                        print ('%s, the Recover procedure has been run when opening the file'%(all_runs_info[run][0]))
+                        continue
+                    InputFile.Close()
+                else:
                     continue
-                elif InputFile.TestBit(ROOT.TFile.kRecovered):
-                    print ('%s, the Recover procedure has been run when opening the file'%(all_runs_info[run][0]))
-                    continue
-                InputFile.Close()
-            else:
-                continue
 
             #if abs(all_runs_info[run][0]-list_on_run_ids[on_run])>40000: continue
             already_used = False
@@ -1000,9 +1010,7 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
     list_off_run_ids = np.array(list_off_run_ids)
     return list_off_run_ids[:,1]
 
-#run_epoch = 'V4'
-#run_epoch = 'V5'
-run_epoch = 'V6'
+use_local_data = True
 #run_obs_type = 'obsLowHV' # RHV
 run_obs_type = 'observing'
 find_off = False
@@ -1016,16 +1024,20 @@ find_off = False
 #    obs_name += '_%s'%(run_epoch)
 #    find_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,find_off)
 
-print ('++++++++++++++++++++++++++++++++++++++++++++++++++++')
-print ('Get all runs El Az...')
-get_all_runs_info(run_epoch,run_obs_type)
-print ('++++++++++++++++++++++++++++++++++++++++++++++++++++')
-
 input_name = sys.argv[1]
 input_ra = float(sys.argv[2])
 input_dec = float(sys.argv[3])
 input_elev_low = float(sys.argv[4])
 input_elev_up = float(sys.argv[5])
+input_epoch = sys.argv[6]
+
+run_epoch = input_epoch # 'V5' or 'V6'
+
+print ('++++++++++++++++++++++++++++++++++++++++++++++++++++')
+print ('Get all runs El Az...')
+get_all_runs_info(run_epoch,run_obs_type)
+print ('++++++++++++++++++++++++++++++++++++++++++++++++++++')
+
 
 find_off = True
 find_imposter = True

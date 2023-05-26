@@ -40,12 +40,13 @@ folder_path = 'output_nuclear'
 #analysis_method = 'FoV'
 #analysis_method = 'Ratio'
 #analysis_method = 'Regression'
-analysis_method = 'Perturbation'
-#analysis_method = 'Combined'
+#analysis_method = 'Perturbation'
+analysis_method = 'Combined'
 
 energy_bin = [100.,200.,251.,316.,398.,501.,794.,1259.,1995.,3162.,5011.,7943.]
 
-calibration_radius = 0.3 # need to be larger than the PSF and smaller than the integration radius
+smooth_size_spectroscopy = 0.07
+calibration_radius = 0.2 # need to be larger than the PSF and smaller than the integration radius
 n_xoff_bins = 1
 
 def reflectXaxis(hist):

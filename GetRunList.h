@@ -12,6 +12,23 @@ pair<double,double> GetSourceRaDec(TString source_name)
 {
     double Source_RA = 0.;
     double Source_Dec = 0.;
+    if (source_name.Contains("SNR_G189_p03"))
+    {
+            Source_RA = 94.213;
+            Source_Dec = 22.503;
+    }
+    if (source_name.Contains("PSR_J2021_p4026"))
+    {
+            Source_RA = 305.37;
+            Source_Dec = 40.45;
+    }
+    if (source_name.Contains("PSR_J1907_p0602"))
+    {
+            //Source_RA = 286.975;
+            //Source_Dec = 6.03777777778;
+            Source_RA = 286.975;
+            Source_Dec = 6.33777777778;
+    }
     if (source_name.Contains("M82"))
     {
             Source_RA = 148.970;
@@ -137,7 +154,7 @@ int GetImposterIDFromFile(string source, int onrun_number, int imposter_idx)
     ifstream myfile (SMI_DIR+"/runlist/ImposterList_"+source+".txt");
     if (myfile.is_open())
     {
-        int current_imposter_idx = 0;
+        int current_imposter_idx = 1;
         int current_on_runnumber = 0;
         while ( getline(myfile,line) )
         {
@@ -165,7 +182,7 @@ int GetImposterIDFromFile(string source, int onrun_number, int imposter_idx)
                     if (this_on_runnumber!=current_on_runnumber)
                     {
                         current_on_runnumber = this_on_runnumber;
-                        current_imposter_idx = 0;
+                        current_imposter_idx = 1;
                     }
                     else
                     {
@@ -206,7 +223,6 @@ vector<int> GetImposterPairListFromFile(string source, int onrun_number)
     ifstream myfile (SMI_DIR+"/runlist/ImposterPairList_"+source+".txt");
     if (myfile.is_open())
     {
-        int current_imposter_idx = 0;
         int current_on_runnumber = 0;
         while ( getline(myfile,line) )
         {
@@ -234,11 +250,6 @@ vector<int> GetImposterPairListFromFile(string source, int onrun_number)
                     if (this_on_runnumber!=current_on_runnumber)
                     {
                         current_on_runnumber = this_on_runnumber;
-                        current_imposter_idx = 0;
-                    }
-                    else
-                    {
-                        current_imposter_idx += 1;
                     }
                     if (onrun_number==int(this_on_runnumber))
                     {
@@ -272,7 +283,6 @@ vector<int> GetPairListFromFile(string source, int onrun_number)
     ifstream myfile (SMI_DIR+"/runlist/PairList_"+source+".txt");
     if (myfile.is_open())
     {
-        int current_imposter_idx = 0;
         int current_on_runnumber = 0;
         while ( getline(myfile,line) )
         {
@@ -300,11 +310,6 @@ vector<int> GetPairListFromFile(string source, int onrun_number)
                     if (this_on_runnumber!=current_on_runnumber)
                     {
                         current_on_runnumber = this_on_runnumber;
-                        current_imposter_idx = 0;
-                    }
-                    else
-                    {
-                        current_imposter_idx += 1;
                     }
                     if (onrun_number==int(this_on_runnumber))
                     {

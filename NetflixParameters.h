@@ -2,6 +2,7 @@
 const int N_energy_bins = 11;
 double energy_bins[N_energy_bins+1] = {100.,200.,251.,316.,398.,501.,794.,1259.,1995.,3162.,5011.,7943.};
 int matrix_rank[N_energy_bins] = {1,2,2,2,2,2,2,1,1,1,1};
+int cr_correction_xyoff_bins[N_energy_bins] = {20,20,20,10,10,5,5,3,3,1,1};
 
 const int N_Xoff_bins = 1;
 
