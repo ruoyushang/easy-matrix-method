@@ -679,7 +679,8 @@ def find_runs_near_galactic_plane(obs_name,epoch,obs_type,gal_b_low,gal_b_up):
     out_file.write('Source list\n')
     for src in range(0,len(list_on_sources)):
         src_name = list_on_sources[src]
-        if runs_per_src[src_name]<50: continue
+        #if runs_per_src[src_name]<50: continue
+        if runs_per_src[src_name]<10: continue
         print ('%s, runs = %s, RA = %0.2f, Dec = %0.2f'%(src_name,runs_per_src[src_name],all_src_ra[src_name],all_src_dec[src_name]))
         out_file.write('%s, runs = %s, RA = %0.2f, Dec = %0.2f \n'%(src_name,runs_per_src[src_name],all_src_ra[src_name],all_src_dec[src_name]))
 
@@ -864,9 +865,11 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
 
     list_on_run_nmatch = []
     list_off_run_ids = []
+    list_no_repeat_off_run_ids = []
     list_off_sources = []
 
     out_pair_file = open('output_vts_hours/%s_%s.txt'%(file_name,obs_name),"w")
+    out_off_file = open('output_vts_hours/%s_OFFRuns_%s.txt'%(file_name,obs_name),"w")
 
     require_nmatch = 5
     if not is_imposter:
@@ -985,6 +988,12 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
             sum_on_run_elev += on_run_el
             sum_off_run_elev += off_run_el
 
+            already_used = False
+            for off_run in range(0,len(list_no_repeat_off_run_ids)):
+                if all_runs_info[run][0]==list_no_repeat_off_run_ids[off_run]: already_used = True
+            if not already_used:
+                list_no_repeat_off_run_ids += [all_runs_info[run][0]]
+
         list_on_run_nmatch += [number_off_runs]
 
     print ('++++++++++++++++++++++++++++++++++++++++++++++++++++')
@@ -992,6 +1001,7 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
     for run in range(0,len(list_off_run_ids)):
         print ('%s %s'%(list_off_run_ids[run][0],list_off_run_ids[run][1]))
         out_pair_file.write('%s %s\n'%(list_off_run_ids[run][0],list_off_run_ids[run][1]))
+    out_pair_file.close()
 
     out_file = open('output_vts_hours/%s.txt'%(obs_name),"a")
     out_file.write('++++++++++++++++++++++++++++++++++++++++++++++++++++\n')
@@ -1004,13 +1014,16 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
     out_file.write('++++++++++++++++++++++++++++++++++++++++++++++++++++\n')
     out_file.write('ON run list\n')
     out_file.write('%s OFF/ON ratio = %0.2f\n'%( file_name, float(len(list_off_run_ids))/float(len(list_on_run_ids)) ))
+    out_file.close()
 
-    out_pair_file.close()
+    for run in range(0,len(list_no_repeat_off_run_ids)):
+        out_off_file.write('%s\n'%(list_no_repeat_off_run_ids[run]))
+    out_off_file.close()
     
     list_off_run_ids = np.array(list_off_run_ids)
     return list_off_run_ids[:,1]
 
-use_local_data = True
+use_local_data = False
 #run_obs_type = 'obsLowHV' # RHV
 run_obs_type = 'observing'
 find_off = False
@@ -1046,13 +1059,16 @@ obs_ra = input_ra
 obs_dec = input_dec
 run_elev_range = [input_elev_low,input_elev_up]
 
+use_local_data = False
 my_list_on_run_ids = find_on_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range)
+use_local_data = False
 my_list_off_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_on_run_ids,False,'PairList')
 my_list_imposter_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_on_run_ids,True,'ImposterList')
 my_list_imposter_off_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_imposter_run_ids,False,'ImposterPairList')
 
-#obs_name = 'Galactic_OFF_%s'%(run_epoch)
-#find_runs_near_galactic_plane(obs_name,run_epoch,run_obs_type,1.5,5.0)
+#run_epoch = 'V6'
+#obs_name = 'Galactic_Plane_%s'%(run_epoch)
+#find_runs_near_galactic_plane(obs_name,run_epoch,run_obs_type,0.0,5.0)
 
 run_id = 103322
 #run_id = 104633

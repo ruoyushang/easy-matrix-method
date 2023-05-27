@@ -64,6 +64,8 @@ if 'V5' in input_epoch:
 if 'V6' in input_epoch:
     list_epoch += ['V6']
 
+total_data_expo = 0.
+
 def FillSkyMapHistogram(hist_input,hist_output,scale=1.):
 
     temp_nbins_x = hist_output.GetNbinsX()
@@ -536,7 +538,7 @@ def MakeFluxMap(flux_map, data_map, bkgd_map, norm_map, elev_map):
 
                 delta_E = (energy_bin[ebin+1]-energy_bin[ebin])/(3.12e+00)
                 local_areatime = hist_areatime_skymap.GetBinContent(binx+1,biny+1)
-                if local_areatime==0.: continue
+                if local_areatime<=0.: continue
                 flux_content = (data_content-bkgd_content)/local_areatime*pow(energy_bin[ebin]/1e3,2)/(100.*100.*3600.)/delta_E
                 stat_data_err = pow(max(data_content,0.),0.5)
                 flux_stat_err = max(stat_data_err,1.)/local_areatime*pow(energy_bin[ebin]/1e3,2)/(100.*100.*3600.)/delta_E
@@ -770,6 +772,9 @@ for xoff_idx in range(0,n_xoff_bins):
                 InfoTree = InputFile.Get("InfoTree")
                 InfoTree.SetBranchAddress('effective_area',ROOT.AddressOf(effective_area))
                 InfoTree.GetEntry(0)
+                data_expo = InfoTree.exposure_hours
+                if xoff_idx==0 and yoff_idx==0:
+                    total_data_expo += data_expo
                 HistName = "Hist_Data_AreaTime_Skymap"
                 FillSkyMapHistogram(InputFile.Get(HistName),hist_areatime_skymap)
                 HistName = "Hist_Data_Elev_Skymap"
@@ -904,6 +909,11 @@ elif 'PSR_J1907_p0602' in source_name:
     region_y = 6.39
     region_r = 1.2
     region_name = '3HWC'
+elif 'PSR_J2021_p4026' in source_name:
+    region_x = 305.0200000
+    region_y = 40.7572222
+    region_r = 1.0
+    region_name = 'Center'
 MakeExtensionProfile(region_x,region_y,region_r,do_fit,region_name,hist_real_flux_skymap_sum,hist_imposter_flux_skymap_sum,'sum')
 MakeSpectrum(region_x,region_y,region_r,region_name,excl_region_x,excl_region_y,excl_region_r)
 
@@ -937,3 +947,4 @@ axbig.legend(loc='best')
 fig.savefig("output_plots/SignificanceDistribution_%s.png"%(plot_tag),bbox_inches='tight')
 axbig.remove()
 
+print ('total_data_expo = %0.1f hrs'%(total_data_expo))

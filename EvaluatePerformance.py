@@ -44,7 +44,7 @@ ROOT.TH1.AddDirectory(False) # without this, the histograms returned from a func
 ROOT.gStyle.SetPaintTextFormat("0.3f")
 np.set_printoptions(precision=4)
 
-measurement_rebin = 10
+measurement_rebin = 1
 
 total_data_expo = 0.
 expo_sum_all_energies = 0.
@@ -407,7 +407,7 @@ for energy_idx in range(0,len(energy_bin)-1):
 #    MakeMultipleFitPlot(axbig,Hists,legends,'relative error $\epsilon$','number of entries')
 #    fig.savefig("output_plots/SystErrDist_E%s_Perturbation.png"%(energy_idx))
 #    axbig.remove()
-#
+
 #for energy_idx in range(0,len(energy_bin)-1):
 #    Hists = []
 #    legends = []

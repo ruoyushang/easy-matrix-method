@@ -36,6 +36,7 @@ from spectral_cube import SpectralCube
 # Great examples of matplotlib plots: https://atmamani.github.io/cheatsheets/matplotlib/matplotlib_2/
 
 folder_path = 'output_nuclear'
+#folder_path = 'output_M2x2'
 
 #analysis_method = 'FoV'
 #analysis_method = 'Ratio'
@@ -69,13 +70,224 @@ def reflectXaxis(hist):
             hT.SetBinError( hist.GetNbinsX() + 1 - binx, biny, hist.GetBinError( binx, biny ) )
     return hT
 
+def ConvertRaDecToGalactic(ra, dec):
+    delta = dec*ROOT.TMath.Pi()/180.
+    delta_G = 27.12825*ROOT.TMath.Pi()/180.
+    alpha = ra*ROOT.TMath.Pi()/180.
+    alpha_G = 192.85948*ROOT.TMath.Pi()/180.
+    l_NCP = 122.93192*ROOT.TMath.Pi()/180.
+    sin_b = ROOT.TMath.Sin(delta)*ROOT.TMath.Sin(delta_G)+ROOT.TMath.Cos(delta)*ROOT.TMath.Cos(delta_G)*ROOT.TMath.Cos(alpha-alpha_G)
+    cos_b = ROOT.TMath.Cos(ROOT.TMath.ASin(sin_b))
+    sin_l_NCP_m_l = ROOT.TMath.Cos(delta)*ROOT.TMath.Sin(alpha-alpha_G)/cos_b
+    cos_l_NCP_m_l = (ROOT.TMath.Cos(delta_G)*ROOT.TMath.Sin(delta)-ROOT.TMath.Sin(delta_G)*ROOT.TMath.Cos(delta)*ROOT.TMath.Cos(alpha-alpha_G))/cos_b
+    b = (ROOT.TMath.ASin(sin_b))*180./ROOT.TMath.Pi()
+    l = (l_NCP-ROOT.TMath.ATan2(sin_l_NCP_m_l,cos_l_NCP_m_l))*180./ROOT.TMath.Pi()
+    return l, b
+
+def ReadBrightStarListFromFile():
+    star_name = []
+    star_ra = []
+    star_dec = []
+    inputFile = open('Hipparcos_MAG8_1997.dat')
+    for line in inputFile:
+        if line[0]=="#": continue
+        if line[0]=="*": continue
+        if len(line.split())<5: continue
+        target_ra = float(line.split()[0])
+        target_dec = float(line.split()[1])
+        target_brightness = float(line.split()[3])+float(line.split()[4])
+        #if target_brightness>7.: continue
+        if target_brightness>6.: continue
+        #if target_brightness>5.: continue
+        star_ra += [target_ra]
+        star_dec += [target_dec]
+        star_name += ['bmag = %0.1f'%(target_brightness)]
+    #print ('Found %s bright stars.'%(len(star_name)))
+    return star_name, star_ra, star_dec
+
+def HMS2deg(ra='', dec=''):
+    RA, DEC, rs, ds = '', '', 1, 1
+    if dec:
+        D, M, S = [float(i) for i in dec.split(':')]
+        if str(D)[0] == '-':
+            ds, D = -1, abs(D)
+        deg = D + (M/60) + (S/3600)
+        DEC = '{0}'.format(deg*ds)
+    if ra:
+        H, M, S = [float(i) for i in ra.split(':')]
+        if str(H)[0] == '-':
+            rs, H = -1, abs(H)
+        deg = (H*15) + (M/4) + (S/240)
+        RA = '{0}'.format(deg*rs)           
+    if ra and dec:
+        return (RA, DEC)
+    else:
+        return RA or DEC
+
+def ReadSNRTargetListFromCSVFile():
+    source_name = []
+    source_ra = []
+    source_dec = []
+    source_size = []
+    with open('SNRcat20221001-SNR.csv', newline='') as csvfile:
+        reader = csv.reader(csvfile, delimiter=';')
+        for row in reader:
+            if len(row)==0: continue
+            if '#' in row[0]: continue
+            target_name = row[0]
+            target_min_dist = row[13]
+            if target_min_dist=='':
+                target_min_dist = '1000'
+            if float(target_min_dist)>6.: continue
+            target_size = row[15]
+            if target_size=='':
+                target_size = 0.
+            target_ra = row[19]
+            target_dec = row[20]
+            source_name += [target_name]
+            source_ra += [float(HMS2deg(target_ra,target_dec)[0])]
+            source_dec += [float(HMS2deg(target_ra,target_dec)[1])]
+            source_size += [0.5*float(target_size)/60.]
+            #print('target_min_dist = %s'%(target_min_dist))
+            #print('source_name = %s'%(source_name[len(source_name)-1]))
+            #print('source_ra = %0.2f'%(source_ra[len(source_ra)-1]))
+            #print('source_dec = %0.2f'%(source_dec[len(source_dec)-1]))
+            #print(row)
+    return source_name, source_ra, source_dec, source_size
+
+def ReadATNFTargetListFromFile(file_path):
+    source_name = []
+    source_ra = []
+    source_dec = []
+    source_dist = []
+    source_age = []
+    source_edot = []
+    inputFile = open(file_path)
+    for line in inputFile:
+        if line[0]=="#": continue
+        target_name = line.split(',')[0].strip(" ")
+        if target_name=="\n": continue
+        target_ra = line.split(',')[1].strip(" ")
+        target_dec = line.split(',')[2].strip(" ")
+        target_dist = line.split(',')[3].strip(" ")
+        target_age = line.split(',')[4].strip(" ")
+        target_edot = line.split(',')[5].strip(" ")
+        if target_dist=='*': continue
+        if target_age=='*': continue
+        if target_edot=='*': continue
+        target_brightness = float(target_edot)/pow(float(target_dist),2)
+
+        if float(target_edot)<1e35: continue
+        #if float(target_dist)>6.: continue
+
+        #ra_deg = float(HMS2deg(target_ra,target_dec)[0])
+        #dec_deg = float(HMS2deg(target_ra,target_dec)[1])
+        #gal_l, gal_b = ConvertRaDecToGalactic(ra_deg,dec_deg)
+        #if abs(gal_b)<5.: continue
+
+        source_name += [target_name]
+        source_ra += [float(HMS2deg(target_ra,target_dec)[0])]
+        source_dec += [float(HMS2deg(target_ra,target_dec)[1])]
+        source_dist += [float(target_dist)]
+        source_age += [float(target_age)]
+        source_edot += [float(target_edot)]
+    return source_name, source_ra, source_dec, source_dist, source_age
+
+def ReadFermiCatelog():
+    source_name = []
+    source_ra = []
+    source_dec = []
+    inputFile = open('gll_psc_v26.xml')
+    target_name = ''
+    target_type = ''
+    target_info = ''
+    target_flux = ''
+    target_ra = ''
+    target_dec = ''
+    for line in inputFile:
+        if line.split(' ')[0]=='<source':
+            for block in range(0,len(line.split(' '))):
+                if 'Unc_' in line.split(' ')[block]: continue
+                if 'name=' in line.split(' ')[block]:
+                    target_name = line.split('name="')[1].split('"')[0]
+                if 'type=' in line.split(' ')[block]:
+                    target_type = line.split('type="')[1].split('"')[0]
+                if 'Flux1000=' in line.split(' ')[block]:
+                    target_flux = line.split('Flux1000="')[1].split('"')[0]
+                if 'Energy_Flux100=' in line.split(' ')[block]:
+                    target_info = line.split(' ')[block]
+                    target_info = target_info.strip('>\n')
+                    target_info = target_info.strip('"')
+                    target_info = target_info.lstrip('Energy_Flux100="')
+        if '<parameter' in line and 'name="RA"' in line:
+            for block in range(0,len(line.split(' '))):
+                if 'value=' in line.split(' ')[block]:
+                    target_ra = line.split(' ')[block].split('"')[1]
+        if '<parameter' in line and 'name="DEC"' in line:
+            for block in range(0,len(line.split(' '))):
+                if 'value=' in line.split(' ')[block]:
+                    target_dec = line.split(' ')[block].split('"')[1]
+        if 'source>' in line:
+            if target_ra=='': 
+                target_name = ''
+                target_type = ''
+                target_info = ''
+                target_ra = ''
+                target_dec = ''
+                continue
+            #if target_type=='PointSource': 
+            #if float(target_info)<1e-5: 
+            if float(target_flux)<1e-9: 
+                target_name = ''
+                target_type = ''
+                target_info = ''
+                target_ra = ''
+                target_dec = ''
+                continue
+            #print ('target_name = %s'%(target_name))
+            #print ('target_type = %s'%(target_type))
+            #print ('target_ra = %s'%(target_ra))
+            #print ('target_dec = %s'%(target_dec))
+            source_name += [target_name]
+            #source_name += ['%0.2e'%(float(target_info))]
+            source_ra += [float(target_ra)]
+            source_dec += [float(target_dec)]
+            target_name = ''
+            target_type = ''
+            target_ra = ''
+            target_dec = ''
+    return source_name, source_ra, source_dec
+
+def ReadHAWCTargetListFromFile(file_path):
+    source_name = []
+    source_ra = []
+    source_dec = []
+    inputFile = open(file_path)
+    for line in inputFile:
+        if line[0]=="#": continue
+        if '- name:' in line:
+            target_name = line.lstrip('   - name: ')
+            target_name = target_name.strip('\n')
+        if 'RA:' in line:
+            target_ra = line.lstrip('     RA: ')
+        if 'Dec:' in line:
+            target_dec = line.lstrip('     Dec: ')
+        if 'flux measurements:' in line:
+            source_name += [target_name]
+            source_ra += [float(target_ra)]
+            source_dec += [float(target_dec)]
+            target_name = ''
+            target_ra = ''
+            target_dec = ''
+    return source_name, source_ra, source_dec
+
 def GetGammaSourceInfo():
 
     other_stars = []
     other_stars_type = []
     other_star_coord = []
 
-    return other_stars, other_stars_type, other_star_coord
+    #return other_stars, other_stars_type, other_star_coord
 
     near_source_cut = 0.1
 
@@ -91,8 +303,6 @@ def GetGammaSourceInfo():
         for src in range(0,len(star_name)):
             src_ra = star_ra[src]
             src_dec = star_dec[src]
-            if doGalacticCoord:
-                src_ra, src_dec = ConvertRaDecToGalactic(src_ra,src_dec)
             other_stars += [star_name[src]]
             other_stars_type += ['Star']
             other_star_coord += [[src_ra,src_dec,0.]]
@@ -104,8 +314,6 @@ def GetGammaSourceInfo():
             gamma_source_ra = target_snr_ra[src]
             gamma_source_dec = target_snr_dec[src]
             gamma_source_size = target_snr_size[src]
-            if doGalacticCoord:
-                gamma_source_ra, gamma_source_dec = ConvertRaDecToGalactic(gamma_source_ra,gamma_source_dec)
             near_a_source = False
             for entry in range(0,len(other_stars)):
                 distance = pow(gamma_source_ra-other_star_coord[entry][0],2)+pow(gamma_source_dec-other_star_coord[entry][1],2)
@@ -122,8 +330,6 @@ def GetGammaSourceInfo():
             gamma_source_name = target_psr_name[src]
             gamma_source_ra = target_psr_ra[src]
             gamma_source_dec = target_psr_dec[src]
-            if doGalacticCoord:
-                gamma_source_ra, gamma_source_dec = ConvertRaDecToGalactic(gamma_source_ra,gamma_source_dec)
             near_a_source = False
             for entry in range(0,len(other_stars)):
                 distance = pow(gamma_source_ra-other_star_coord[entry][0],2)+pow(gamma_source_dec-other_star_coord[entry][1],2)
@@ -143,8 +349,6 @@ def GetGammaSourceInfo():
             gamma_source_name = fermi_name[src]
             gamma_source_ra = fermi_ra[src]
             gamma_source_dec = fermi_dec[src]
-            if doGalacticCoord:
-                gamma_source_ra, gamma_source_dec = ConvertRaDecToGalactic(gamma_source_ra,gamma_source_dec)
             near_a_source = False
             for entry in range(0,len(other_stars)):
                 distance = pow(gamma_source_ra-other_star_coord[entry][0],2)+pow(gamma_source_dec-other_star_coord[entry][1],2)
@@ -161,8 +365,6 @@ def GetGammaSourceInfo():
             gamma_source_name = target_hwc_name[src]
             gamma_source_ra = target_hwc_ra[src]
             gamma_source_dec = target_hwc_dec[src]
-            if doGalacticCoord:
-                gamma_source_ra, gamma_source_dec = ConvertRaDecToGalactic(gamma_source_ra,gamma_source_dec)
             near_a_source = False
             for entry in range(0,len(other_stars)):
                 distance = pow(gamma_source_ra-other_star_coord[entry][0],2)+pow(gamma_source_dec-other_star_coord[entry][1],2)
@@ -179,8 +381,6 @@ def GetGammaSourceInfo():
             gamma_source_name = line.split(',')[0]
             gamma_source_ra = float(line.split(',')[1])
             gamma_source_dec = float(line.split(',')[2])
-            if doGalacticCoord:
-                gamma_source_ra, gamma_source_dec = ConvertRaDecToGalactic(gamma_source_ra,gamma_source_dec)
             near_a_source = False
             for entry in range(0,len(other_stars)):
                 distance = pow(gamma_source_ra-other_star_coord[entry][0],2)+pow(gamma_source_dec-other_star_coord[entry][1],2)
@@ -323,14 +523,8 @@ def MatplotlibMap2D(hist_map,hist_tone,hist_contour,fig,label_x,label_y,label_z,
     source_dec = (MapEdge_lower+MapEdge_upper)/2.
     n_stars = 0
     for star in range(0,len(other_stars)):
-        if doGalacticCoord:
-            if abs(source_ra+other_star_coord[star][0])>star_range: continue
-            if abs(source_dec-other_star_coord[star][1])>0.5*star_range: continue
-        else:
-            #if pow(source_ra+other_star_coord[star][0],2)+pow(source_dec-other_star_coord[star][1],2)>star_range*star_range: continue
-            if abs(source_ra+other_star_coord[star][0])>star_range: continue
-            if abs(source_dec-other_star_coord[star][1])>star_range: continue
-        #if '#' in other_stars[star]: continue
+        if abs(source_ra+other_star_coord[star][0])>star_range: continue
+        if abs(source_dec-other_star_coord[star][1])>star_range: continue
         other_star_markers += [[-other_star_coord[star][0],other_star_coord[star][1],other_star_coord[star][2]]]
         other_star_labels += ['(%s) %s'%(n_stars,other_stars[star])]
         other_star_types += [other_star_type[star]]
@@ -387,10 +581,9 @@ def MatplotlibMap2D(hist_map,hist_tone,hist_contour,fig,label_x,label_y,label_z,
     fig.savefig("output_plots/%s.png"%(plotname),bbox_inches='tight')
 
     if 'SkymapZscore_Sum' in plotname:
-        if not doGalacticCoord:
-            if roi_r>0.:
-                mycircle = plt.Circle((-roi_x, roi_y), roi_r, color='b', fill=False)
-                axbig.add_patch(mycircle)
+        if roi_r>0.:
+            mycircle = plt.Circle((-roi_x, roi_y), roi_r, color='b', fill=False)
+            axbig.add_patch(mycircle)
         axbig.legend(bbox_to_anchor=(1.04, 1), borderaxespad=0, fontsize=7)
         fig.savefig("output_plots/%s_legend.png"%(plotname),bbox_inches='tight')
     axbig.remove()

@@ -39,6 +39,7 @@
 using namespace Eigen;
 
 #include "GetRunList.h"
+#include "ResetPublicVariables.C"
 
 char target[50] = "";
 double SizeSecondMax_Cut = 0.;
@@ -919,7 +920,11 @@ void SingleRunAnalysis(int int_run_number, int int_run_number_real, int input_xo
         }
 
     }
-    double expo_scaling = exposure_thisrun/Hist_Expo_Roff.GetBinContent(1);
+    double expo_scaling = 0.;
+    if (Hist_Expo_Roff.GetBinContent(1)>0.)
+    {
+        expo_scaling = exposure_thisrun/Hist_Expo_Roff.GetBinContent(1);
+    }
     Hist_Data_AreaTime_Skymap.Add(&Hist_SingleRun_AreaTime_Skymap,expo_scaling);
     input_file->Close();
 
@@ -1026,6 +1031,17 @@ MatrixXcd MatrixPerturbationMethod(MatrixXcd mtx_init_input, MatrixXcd mtx_data_
         mtx_S_init(entry,entry) = svd_init.singularValues()(entry);
     }
 
+    entry_size = 1;
+    for (int entry=0;entry<svd_init.singularValues().size()-1;entry++)
+    {
+        entry_size = entry+1;
+        if (mtx_S_init(entry,entry)/mtx_S_init(entry+1,entry+1)<5.)
+        {
+            break;
+        }
+    }
+    std::cout << "entry_size = " << entry_size << std::endl;
+
     int size_k = mtx_init_input.cols();
     int size_n = mtx_init_input.cols();
     int length_tkn = size_k*size_n;
@@ -1047,7 +1063,10 @@ MatrixXcd MatrixPerturbationMethod(MatrixXcd mtx_init_input, MatrixXcd mtx_data_
             double sigma_data = max(1.,pow(mtx_init_input(idx_i,idx_j).real(),0.5));
             double stat_weight = 1./pow(sigma_data*sigma_data,0.5);
             double weight = 1.;
-            //weight = stat_weight;
+            if (use_stat_err_weight) 
+            {
+                weight = stat_weight;
+            }
             mtx_W(idx_u,idx_u) = weight;
             vtr_Delta(idx_u) = (mtx_data_input-mtx_init_input)(idx_i,idx_j);
             if (isBlind)
@@ -1202,6 +1221,7 @@ void FillHistograms(string target_data, bool isON, int doImposter)
 {
 
     sprintf(target, "%s", target_data.c_str());
+    ResetPublicVariables(TString(target));
 
     SMI_INPUT = string(std::getenv("SMI_INPUT"));
     SMI_OUTPUT = string(std::getenv("SMI_OUTPUT"));
@@ -1393,11 +1413,11 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                 }
                 OffData_runlist_init = RemoveNonExistingRuns(OffData_runlist_init);
 
-                if (OffData_runlist_init.size()<nbins_unblind)
-                {
-                    std::cout << "Insufficient training data..." << std::endl;
-                    analyze_this_run = false;
-                }
+                //if (OffData_runlist_init.size()<nbins_unblind)
+                //{
+                //    std::cout << "Insufficient training data..." << std::endl;
+                //    analyze_this_run = false;
+                //}
 
                 if (analyze_this_run)
                 {
@@ -1409,6 +1429,14 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         if (!PointingSelection(int(OffData_runlist_init[offrun])))
                         {
                             continue;
+                        }
+                        for (int offrun2=0;offrun2<offrun;offrun2++)
+                        {
+                            if (int(OffData_runlist_init[offrun])==int(OffData_runlist_init[offrun2]))
+                            {
+                                std::cout << "OFF run " << int(OffData_runlist_init[offrun]) << " has been used. Remove it from training sample." << std::endl;
+                                continue;
+                            }
                         }
 
                         TrainingRunAnalysis(int(OffData_runlist_init[offrun]), xoff_idx, yoff_idx);
@@ -1480,8 +1508,9 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                     std::cout << "n_training_samples = " << n_training_samples << std::endl;
                     std::cout << "nbins_unblind = " << nbins_unblind << std::endl;
 
-                    if (n_training_samples<nbins_unblind)
+                    if (n_training_samples<nbins_unblind || n_training_samples<n_samples)
                     {
+                        std::cout << "Cannot make prediction! Insufficient training data." << std::endl;
                         continue;
                     }
 
@@ -1524,7 +1553,10 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                             if (off_blinded_element.at(sample).at(e)>0.)
                             {
                                 double weight = 1.;
-                                //weight = 1./pow(off_blinded_element.at(sample).at(e),0.5);
+                                if (use_stat_err_weight) 
+                                {
+                                    weight = 1./pow(off_blinded_element.at(sample).at(e),0.5);
+                                }
                                 mtx_W(sample,sample) = weight;
                             }
                             for (int bin=0;bin<nbins_unblind;bin++)
@@ -1630,10 +1662,10 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         }
 
                         // perturbation method
-                        double total_on_count = CR_count;
-                        double total_off_count = Hist_OffData_MSCLW_Fine_Sum.at(e).Integral()-Hist_OffData_MSCLW_Fine_Sum.at(e).Integral(1,binx_blind_upper_global,1,biny_blind_upper_global);
-                        //double total_on_count = SR_predict_regression;
-                        //double total_off_count = Hist_OffData_MSCLW_Fine_Sum.at(e).Integral(1,binx_blind_upper_global,1,biny_blind_upper_global);
+                        //double total_on_count = CR_count;
+                        //double total_off_count = Hist_OffData_MSCLW_Fine_Sum.at(e).Integral()-Hist_OffData_MSCLW_Fine_Sum.at(e).Integral(1,binx_blind_upper_global,1,biny_blind_upper_global);
+                        double total_on_count = SR_predict_regression + CR_count;
+                        double total_off_count = Hist_OffData_MSCLW_Fine_Sum.at(e).Integral();
                         if (total_off_count>0.)
                         {
                             Hist_OffData_MSCLW_Fine_Sum.at(e).Scale(total_on_count/total_off_count);
