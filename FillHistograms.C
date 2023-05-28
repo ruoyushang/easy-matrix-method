@@ -390,8 +390,8 @@ vector<double> GetRunElevationList(vector<int> list)
         double run_elev = GetRunElevAzim(int(list.at(run))).first;
         double run_azim = GetRunElevAzim(int(list.at(run))).second;
         if (run_azim>180.) run_azim = 360.-run_azim;
-        //list_elev.push_back(run_elev);
-        list_elev.push_back(run_azim);
+        list_elev.push_back(run_elev);
+        //list_elev.push_back(run_azim);
     }
     return list_elev;
 }
@@ -635,7 +635,7 @@ bool SelectNImages()
     if (NImages<min_NImages) return false;
     if (EmissionHeight<EmissionHeight_cut) return false;
     if (Xcore*Xcore+Ycore*Ycore>max_Rcore*max_Rcore) return false;
-    if (pow(R2off,0.5)>1.6) return false;
+    if (pow(R2off,0.5)>max_Roff) return false;
     return true;
 }
 
@@ -1031,16 +1031,16 @@ MatrixXcd MatrixPerturbationMethod(MatrixXcd mtx_init_input, MatrixXcd mtx_data_
         mtx_S_init(entry,entry) = svd_init.singularValues()(entry);
     }
 
-    entry_size = 1;
-    for (int entry=0;entry<svd_init.singularValues().size()-1;entry++)
-    {
-        entry_size = entry+1;
-        if (mtx_S_init(entry,entry)/mtx_S_init(entry+1,entry+1)<5.)
-        {
-            break;
-        }
-    }
-    std::cout << "entry_size = " << entry_size << std::endl;
+    //entry_size = 1;
+    //for (int entry=0;entry<svd_init.singularValues().size()-1;entry++)
+    //{
+    //    entry_size = entry+1;
+    //    if (mtx_S_init(entry,entry)/mtx_S_init(entry+1,entry+1)<5.)
+    //    {
+    //        break;
+    //    }
+    //}
+    //std::cout << "entry_size = " << entry_size << std::endl;
 
     int size_k = mtx_init_input.cols();
     int size_n = mtx_init_input.cols();
@@ -1088,6 +1088,7 @@ MatrixXcd MatrixPerturbationMethod(MatrixXcd mtx_init_input, MatrixXcd mtx_data_
                     if (kth_entry>entry_size) continue;
                     if (nth_entry>entry_size) continue;
                     if (kth_entry==nth_entry) continue;
+                    //if (kth_entry!=nth_entry) continue;
                     int idx_v = idx_k*size_n + idx_n;
                     mtx_A(idx_u,idx_v) = mtx_U_init(idx_i,idx_k)*mtx_V_init(idx_j,idx_n);
                 }
@@ -1662,17 +1663,19 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         }
 
                         // perturbation method
-                        //double total_on_count = CR_count;
-                        //double total_off_count = Hist_OffData_MSCLW_Fine_Sum.at(e).Integral()-Hist_OffData_MSCLW_Fine_Sum.at(e).Integral(1,binx_blind_upper_global,1,biny_blind_upper_global);
-                        double total_on_count = SR_predict_regression + CR_count;
-                        double total_off_count = Hist_OffData_MSCLW_Fine_Sum.at(e).Integral();
-                        if (total_off_count>0.)
+                        double total_on_cr_count = CR_count + SR_predict_regression;
+                        double total_off_cr_count = Hist_OffData_MSCLW_Fine_Sum.at(e).Integral();
+                        //double total_on_sr_count = SR_predict_regression;
+                        //double total_off_sr_count = Hist_OffData_MSCLW_Fine_Sum.at(e).Integral(1,binx_blind_upper_global,1,biny_blind_upper_global);
+                        TH2D Hist_OffData_MSCLW_CR_scaled = TH2D("Hist_OffData_MSCLW_CR_scaled","",mtx_dim_l_fine,MSCL_plot_lower,MSCL_plot_upper,mtx_dim_w_fine,MSCW_plot_lower,MSCW_plot_upper);
+                        if (total_off_cr_count>0.)
                         {
-                            Hist_OffData_MSCLW_Fine_Sum.at(e).Scale(total_on_count/total_off_count);
+                            Hist_OffData_MSCLW_CR_scaled.Add(&Hist_OffData_MSCLW_Fine_Sum.at(e),total_on_cr_count/total_off_cr_count);
                         }
+                        MatrixXcd mtx_off_data_cr_scaled = fillMatrix(&Hist_OffData_MSCLW_CR_scaled);
                         MatrixXcd mtx_on_data = fillMatrix(&Hist_OnData_MSCLW_Fine.at(e));
-                        MatrixXcd mtx_off_data = fillMatrix(&Hist_OffData_MSCLW_Fine_Sum.at(e));
-                        MatrixXcd mtx_on_bkgd = MatrixPerturbationMethod(mtx_off_data, mtx_on_data, matrix_rank[e]);
+                        //mtx_on_data.block(0,0,binx_blind_upper_global,biny_blind_upper_global) = mtx_off_data_cr_scaled.block(0,0,binx_blind_upper_global,biny_blind_upper_global);
+                        MatrixXcd mtx_on_bkgd = MatrixPerturbationMethod(mtx_off_data_cr_scaled, mtx_on_data, matrix_rank[e]);
                         fill2DHistogram(&Hist_OnBkgd_MSCLW_Fine.at(e),mtx_on_bkgd);
                         double SR_predict_perturbation = Hist_OnBkgd_MSCLW_Fine.at(e).Integral(1,binx_blind_upper_global,1,biny_blind_upper_global);
 
