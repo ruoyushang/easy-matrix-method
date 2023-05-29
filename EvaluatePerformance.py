@@ -31,6 +31,7 @@ import CommonPlotFunctions
 folder_path = CommonPlotFunctions.folder_path
 energy_bin = CommonPlotFunctions.energy_bin
 n_xoff_bins = CommonPlotFunctions.n_xoff_bins
+n_yoff_bins = CommonPlotFunctions.n_yoff_bins
 
 fig, ax = plt.subplots()
 figsize_x = 8
@@ -44,7 +45,10 @@ ROOT.TH1.AddDirectory(False) # without this, the histograms returned from a func
 ROOT.gStyle.SetPaintTextFormat("0.3f")
 np.set_printoptions(precision=4)
 
-measurement_rebin = 1
+measurement_rebin = 10
+
+elev_range = [30.,90.]
+#elev_range = [45.,65.]
 
 total_data_expo = 0.
 expo_sum_all_energies = 0.
@@ -209,7 +213,7 @@ for energy_idx in range(0,len(energy_bin)-1):
     array_rebin_syst_err_per_energy_combined = []
     for src in range(0,len(sample_list)):
         for xoff_idx in range(0,n_xoff_bins):
-            for yoff_idx in range(0,n_xoff_bins):
+            for yoff_idx in range(0,n_yoff_bins):
                 n_groups = 0
                 file_exists = True
                 while file_exists:
@@ -231,6 +235,7 @@ for energy_idx in range(0,len(energy_bin)-1):
                     SourceFilePath = "/gamma_raid/userspace/rshang/SMI_output/%s/Netflix_%s_G%d_X%d_Y%d.root"%(folder_path,sample_list[src],group,xoff_idx,yoff_idx)
                     eff_area, data_truth, ratio_bkgd, regression_bkgd, perturbation_bkgd, combined_bkgd = GetGammaCounts(SourceFilePath,energy_idx)
                     data_expo, total_cr_count, elev_mean, azim_mean, nsb_mean = GetRunInfo(SourceFilePath)
+                    if elev_mean<elev_range[0] or elev_mean>elev_range[1]: continue
                     expo_sum_all_energies += data_expo
                     if energy_idx==0:
                         total_data_expo += data_expo
@@ -246,10 +251,10 @@ for energy_idx in range(0,len(energy_bin)-1):
                     array_per_energy_elev_mean += [elev_mean]
                     array_per_energy_azim_mean += [azim_mean]
                     array_per_energy_nsb_mean += [nsb_mean]
-                    array_syst_err_per_energy_ratio += [(ratio_bkgd-data_truth)/data_truth]
-                    array_syst_err_per_energy_regression += [(regression_bkgd-data_truth)/data_truth]
-                    array_syst_err_per_energy_perturbation += [(perturbation_bkgd-data_truth)/data_truth]
-                    array_syst_err_per_energy_combined += [(combined_bkgd-data_truth)/data_truth]
+                    array_syst_err_per_energy_ratio += [-(ratio_bkgd-data_truth)/data_truth]
+                    array_syst_err_per_energy_regression += [-(regression_bkgd-data_truth)/data_truth]
+                    array_syst_err_per_energy_perturbation += [-(perturbation_bkgd-data_truth)/data_truth]
+                    array_syst_err_per_energy_combined += [-(combined_bkgd-data_truth)/data_truth]
                     n_rebin += 1
                     if n_rebin == measurement_rebin:
                         Hist_SystErrDist_Ratio[energy_idx].Fill((total_ratio_bkgd-total_data_truth)/total_data_truth)
@@ -295,9 +300,13 @@ for energy_idx in range(0,len(energy_bin)-1):
     print ('================================================================================================')
     print ('Energy = %s'%(energy_bin[energy_idx]))
     print ('mean of stat. error of data = %0.3f'%(array_stat_err_mean))
+    print ('mean of syst. error of simple scaling method = %0.3f'%(array_syst_err_ratio_mean))
     print ('rms of syst. error of simple scaling method = %0.3f'%(array_syst_err_ratio_rms))
+    print ('mean of syst. error of regression method = %0.3f'%(array_syst_err_regression_mean))
     print ('rms of syst. error of regression method = %0.3f'%(array_syst_err_regression_rms))
+    print ('mean of syst. error of perturbation method = %0.3f'%(array_syst_err_perturbation_mean))
     print ('rms of syst. error of perturbation method = %0.3f'%(array_syst_err_perturbation_rms))
+    print ('mean of syst. error of combined method = %0.3f'%(array_syst_err_combined_mean))
     print ('rms of syst. error of combined method = %0.3f'%(array_syst_err_combined_rms))
 
 for energy_idx in range(0,len(energy_bin)-1):
@@ -305,65 +314,65 @@ for energy_idx in range(0,len(energy_bin)-1):
     fig.set_figheight(8)
     fig.set_figwidth(8)
     axbig = fig.add_subplot()
-    axbig.scatter(array_cr_count[energy_idx],array_syst_err_combined[energy_idx],color='b',alpha=0.5)
+    axbig.scatter(array_cr_count[energy_idx],array_syst_err_combined[energy_idx],color='k',alpha=0.5)
     axbig.set_xlabel('Total CR count')
     axbig.set_ylabel('Combined method $\epsilon$')
     fig.savefig("output_plots/CR_count_vs_Combined_Correlation_E%s.png"%(energy_idx))
     axbig.remove()
-    #fig.clf()
-    #fig.set_figheight(8)
-    #fig.set_figwidth(8)
-    #axbig = fig.add_subplot()
-    #axbig.scatter(array_elev_mean[energy_idx],array_syst_err_regression[energy_idx],color='b',alpha=0.5)
-    #axbig.set_xlabel('Elevation [deg]')
-    #axbig.set_ylabel('Regression method $\epsilon$')
-    #fig.savefig("output_plots/Elev_vs_Regression_Correlation_E%s.png"%(energy_idx))
-    #axbig.remove()
-    #fig.clf()
-    #fig.set_figheight(8)
-    #fig.set_figwidth(8)
-    #axbig = fig.add_subplot()
-    #axbig.scatter(array_azim_mean[energy_idx],array_syst_err_regression[energy_idx],color='b',alpha=0.5)
-    #axbig.set_xlabel('Azimuth [deg]')
-    #axbig.set_ylabel('Regression method $\epsilon$')
-    #fig.savefig("output_plots/Azim_vs_Regression_Correlation_E%s.png"%(energy_idx))
-    #axbig.remove()
-    #fig.clf()
-    #fig.set_figheight(8)
-    #fig.set_figwidth(8)
-    #axbig = fig.add_subplot()
-    #axbig.scatter(array_nsb_mean[energy_idx],array_syst_err_regression[energy_idx],color='b',alpha=0.5)
-    #axbig.set_xlabel('NSB')
-    #axbig.set_ylabel('Regression method $\epsilon$')
-    #fig.savefig("output_plots/NSB_vs_Regression_Correlation_E%s.png"%(energy_idx))
-    #axbig.remove()
-    #fig.clf()
-    #fig.set_figheight(8)
-    #fig.set_figwidth(8)
-    #axbig = fig.add_subplot()
-    #axbig.scatter(array_elev_mean[energy_idx],array_syst_err_perturbation[energy_idx],color='b',alpha=0.5)
-    #axbig.set_xlabel('Elevation [deg]')
-    #axbig.set_ylabel('Perturbation method $\epsilon$')
-    #fig.savefig("output_plots/Elev_vs_Perturbation_Correlation_E%s.png"%(energy_idx))
-    #axbig.remove()
-    #fig.clf()
-    #fig.set_figheight(8)
-    #fig.set_figwidth(8)
-    #axbig = fig.add_subplot()
-    #axbig.scatter(array_azim_mean[energy_idx],array_syst_err_perturbation[energy_idx],color='b',alpha=0.5)
-    #axbig.set_xlabel('Azimuth [deg]')
-    #axbig.set_ylabel('Perturbation method $\epsilon$')
-    #fig.savefig("output_plots/Azim_vs_Perturbation_Correlation_E%s.png"%(energy_idx))
-    #axbig.remove()
-    #fig.clf()
-    #fig.set_figheight(8)
-    #fig.set_figwidth(8)
-    #axbig = fig.add_subplot()
-    #axbig.scatter(array_nsb_mean[energy_idx],array_syst_err_perturbation[energy_idx],color='b',alpha=0.5)
-    #axbig.set_xlabel('NSB')
-    #axbig.set_ylabel('Perturbation method $\epsilon$')
-    #fig.savefig("output_plots/NSB_vs_Perturbation_Correlation_E%s.png"%(energy_idx))
-    #axbig.remove()
+    fig.clf()
+    fig.set_figheight(8)
+    fig.set_figwidth(8)
+    axbig = fig.add_subplot()
+    axbig.scatter(array_elev_mean[energy_idx],array_syst_err_regression[energy_idx],color='r',alpha=0.5)
+    axbig.set_xlabel('Elevation [deg]')
+    axbig.set_ylabel('Regression method $\epsilon$')
+    fig.savefig("output_plots/Elev_vs_Regression_Correlation_E%s.png"%(energy_idx))
+    axbig.remove()
+    fig.clf()
+    fig.set_figheight(8)
+    fig.set_figwidth(8)
+    axbig = fig.add_subplot()
+    axbig.scatter(array_azim_mean[energy_idx],array_syst_err_regression[energy_idx],color='r',alpha=0.5)
+    axbig.set_xlabel('Azimuth [deg]')
+    axbig.set_ylabel('Regression method $\epsilon$')
+    fig.savefig("output_plots/Azim_vs_Regression_Correlation_E%s.png"%(energy_idx))
+    axbig.remove()
+    fig.clf()
+    fig.set_figheight(8)
+    fig.set_figwidth(8)
+    axbig = fig.add_subplot()
+    axbig.scatter(array_nsb_mean[energy_idx],array_syst_err_regression[energy_idx],color='r',alpha=0.5)
+    axbig.set_xlabel('NSB')
+    axbig.set_ylabel('Regression method $\epsilon$')
+    fig.savefig("output_plots/NSB_vs_Regression_Correlation_E%s.png"%(energy_idx))
+    axbig.remove()
+    fig.clf()
+    fig.set_figheight(8)
+    fig.set_figwidth(8)
+    axbig = fig.add_subplot()
+    axbig.scatter(array_elev_mean[energy_idx],array_syst_err_perturbation[energy_idx],color='b',alpha=0.5)
+    axbig.set_xlabel('Elevation [deg]')
+    axbig.set_ylabel('Perturbation method $\epsilon$')
+    fig.savefig("output_plots/Elev_vs_Perturbation_Correlation_E%s.png"%(energy_idx))
+    axbig.remove()
+    fig.clf()
+    fig.set_figheight(8)
+    fig.set_figwidth(8)
+    axbig = fig.add_subplot()
+    axbig.scatter(array_azim_mean[energy_idx],array_syst_err_perturbation[energy_idx],color='b',alpha=0.5)
+    axbig.set_xlabel('Azimuth [deg]')
+    axbig.set_ylabel('Perturbation method $\epsilon$')
+    fig.savefig("output_plots/Azim_vs_Perturbation_Correlation_E%s.png"%(energy_idx))
+    axbig.remove()
+    fig.clf()
+    fig.set_figheight(8)
+    fig.set_figwidth(8)
+    axbig = fig.add_subplot()
+    axbig.scatter(array_nsb_mean[energy_idx],array_syst_err_perturbation[energy_idx],color='b',alpha=0.5)
+    axbig.set_xlabel('NSB')
+    axbig.set_ylabel('Perturbation method $\epsilon$')
+    fig.savefig("output_plots/NSB_vs_Perturbation_Correlation_E%s.png"%(energy_idx))
+    axbig.remove()
 
 for energy_idx in range(0,len(energy_bin)-1):
     fig.clf()

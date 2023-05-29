@@ -38,6 +38,7 @@ fig.set_figwidth(figsize_x)
 new_nbins_x = 100
 new_nbins_y = 100
 
+effective_area_cut = 10000.
 energy_bin = CommonPlotFunctions.energy_bin
 energy_bin_cut_low = int(sys.argv[4])
 energy_bin_cut_up = int(sys.argv[5])
@@ -48,6 +49,7 @@ isON = sys.argv[3]  # 'ON' or 'OFF'
 
 analysis_method = CommonPlotFunctions.analysis_method
 n_xoff_bins = CommonPlotFunctions.n_xoff_bins
+n_yoff_bins = CommonPlotFunctions.n_yoff_bins
 smooth_size_spectroscopy = CommonPlotFunctions.smooth_size_spectroscopy
 
 n_imposters = 5
@@ -526,8 +528,9 @@ def MakeFluxMap(flux_map, data_map, bkgd_map, norm_map, elev_map):
 
                 #correction = GetFluxCalibration(ebin,elev_content)
 
-                norm_ratio = norm_content/norm_content_max
-                norm_weight = 1./(1.+np.exp(-(norm_ratio-0.3)/0.1))
+                norm_weight = 1.
+                #norm_ratio = norm_content/norm_content_max
+                #norm_weight = 1./(1.+np.exp(-(norm_ratio-0.3)/0.1))
 
                 #correction = correction*norm_weight
                 #stat_data_err = pow(max(data_content,0.),0.5)
@@ -752,7 +755,7 @@ effective_area = ROOT.std.vector("double")(20)
 
 n_samples = 0.
 for xoff_idx in range(0,n_xoff_bins):
-    for yoff_idx in range(0,n_xoff_bins):
+    for yoff_idx in range(0,n_yoff_bins):
         for epoch in list_epoch:
             n_groups = 0
             file_exists = True
@@ -785,7 +788,7 @@ for xoff_idx in range(0,n_xoff_bins):
                 FillSkyMapHistogram(InputFile.Get(HistName),hist_nsb_skymap)
                 for ebin in range(0,len(energy_bin)-1):
                     if energy_bin_cut_low>0:
-                        if effective_area[ebin] < 30000.: continue
+                        if effective_area[ebin] < effective_area_cut: continue
                     HistName = "Hist_OnData_SR_Skymap_Sum_ErecS%sto%s"%(int(energy_bin[ebin]),int(energy_bin[ebin+1]))
                     FillSkyMapHistogram(InputFile.Get(HistName),hist_real_data_skymap[ebin])
                     HistName = "Hist_OnData_CR_Skymap_%s_Sum_ErecS%sto%s"%(analysis_method,int(energy_bin[ebin]),int(energy_bin[ebin+1]))
@@ -802,7 +805,7 @@ if doImposter:
     for imposter in range(0,n_imposters):
         n_imposter_samples = 0.
         for xoff_idx in range(0,n_xoff_bins):
-            for yoff_idx in range(0,n_xoff_bins):
+            for yoff_idx in range(0,n_yoff_bins):
                 for epoch in list_epoch:
                     n_groups = 0
                     file_exists = True
@@ -824,7 +827,7 @@ if doImposter:
                         InfoTree.GetEntry(0)
                         for ebin in range(energy_bin_cut_low,energy_bin_cut_up):
                             if energy_bin_cut_low>0:
-                                if effective_area[ebin] < 30000.: continue
+                                if effective_area[ebin] < effective_area_cut: continue
                             HistName = "Hist_OnData_SR_Skymap_Sum_ErecS%sto%s"%(int(energy_bin[ebin]),int(energy_bin[ebin+1]))
                             FillSkyMapHistogram(InputFile.Get(HistName),hist_imposter_data_skymap[imposter][ebin])
                             HistName = "Hist_OnData_CR_Skymap_%s_Sum_ErecS%sto%s"%(analysis_method,int(energy_bin[ebin]),int(energy_bin[ebin+1]))
@@ -895,7 +898,7 @@ excl_region_y = MapCenter_y
 excl_region_r = 0.0
 region_x = MapCenter_x
 region_y = MapCenter_y
-region_r = 2.0
+region_r = 2.5
 region_name = 'Center'
 do_fit = 0
 if 'Crab' in source_name:
@@ -912,6 +915,12 @@ elif 'PSR_J1907_p0602' in source_name:
 elif 'PSR_J2021_p4026' in source_name:
     region_x = 305.0200000
     region_y = 40.7572222
+    region_r = 1.0
+    region_name = 'Center'
+elif '2HWC_J1953_p294' in source_name:
+    # G067.6+00.9
+    region_x = 299.44
+    region_y = 30.88
     region_r = 1.0
     region_name = 'Center'
 MakeExtensionProfile(region_x,region_y,region_r,do_fit,region_name,hist_real_flux_skymap_sum,hist_imposter_flux_skymap_sum,'sum')

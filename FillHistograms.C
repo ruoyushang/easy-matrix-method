@@ -98,6 +98,8 @@ vector<double> combined_bkgd_count;
 
 int binx_blind_upper_global;
 int biny_blind_upper_global;
+int binx_blind_lower_global;
+int biny_blind_lower_global;
 
 TH2D Hist_Data_AreaTime_Skymap;
 TH2D Hist_Data_Norm_Skymap;
@@ -110,6 +112,7 @@ vector<TH2D> Hist_OffData_MSCLW;
 vector<TH2D> Hist_OnData_MSCLW_Fine;
 vector<TH2D> Hist_OffData_MSCLW_Fine;
 vector<TH2D> Hist_OnBkgd_MSCLW_Fine;
+vector<TH2D> Hist_OffData_MSCLW_Sum;
 vector<TH2D> Hist_OffData_MSCLW_Fine_Sum;
 vector<TH2D> Hist_OffData_SR_XYoff;
 vector<TH2D> Hist_OffData_CR_XYoff;
@@ -127,6 +130,8 @@ vector<TH2D> Hist_OnData_CR_Skymap_Ratio_Sum;
 vector<TH2D> Hist_OnData_CR_Skymap_Regression_Sum;
 vector<TH2D> Hist_OnData_CR_Skymap_Perturbation_Sum;
 vector<TH2D> Hist_OnData_CR_Skymap_Combined_Sum;
+
+vector<double> CR_count_weighted;
 
 vector<vector<double>> GammaSource_Data;
 
@@ -369,7 +374,7 @@ void SortingList(vector<int>* list, vector<double>* list_pointing)
     {
         for (int run2=run1+1;run2<list->size();run2++)
         {
-            if (list_pointing->at(run1)<list_pointing->at(run2))
+            if (list_pointing->at(run1)>list_pointing->at(run2))
             {
                 temp_list = list->at(run1);
                 temp_list_pointing = list_pointing->at(run1);
@@ -390,8 +395,8 @@ vector<double> GetRunElevationList(vector<int> list)
         double run_elev = GetRunElevAzim(int(list.at(run))).first;
         double run_azim = GetRunElevAzim(int(list.at(run))).second;
         if (run_azim>180.) run_azim = 360.-run_azim;
-        list_elev.push_back(run_elev);
-        //list_elev.push_back(run_azim);
+        //list_elev.push_back(run_elev);
+        list_elev.push_back(run_azim);
     }
     return list_elev;
 }
@@ -634,6 +639,8 @@ bool SelectNImages()
 {
     if (NImages<min_NImages) return false;
     if (EmissionHeight<EmissionHeight_cut) return false;
+    if (EmissionHeight>20.) return false;
+    if (EChi2S>1.) return false;
     if (Xcore*Xcore+Ycore*Ycore>max_Rcore*max_Rcore) return false;
     if (pow(R2off,0.5)>max_Roff) return false;
     return true;
@@ -723,7 +730,8 @@ void TrainingRunAnalysis(int int_run_number, int input_xoff_idx, int input_yoff_
     double MSCL_plot_lower = -MSCL_cut_blind;
 
     TH1D Hist_ErecS = TH1D("Hist_ErecS","",N_energy_bins,energy_bins);
-    TH1D Hist_Xoff = TH1D("Hist_Xoff","",N_Xoff_bins,-2.,2.);
+    TH1D Hist_Xoff = TH1D("Hist_Xoff","",N_Xoff_bins,0.,2.);
+    TH1D Hist_Yoff = TH1D("Hist_Yoff","",N_Yoff_bins,-2.,2.);
     for (int entry=0;entry<Data_tree->GetEntries();entry++) 
     {
         ErecS = 0;
@@ -746,12 +754,8 @@ void TrainingRunAnalysis(int int_run_number, int input_xoff_idx, int input_yoff_
         if (!ApplyTimeCuts(Time-time_0, timecut_thisrun)) continue;
         if (energy_idx<0) continue;
         if (energy_idx>=N_energy_bins) continue;
-        if (MSCL>MSCL_plot_upper) continue;
-        if (MSCL<MSCL_plot_lower) continue;
-        if (MSCW>MSCW_plot_upper) continue;
-        if (MSCW<MSCW_plot_lower) continue;
-        int idx_xoff = Hist_Xoff.FindBin(Xoff)-1;
-        int idx_yoff = Hist_Xoff.FindBin(Yoff)-1;
+        int idx_xoff = Hist_Xoff.FindBin(pow(R2off,0.5))-1;
+        int idx_yoff = Hist_Yoff.FindBin(Yoff)-1;
         if (input_xoff_idx!=idx_xoff) continue;
         if (input_yoff_idx!=idx_yoff) continue;
 
@@ -759,11 +763,18 @@ void TrainingRunAnalysis(int int_run_number, int input_xoff_idx, int input_yoff_
 
         Hist_OffData_MSCLW.at(energy_idx).Fill(MSCL,MSCW);
         Hist_OffData_MSCLW_Fine.at(energy_idx).Fill(MSCL,MSCW);
-        if (MSCL<MSCL_cut_blind && MSCW<MSCW_cut_blind)
+
+        if (MSCL>MSCL_plot_upper) continue;
+        if (MSCL<MSCL_plot_lower) continue;
+        if (MSCW>MSCW_plot_upper) continue;
+        if (MSCW<MSCW_plot_lower) continue;
+
+        if (MSCL<MSCL_cut_blind && MSCW<MSCW_cut_blind && MSCL>-MSCL_cut_blind && MSCW>-MSCW_cut_blind)
         {
             Hist_OffData_SR_XYoff.at(energy_idx).Fill(Xoff,Yoff);
         }
         else
+        //else if (MSCL<2.*MSCL_cut_blind && MSCW<2.*MSCW_cut_blind && MSCL>-MSCL_cut_blind && MSCW>-MSCW_cut_blind)
         {
             Hist_OffData_CR_XYoff.at(energy_idx).Fill(Xoff,Yoff);
         }
@@ -833,7 +844,8 @@ void SingleRunAnalysis(int int_run_number, int int_run_number_real, int input_xo
     double MSCL_plot_lower = -MSCL_cut_blind;
 
     TH1D Hist_ErecS = TH1D("Hist_ErecS","",N_energy_bins,energy_bins);
-    TH1D Hist_Xoff = TH1D("Hist_Xoff","",N_Xoff_bins,-2.,2.);
+    TH1D Hist_Xoff = TH1D("Hist_Xoff","",N_Xoff_bins,0.,2.);
+    TH1D Hist_Yoff = TH1D("Hist_Yoff","",N_Yoff_bins,-2.,2.);
     TH1D Hist_Expo_Roff = TH1D("Hist_Expo_Roff","",4,0.,2.);
     TH2D Hist_SingleRun_AreaTime_Skymap = TH2D("Hist_SingleRun_AreaTime_Skymap","",Skymap_nbins_x,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,Skymap_nbins_x,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y);
     for (int entry=0;entry<Data_tree->GetEntries();entry++) 
@@ -858,12 +870,8 @@ void SingleRunAnalysis(int int_run_number, int int_run_number_real, int input_xo
         if (!ApplyTimeCuts(Time-time_0, timecut_thisrun)) continue;
         if (energy_idx<0) continue;
         if (energy_idx>=N_energy_bins) continue;
-        if (MSCL>MSCL_plot_upper) continue;
-        if (MSCL<MSCL_plot_lower) continue;
-        if (MSCW>MSCW_plot_upper) continue;
-        if (MSCW<MSCW_plot_lower) continue;
-        int idx_xoff = Hist_Xoff.FindBin(Xoff)-1;
-        int idx_yoff = Hist_Xoff.FindBin(Yoff)-1;
+        int idx_xoff = Hist_Xoff.FindBin(pow(R2off,0.5))-1;
+        int idx_yoff = Hist_Yoff.FindBin(Yoff)-1;
         if (input_xoff_idx!=idx_xoff) continue;
         if (input_yoff_idx!=idx_yoff) continue;
 
@@ -871,10 +879,10 @@ void SingleRunAnalysis(int int_run_number, int int_run_number_real, int input_xo
         double map_left_edge = map_center_x-Skymap_size_x;
         double map_top_edge = map_center_y+Skymap_size_y;
         double map_bottom_edge = map_center_y-Skymap_size_y;
-        if (ra_sky>map_right_edge) continue;
-        if (ra_sky<map_left_edge) continue;
-        if (dec_sky>map_top_edge) continue;
-        if (dec_sky<map_bottom_edge) continue;
+        //if (ra_sky>map_right_edge) continue;
+        //if (ra_sky<map_left_edge) continue;
+        //if (dec_sky>map_top_edge) continue;
+        //if (dec_sky<map_bottom_edge) continue;
 
         if (!FoV(ra_sky, dec_sky, true)) continue;
         if (isImposter)
@@ -884,11 +892,17 @@ void SingleRunAnalysis(int int_run_number, int int_run_number_real, int input_xo
             if (!FoV(imposter_ra_sky, imposter_dec_sky, false)) continue;
         }
 
-        double evt_eff_area = i_hEffAreaP->GetBinContent( i_hEffAreaP->FindBin( log10(ErecS)));
-
         Hist_OnData_MSCLW.at(energy_idx).Fill(MSCL,MSCW);
         Hist_OnData_MSCLW_Fine.at(energy_idx).Fill(MSCL,MSCW);
-        if (MSCL<MSCL_cut_blind && MSCW<MSCW_cut_blind)
+
+        if (MSCL>MSCL_plot_upper) continue;
+        if (MSCL<MSCL_plot_lower) continue;
+        if (MSCW>MSCW_plot_upper) continue;
+        if (MSCW<MSCW_plot_lower) continue;
+
+        double evt_eff_area = i_hEffAreaP->GetBinContent( i_hEffAreaP->FindBin( log10(ErecS)));
+
+        if (MSCL<MSCL_cut_blind && MSCW<MSCW_cut_blind && MSCL>-MSCL_cut_blind && MSCW>-MSCW_cut_blind)
         {
             Hist_OnData_SR_Skymap.at(energy_idx).Fill(ra_sky,dec_sky);
             if (pow(theta2,0.5)>0.3)
@@ -897,6 +911,7 @@ void SingleRunAnalysis(int int_run_number, int int_run_number_real, int input_xo
             }
         }
         else
+        //else if (MSCL<2.*MSCL_cut_blind && MSCW<2.*MSCW_cut_blind && MSCL>-MSCL_cut_blind && MSCW>-MSCW_cut_blind)
         {
             int local_xoff_idx = Hist_OffData_Ratio_XYoff.at(energy_idx).GetXaxis()->FindBin(Xoff);
             int local_yoff_idx = Hist_OffData_Ratio_XYoff.at(energy_idx).GetYaxis()->FindBin(Yoff);
@@ -911,6 +926,7 @@ void SingleRunAnalysis(int int_run_number, int int_run_number_real, int input_xo
             }
             Hist_Expo_Roff.Fill(pow(R2off,0.5),exposure_thisrun*weight);
             Hist_SingleRun_AreaTime_Skymap.Fill(ra_sky,dec_sky,evt_eff_area*exposure_thisrun*weight);
+            CR_count_weighted.at(energy_idx) += weight;
 
             Hist_Data_Norm_Skymap.Fill(ra_sky,dec_sky);
             Hist_Data_Elev_Skymap.Fill(ra_sky,dec_sky,tele_elev);
@@ -1071,7 +1087,7 @@ MatrixXcd MatrixPerturbationMethod(MatrixXcd mtx_init_input, MatrixXcd mtx_data_
             vtr_Delta(idx_u) = (mtx_data_input-mtx_init_input)(idx_i,idx_j);
             if (isBlind)
             {
-                if (idx_i<binx_blind_upper_global && idx_j<biny_blind_upper_global)
+                if (idx_i<binx_blind_upper_global && idx_j<biny_blind_upper_global && idx_i>=binx_blind_lower_global && idx_j>=biny_blind_lower_global)
                 {
                     mtx_W(idx_u,idx_u) = 0.;
                 }
@@ -1290,6 +1306,10 @@ void FillHistograms(string target_data, bool isON, int doImposter)
     double MSCL_plot_upper = gamma_hadron_dim_ratio_l*(MSCL_cut_blind-(-1.*MSCL_cut_blind))+MSCL_cut_blind;
     double MSCW_plot_lower = -MSCW_cut_blind;
     double MSCL_plot_lower = -MSCL_cut_blind;
+    double MSCW_bin_size = (MSCW_plot_upper+MSCW_cut_blind)/double(mtx_dim_w_fine);
+    double MSCL_bin_size = (MSCL_plot_upper+MSCL_cut_blind)/double(mtx_dim_l_fine);
+    double MSCW_plot_lower_fine = -MSCW_cut_blind-MSCW_bin_size;
+    double MSCL_plot_lower_fine = -MSCL_cut_blind-MSCL_bin_size;
 
 
     Hist_Data_AreaTime_Skymap = TH2D("Hist_Data_AreaTime_Skymap","",Skymap_nbins_x,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,Skymap_nbins_x,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y);
@@ -1306,10 +1326,11 @@ void FillHistograms(string target_data, bool isON, int doImposter)
         sprintf(e_up, "%i", int(energy_bins[e+1]));
         Hist_OnData_MSCLW.push_back(TH2D("Hist_OnData_MSCLW_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",mtx_dim_l,MSCL_plot_lower,MSCL_plot_upper,mtx_dim_w,MSCW_plot_lower,MSCW_plot_upper));
         Hist_OffData_MSCLW.push_back(TH2D("Hist_OffData_MSCLW_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",mtx_dim_l,MSCL_plot_lower,MSCL_plot_upper,mtx_dim_w,MSCW_plot_lower,MSCW_plot_upper));
-        Hist_OnData_MSCLW_Fine.push_back(TH2D("Hist_OnData_MSCLW_Fine_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",mtx_dim_l_fine,MSCL_plot_lower,MSCL_plot_upper,mtx_dim_w_fine,MSCW_plot_lower,MSCW_plot_upper));
-        Hist_OffData_MSCLW_Fine.push_back(TH2D("Hist_OffData_MSCLW_Fine_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",mtx_dim_l_fine,MSCL_plot_lower,MSCL_plot_upper,mtx_dim_w_fine,MSCW_plot_lower,MSCW_plot_upper));
-        Hist_OnBkgd_MSCLW_Fine.push_back(TH2D("Hist_OnBkgd_MSCLW_Fine_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",mtx_dim_l_fine,MSCL_plot_lower,MSCL_plot_upper,mtx_dim_w_fine,MSCW_plot_lower,MSCW_plot_upper));
-        Hist_OffData_MSCLW_Fine_Sum.push_back(TH2D("Hist_OffData_MSCLW_Fine_Sum_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",mtx_dim_l_fine,MSCL_plot_lower,MSCL_plot_upper,mtx_dim_w_fine,MSCW_plot_lower,MSCW_plot_upper));
+        Hist_OffData_MSCLW_Sum.push_back(TH2D("Hist_OffData_MSCLW_Sum_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",mtx_dim_l,MSCL_plot_lower,MSCL_plot_upper,mtx_dim_w,MSCW_plot_lower,MSCW_plot_upper));
+        Hist_OnData_MSCLW_Fine.push_back(TH2D("Hist_OnData_MSCLW_Fine_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",mtx_dim_l_fine+n_extra_lower_bins,MSCL_plot_lower_fine,MSCL_plot_upper,mtx_dim_w_fine+n_extra_lower_bins,MSCW_plot_lower_fine,MSCW_plot_upper));
+        Hist_OffData_MSCLW_Fine.push_back(TH2D("Hist_OffData_MSCLW_Fine_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",mtx_dim_l_fine+n_extra_lower_bins,MSCL_plot_lower_fine,MSCL_plot_upper,mtx_dim_w_fine+n_extra_lower_bins,MSCW_plot_lower_fine,MSCW_plot_upper));
+        Hist_OnBkgd_MSCLW_Fine.push_back(TH2D("Hist_OnBkgd_MSCLW_Fine_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",mtx_dim_l_fine+n_extra_lower_bins,MSCL_plot_lower_fine,MSCL_plot_upper,mtx_dim_w_fine+n_extra_lower_bins,MSCW_plot_lower_fine,MSCW_plot_upper));
+        Hist_OffData_MSCLW_Fine_Sum.push_back(TH2D("Hist_OffData_MSCLW_Fine_Sum_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",mtx_dim_l_fine+n_extra_lower_bins,MSCL_plot_lower_fine,MSCL_plot_upper,mtx_dim_w_fine+n_extra_lower_bins,MSCW_plot_lower_fine,MSCW_plot_upper));
         Hist_OnData_SR_Skymap.push_back(TH2D("Hist_OnData_SR_Skymap_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",Skymap_nbins_x,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,Skymap_nbins_y,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y));
         Hist_OnData_SR_Skymap_Mask.push_back(TH2D("Hist_OnData_SR_Skymap_Mask_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",Skymap_nbins_x,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,Skymap_nbins_y,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y));
         Hist_OnData_CR_Skymap_Mask.push_back(TH2D("Hist_OnData_CR_Skymap_Mask_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",Skymap_nbins_x,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,Skymap_nbins_y,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y));
@@ -1328,10 +1349,14 @@ void FillHistograms(string target_data, bool isON, int doImposter)
         Hist_OffData_SR_XYoff.push_back(TH2D("Hist_OffData_SR_XYoff_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",XYoff_bins,-2.,2.,XYoff_bins,-2.,2.));
         Hist_OffData_CR_XYoff.push_back(TH2D("Hist_OffData_CR_XYoff_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",XYoff_bins,-2.,2.,XYoff_bins,-2.,2.));
         Hist_OffData_Ratio_XYoff.push_back(TH2D("Hist_OffData_Ratio_XYoff_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",XYoff_bins,-2.,2.,XYoff_bins,-2.,2.));
+
+        CR_count_weighted.push_back(0.);
     }
 
     binx_blind_upper_global = Hist_OnData_MSCLW_Fine.at(0).GetXaxis()->FindBin(MSCL_cut_blind+0.01)-1;
     biny_blind_upper_global = Hist_OnData_MSCLW_Fine.at(0).GetYaxis()->FindBin(MSCW_cut_blind+0.01)-1;
+    binx_blind_lower_global = Hist_OnData_MSCLW_Fine.at(0).GetXaxis()->FindBin(-MSCL_cut_blind+0.01)-1;
+    biny_blind_lower_global = Hist_OnData_MSCLW_Fine.at(0).GetYaxis()->FindBin(-MSCW_cut_blind+0.01)-1;
 
     int n_training_samples = 0;
     int nbins_unblind = 0;
@@ -1375,7 +1400,7 @@ void FillHistograms(string target_data, bool isON, int doImposter)
 
     for (int xoff_idx=0;xoff_idx<N_Xoff_bins;xoff_idx++)
     {
-        for (int yoff_idx=0;yoff_idx<N_Xoff_bins;yoff_idx++)
+        for (int yoff_idx=0;yoff_idx<N_Yoff_bins;yoff_idx++)
         {
             group_idx = 0;
             for (int run=0;run<Data_runlist_init.size();run++)
@@ -1473,6 +1498,7 @@ void FillHistograms(string target_data, bool isON, int doImposter)
 
                         for (int e=0;e<N_energy_bins;e++) 
                         {
+                            Hist_OffData_MSCLW_Sum.at(e).Add(&Hist_OffData_MSCLW.at(e));
                             Hist_OffData_MSCLW_Fine_Sum.at(e).Add(&Hist_OffData_MSCLW_Fine.at(e));
                             Hist_OffData_MSCLW_Fine.at(e).Reset();
                             Hist_OffData_MSCLW.at(e).Reset();
@@ -1624,7 +1650,8 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         }
                         double SR_predict_ratio = convert_unblind_to_blind_ratio.at(e)*CR_count; 
 
-                        CR_count_map = Hist_OnData_CR_Skymap_Ratio.at(e).Integral();
+                        //CR_count_map = Hist_OnData_CR_Skymap_Ratio.at(e).Integral();
+                        CR_count_map = CR_count_weighted.at(e);
                         if (CR_count_map>0.)
                         {
                             Hist_OnData_CR_Skymap_Ratio.at(e).Scale(SR_predict_ratio/CR_count_map);
@@ -1648,38 +1675,29 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         SR_predict_regression = vtr_predict(0).real();
                         total_truth = vtr_truth(0).real();
 
-                        CR_count_map = Hist_OnData_CR_Skymap_Regression.at(e).Integral();
+                        //CR_count_map = Hist_OnData_CR_Skymap_Regression.at(e).Integral();
+                        CR_count_map = CR_count_weighted.at(e);
                         if (CR_count_map>0.)
                         {
-                            //if (matrix_rank[e]==1)
-                            //{
-                            //    Hist_OnData_CR_Skymap_Regression.at(e).Scale(SR_predict_ratio/CR_count_map);
-                            //}
-                            //else
-                            //{
-                            //    Hist_OnData_CR_Skymap_Regression.at(e).Scale(SR_predict_regression/CR_count_map);
-                            //}
                             Hist_OnData_CR_Skymap_Regression.at(e).Scale(SR_predict_regression/CR_count_map);
                         }
 
                         // perturbation method
                         double total_on_cr_count = CR_count + SR_predict_regression;
-                        double total_off_cr_count = Hist_OffData_MSCLW_Fine_Sum.at(e).Integral();
-                        //double total_on_sr_count = SR_predict_regression;
-                        //double total_off_sr_count = Hist_OffData_MSCLW_Fine_Sum.at(e).Integral(1,binx_blind_upper_global,1,biny_blind_upper_global);
-                        TH2D Hist_OffData_MSCLW_CR_scaled = TH2D("Hist_OffData_MSCLW_CR_scaled","",mtx_dim_l_fine,MSCL_plot_lower,MSCL_plot_upper,mtx_dim_w_fine,MSCW_plot_lower,MSCW_plot_upper);
+                        double total_off_cr_count = Hist_OffData_MSCLW_Sum.at(e).Integral();
+                        TH2D Hist_OffData_MSCLW_CR_scaled = TH2D("Hist_OffData_MSCLW_CR_scaled","",mtx_dim_l_fine+n_extra_lower_bins,MSCL_plot_lower_fine,MSCL_plot_upper,mtx_dim_w_fine+n_extra_lower_bins,MSCW_plot_lower_fine,MSCW_plot_upper);
                         if (total_off_cr_count>0.)
                         {
                             Hist_OffData_MSCLW_CR_scaled.Add(&Hist_OffData_MSCLW_Fine_Sum.at(e),total_on_cr_count/total_off_cr_count);
                         }
                         MatrixXcd mtx_off_data_cr_scaled = fillMatrix(&Hist_OffData_MSCLW_CR_scaled);
                         MatrixXcd mtx_on_data = fillMatrix(&Hist_OnData_MSCLW_Fine.at(e));
-                        //mtx_on_data.block(0,0,binx_blind_upper_global,biny_blind_upper_global) = mtx_off_data_cr_scaled.block(0,0,binx_blind_upper_global,biny_blind_upper_global);
                         MatrixXcd mtx_on_bkgd = MatrixPerturbationMethod(mtx_off_data_cr_scaled, mtx_on_data, matrix_rank[e]);
                         fill2DHistogram(&Hist_OnBkgd_MSCLW_Fine.at(e),mtx_on_bkgd);
-                        double SR_predict_perturbation = Hist_OnBkgd_MSCLW_Fine.at(e).Integral(1,binx_blind_upper_global,1,biny_blind_upper_global);
+                        double SR_predict_perturbation = Hist_OnBkgd_MSCLW_Fine.at(e).Integral(binx_blind_lower_global+1,binx_blind_upper_global,biny_blind_lower_global+1,biny_blind_upper_global);
 
-                        CR_count_map = Hist_OnData_CR_Skymap_Perturbation.at(e).Integral();
+                        //CR_count_map = Hist_OnData_CR_Skymap_Perturbation.at(e).Integral();
+                        CR_count_map = CR_count_weighted.at(e);
                         if (CR_count_map>0.)
                         {
                             if (matrix_rank[e]==1)
@@ -1716,6 +1734,7 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                     for (int e=0;e<N_energy_bins;e++) 
                     {
                         Hist_OffData_MSCLW_Fine_Sum.at(e).Reset();
+                        Hist_OffData_MSCLW_Sum.at(e).Reset();
                         Hist_OnData_MSCLW.at(e).Reset();
                         Hist_OnData_MSCLW_Fine.at(e).Reset();
                         Hist_OnBkgd_MSCLW_Fine.at(e).Reset();
@@ -1726,6 +1745,7 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         Hist_OnData_CR_Skymap_Ratio.at(e).Reset();
                         Hist_OnData_CR_Skymap_Regression.at(e).Reset();
                         Hist_OnData_CR_Skymap_Perturbation.at(e).Reset();
+                        CR_count_weighted.at(e) = 0.;
                     }
 
                     NSB_mean = NSB_mean/double(n_samples);

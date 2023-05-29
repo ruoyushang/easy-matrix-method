@@ -5,6 +5,7 @@ int matrix_rank[N_energy_bins] = {1,2,2,2,2,2,2,1,1,1,1};
 int cr_correction_xyoff_bins[N_energy_bins] = {20,20,20,10,10,5,5,3,3,1,1};
 
 const int N_Xoff_bins = 1;
+const int N_Yoff_bins = 1;
 
 double source_theta_cut = 0.3;
 double Elev_cut_lower = 30.;
@@ -17,18 +18,23 @@ double min_CR_count = 100000.;
 
 double MSCW_cut_blind = 0.5;
 double MSCL_cut_blind = 0.7;
+int n_extra_lower_bins = 1;
 int mtx_dim_w = 2;
 int mtx_dim_l = 2;
-//int mtx_dim_w = 4;
-//int mtx_dim_l = 4;
-int mtx_dim_w_fine = 8;
-int mtx_dim_l_fine = 8;
+int mtx_dim_w_fine = 12;
+int mtx_dim_l_fine = 12;
 double gamma_hadron_dim_ratio_w = 1.;
 double gamma_hadron_dim_ratio_l = 1.;
+//int mtx_dim_w = 3;
+//int mtx_dim_l = 3;
+//int mtx_dim_w_fine = 12;
+//int mtx_dim_l_fine = 12;
+//double gamma_hadron_dim_ratio_w = 2.;
+//double gamma_hadron_dim_ratio_l = 2.;
 
 bool use_stat_err_weight = true;
 
-int min_NImages = 2;
+int min_NImages = 3;
 double max_Roff = 1.6;
 double EmissionHeight_cut = 6.;
 double max_Rcore = 250.;

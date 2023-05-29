@@ -49,6 +49,7 @@ energy_bin = [100.,200.,251.,316.,398.,501.,794.,1259.,1995.,3162.,5011.,7943.]
 smooth_size_spectroscopy = 0.07
 calibration_radius = 0.2 # need to be larger than the PSF and smaller than the integration radius
 n_xoff_bins = 1
+n_yoff_bins = 1
 
 def reflectXaxis(hist):
 
@@ -580,7 +581,7 @@ def MatplotlibMap2D(hist_map,hist_tone,hist_contour,fig,label_x,label_y,label_z,
     axbig.set_xticklabels(x_axis_reflect)
     fig.savefig("output_plots/%s.png"%(plotname),bbox_inches='tight')
 
-    if 'SkymapZscore_Sum' in plotname:
+    if 'SkymapSignificance_Sum' in plotname:
         if roi_r>0.:
             mycircle = plt.Circle((-roi_x, roi_y), roi_r, color='b', fill=False)
             axbig.add_patch(mycircle)
@@ -588,7 +589,7 @@ def MatplotlibMap2D(hist_map,hist_tone,hist_contour,fig,label_x,label_y,label_z,
         fig.savefig("output_plots/%s_legend.png"%(plotname),bbox_inches='tight')
     axbig.remove()
 
-    if 'SkymapZscore_Sum' in plotname:
+    if 'SkymapSignificance_Sum' in plotname:
         for star in range(0,len(other_star_markers)):
             print ('%s, (%0.2f,%0.2f)'%(other_star_labels[star],-other_star_markers[star][0],other_star_markers[star][1]))
 
