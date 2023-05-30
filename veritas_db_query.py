@@ -80,7 +80,7 @@ def print_all_runs_nsb():
     res_runtime = crs.fetchall()
 
     print ('Calculate NSB...')
-    with open('NSB_allruns.txt', 'w') as file:
+    with open('/gamma_raid/userspace/rshang/SMI_AUX/NSB_allruns.txt', 'w') as file:
         previous_run_id = 0
         for x in res_runtime:
 
@@ -260,7 +260,7 @@ def print_all_runs_l3rate():
         all_runs_type[x['run_id']] = x['run_type']
 
     print('Calculate Run L3 rate...')
-    with open('l3rate_allruns.txt', 'w') as file:
+    with open('/gamma_raid/userspace/rshang/SMI_AUX/l3rate_allruns.txt', 'w') as file:
         previous_run_id = 0
         for x in res_run_info:
 
@@ -324,7 +324,7 @@ def print_all_runs_el_az():
         all_runs_type[x['run_id']] = x['run_type']
 
     print('Calculate Run Elev Azim...')
-    with open('elaz_allruns.txt', 'w') as file:
+    with open('/gamma_raid/userspace/rshang/SMI_AUX/elaz_allruns.txt', 'w') as file:
         previous_run_id = 0
         for x in res_run_info:
 
@@ -434,7 +434,7 @@ def print_all_runs_timecut():
     res = crs.fetchall()
 
     print ('Get timecut...')
-    with open('timecuts_allruns.txt', 'w') as file:
+    with open('/gamma_raid/userspace/rshang/SMI_AUX/timecuts_allruns.txt', 'w') as file:
         for x in res:
             print('%s %s'%(x['run_id'],x['time_cut_mask']))
             file.write('%s %s\n'%(x['run_id'],x['time_cut_mask']))
@@ -464,7 +464,7 @@ def print_all_runs_usable_duration():
     # fetch from cursor
     res = crs.fetchall()
 
-    with open('usable_time_allruns.txt', 'w') as file:
+    with open('/gamma_raid/userspace/rshang/SMI_AUX/usable_time_allruns.txt', 'w') as file:
         for x in res:
             duration = get_sec(str(x['usable_duration']))
             print ('%s %s'%(x['run_id'],duration))
@@ -535,7 +535,7 @@ def print_all_runs_type():
     # fetch from cursor
     res = crs.fetchall()
 
-    with open('runtype_allruns.txt', 'w') as file:
+    with open('/gamma_raid/userspace/rshang/SMI_AUX/runtype_allruns.txt', 'w') as file:
         for x in res:
             print ('%s %s'%(x['run_id'],x['run_type']))
             file.write('%s %s\n'%(x['run_id'],x['run_type']))
@@ -1046,29 +1046,41 @@ input_epoch = sys.argv[6]
 
 run_epoch = input_epoch # 'V5' or 'V6'
 
-print ('++++++++++++++++++++++++++++++++++++++++++++++++++++')
-print ('Get all runs El Az...')
-get_all_runs_info(run_epoch,run_obs_type)
-print ('++++++++++++++++++++++++++++++++++++++++++++++++++++')
+if input_name=='AUX_files':
 
+    print_all_runs_usable_duration()
+    print_all_runs_type()
+    print_all_runs_timecut()
+    print_all_runs_el_az()
+    print_all_runs_nsb()
+    #print_all_runs_l3rate()  # do not use
 
-find_off = True
-find_imposter = True
-obs_name = '%s_%s'%(input_name,run_epoch)
-obs_ra = input_ra
-obs_dec = input_dec
-run_elev_range = [input_elev_low,input_elev_up]
+elif input_name=='Galactic_Plane':
 
-use_local_data = False
-my_list_on_run_ids = find_on_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range)
-use_local_data = False
-my_list_off_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_on_run_ids,False,'PairList')
-my_list_imposter_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_on_run_ids,True,'ImposterList')
-my_list_imposter_off_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_imposter_run_ids,False,'ImposterPairList')
+    obs_name = 'Galactic_Plane_%s'%(run_epoch)
+    find_runs_near_galactic_plane(obs_name,run_epoch,run_obs_type,0.0,5.0)
 
-#run_epoch = 'V6'
-#obs_name = 'Galactic_Plane_%s'%(run_epoch)
-#find_runs_near_galactic_plane(obs_name,run_epoch,run_obs_type,0.0,5.0)
+else:
+
+    print ('++++++++++++++++++++++++++++++++++++++++++++++++++++')
+    print ('Get all runs El Az...')
+    get_all_runs_info(run_epoch,run_obs_type)
+    print ('++++++++++++++++++++++++++++++++++++++++++++++++++++')
+    
+    find_off = True
+    find_imposter = True
+    obs_name = '%s_%s'%(input_name,run_epoch)
+    obs_ra = input_ra
+    obs_dec = input_dec
+    run_elev_range = [input_elev_low,input_elev_up]
+    
+    use_local_data = False
+    my_list_on_run_ids = find_on_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range)
+    use_local_data = False
+    my_list_off_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_on_run_ids,False,'PairList')
+    my_list_imposter_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_on_run_ids,True,'ImposterList')
+    my_list_imposter_off_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_imposter_run_ids,False,'ImposterPairList')
+
 
 run_id = 103322
 #run_id = 104633
@@ -1081,9 +1093,3 @@ run_id = 103322
 #get_run_nsb(run_id)
 #get_run_el_az(run_id)
 
-#print_all_runs_usable_duration()
-#print_all_runs_type()
-#print_all_runs_timecut()
-#print_all_runs_el_az()
-#print_all_runs_nsb()
-#print_all_runs_l3rate()  # do not use

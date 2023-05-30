@@ -82,6 +82,8 @@ double Phioff = 0;
 double theta2 = 0;
 double ra_sky = 0;
 double dec_sky = 0;
+double complementary_ra_sky = 0;
+double complementary_dec_sky = 0;
 double exposure_hours = 0.;
 double exposure_hours_usable = 0.;
 double total_cr_count = 0.;
@@ -134,6 +136,7 @@ vector<TH2D> Hist_OnData_CR_Skymap_Combined_Sum;
 vector<double> CR_count_weighted;
 
 vector<vector<double>> GammaSource_Data;
+vector<vector<double>> BrightStars_Data;
 
 TObject* getEffAreaHistogram(string file_name, int runnumber, double offset)
 {
@@ -224,6 +227,38 @@ void GetGammaSources()
     std::cout << "I found " << GammaSource_Data.size() << " gamma-ray sources." << std::endl;
 }
 
+void GetBrightStars()
+{
+    std::ifstream astro_file(SMI_AUX+"/Hipparcos_MAG8_1997.dat");
+    std::string line;
+    // Read one line at a time into the variable line:
+    while(std::getline(astro_file, line))
+    {
+        if (line.find("#")!=std::string::npos) continue;
+        if (line.find("*")!=std::string::npos) continue;
+        if (line.empty()) continue;
+        std::vector<double>   lineData;
+        std::stringstream  lineStream(line);
+        double value;
+        // Read an integer at a time from the line
+        while(lineStream >> value)
+        {
+            // Add the integers from a line to a 1D array (vector)
+            lineData.push_back(value);
+        }
+        if (lineData.size()!=5) continue;
+        double star_ra = lineData.at(0);
+        double star_dec = lineData.at(1);
+        double star_brightness = lineData.at(3)+lineData.at(4);
+        if (pow((mean_tele_point_ra-star_ra)*(mean_tele_point_ra-star_ra)+(mean_tele_point_dec-star_dec)*(mean_tele_point_dec-star_dec),0.5)>Skymap_size_x) continue;
+        if (star_brightness<brightness_cut)
+        {
+            BrightStars_Data.push_back(lineData);
+        }
+    }
+    std::cout << "I found " << BrightStars_Data.size() << " bright stars" << std::endl;
+}
+
 bool CoincideWithGammaSources(double ra, double dec, double radius_cut)
 {
     bool isCoincident = false;
@@ -233,6 +268,29 @@ bool CoincideWithGammaSources(double ra, double dec, double radius_cut)
         double star_dec = GammaSource_Data.at(star).at(1);
         double radius = pow((ra-star_ra)*(ra-star_ra)+(dec-star_dec)*(dec-star_dec),0.5);
         if (radius>radius_cut) continue;
+        isCoincident = true;
+    }
+    return isCoincident;
+}
+
+bool CoincideWithBrightStars(double ra, double dec, double evt_energy)
+{
+    bool isCoincident = false;
+    for (int star=0;star<BrightStars_Data.size();star++)
+    {
+        double star_ra = BrightStars_Data.at(star).at(0);
+        double star_dec = BrightStars_Data.at(star).at(1);
+        double star_brightness = BrightStars_Data.at(star).at(3);
+        double radius = pow((ra-star_ra)*(ra-star_ra)+(dec-star_dec)*(dec-star_dec),0.5);
+        if (star_brightness>brightness_cut) continue;
+        if (evt_energy<398.)
+        {
+            if (radius>bright_star_radius_cut) continue;
+        }
+        else
+        {
+            if (radius>bright_star_radius_cut) continue;
+        }
         isCoincident = true;
     }
     return isCoincident;
@@ -374,7 +432,7 @@ void SortingList(vector<int>* list, vector<double>* list_pointing)
     {
         for (int run2=run1+1;run2<list->size();run2++)
         {
-            if (list_pointing->at(run1)>list_pointing->at(run2))
+            if (list_pointing->at(run1)<list_pointing->at(run2))
             {
                 temp_list = list->at(run1);
                 temp_list_pointing = list_pointing->at(run1);
@@ -395,8 +453,8 @@ vector<double> GetRunElevationList(vector<int> list)
         double run_elev = GetRunElevAzim(int(list.at(run))).first;
         double run_azim = GetRunElevAzim(int(list.at(run))).second;
         if (run_azim>180.) run_azim = 360.-run_azim;
-        //list_elev.push_back(run_elev);
-        list_elev.push_back(run_azim);
+        list_elev.push_back(run_elev);
+        //list_elev.push_back(run_azim);
     }
     return list_elev;
 }
@@ -638,10 +696,11 @@ double GetRunUsableTime(string file_name,int run_number)
 bool SelectNImages()
 {
     if (NImages<min_NImages) return false;
-    if (EmissionHeight<EmissionHeight_cut) return false;
-    if (EmissionHeight>20.) return false;
+    if (EmissionHeight<min_EmissionHeight_cut) return false;
+    if (EmissionHeight>max_EmissionHeight_cut) return false;
     if (EChi2S>1.) return false;
     if (Xcore*Xcore+Ycore*Ycore>max_Rcore*max_Rcore) return false;
+    if (Xcore*Xcore+Ycore*Ycore<min_Rcore*min_Rcore) return false;
     if (pow(R2off,0.5)>max_Roff) return false;
     return true;
 }
@@ -864,6 +923,8 @@ void SingleRunAnalysis(int int_run_number, int int_run_number_real, int input_xo
         Phioff = atan2(Yoff,Xoff)+M_PI;
         ra_sky = real_tele_point_ra_dec.first+Xoff_derot;
         dec_sky = real_tele_point_ra_dec.second+Yoff_derot;
+        complementary_ra_sky = real_tele_point_ra_dec.first-Xoff_derot;
+        complementary_dec_sky = real_tele_point_ra_dec.second-Yoff_derot;
         theta2 = pow(ra_sky-mean_tele_point_ra,2)+pow(dec_sky-mean_tele_point_dec,2);
         int energy_idx = Hist_ErecS.FindBin(ErecS*1000.)-1;
         if (!SelectNImages()) continue;
@@ -916,13 +977,39 @@ void SingleRunAnalysis(int int_run_number, int int_run_number_real, int input_xo
             int local_xoff_idx = Hist_OffData_Ratio_XYoff.at(energy_idx).GetXaxis()->FindBin(Xoff);
             int local_yoff_idx = Hist_OffData_Ratio_XYoff.at(energy_idx).GetYaxis()->FindBin(Yoff);
             double weight = Hist_OffData_Ratio_XYoff.at(energy_idx).GetBinContent(local_xoff_idx,local_yoff_idx);
-            Hist_OnData_CR_Skymap_FoV.at(energy_idx).Fill(ra_sky,dec_sky,weight);
-            Hist_OnData_CR_Skymap_Ratio.at(energy_idx).Fill(ra_sky,dec_sky,weight);
-            Hist_OnData_CR_Skymap_Regression.at(energy_idx).Fill(ra_sky,dec_sky,weight);
-            Hist_OnData_CR_Skymap_Perturbation.at(energy_idx).Fill(ra_sky,dec_sky,weight);
-            if (pow(theta2,0.5)>0.3)
+
+            if (CoincideWithBrightStars(complementary_ra_sky,complementary_dec_sky,ErecS*1000.))
             {
-                Hist_OnData_CR_Skymap_Mask.at(energy_idx).Fill(ra_sky,dec_sky,weight);
+                Hist_OnData_CR_Skymap_FoV.at(energy_idx).Fill(complementary_ra_sky,complementary_dec_sky,weight*0.5);
+                Hist_OnData_CR_Skymap_Ratio.at(energy_idx).Fill(complementary_ra_sky,complementary_dec_sky,weight*0.5);
+                Hist_OnData_CR_Skymap_Regression.at(energy_idx).Fill(complementary_ra_sky,complementary_dec_sky,weight*0.5);
+                Hist_OnData_CR_Skymap_Perturbation.at(energy_idx).Fill(complementary_ra_sky,complementary_dec_sky,weight*0.5);
+                if (pow(theta2,0.5)>0.3)
+                {
+                    Hist_OnData_CR_Skymap_Mask.at(energy_idx).Fill(complementary_ra_sky,complementary_dec_sky,weight*0.5);
+                }
+            }
+            if (CoincideWithBrightStars(ra_sky,dec_sky,ErecS*1000.))
+            {
+                Hist_OnData_CR_Skymap_FoV.at(energy_idx).Fill(ra_sky,dec_sky,weight*0.5);
+                Hist_OnData_CR_Skymap_Ratio.at(energy_idx).Fill(ra_sky,dec_sky,weight*0.5);
+                Hist_OnData_CR_Skymap_Regression.at(energy_idx).Fill(ra_sky,dec_sky,weight*0.5);
+                Hist_OnData_CR_Skymap_Perturbation.at(energy_idx).Fill(ra_sky,dec_sky,weight*0.5);
+                if (pow(theta2,0.5)>0.3)
+                {
+                    Hist_OnData_CR_Skymap_Mask.at(energy_idx).Fill(ra_sky,dec_sky,weight*0.5);
+                }
+            }
+            else
+            {
+                Hist_OnData_CR_Skymap_FoV.at(energy_idx).Fill(ra_sky,dec_sky,weight);
+                Hist_OnData_CR_Skymap_Ratio.at(energy_idx).Fill(ra_sky,dec_sky,weight);
+                Hist_OnData_CR_Skymap_Regression.at(energy_idx).Fill(ra_sky,dec_sky,weight);
+                Hist_OnData_CR_Skymap_Perturbation.at(energy_idx).Fill(ra_sky,dec_sky,weight);
+                if (pow(theta2,0.5)>0.3)
+                {
+                    Hist_OnData_CR_Skymap_Mask.at(energy_idx).Fill(ra_sky,dec_sky,weight);
+                }
             }
             Hist_Expo_Roff.Fill(pow(R2off,0.5),exposure_thisrun*weight);
             Hist_SingleRun_AreaTime_Skymap.Fill(ra_sky,dec_sky,evt_eff_area*exposure_thisrun*weight);
@@ -1299,6 +1386,7 @@ void FillHistograms(string target_data, bool isON, int doImposter)
     SortingList(&Data_runlist_init,&Data_runlist_init_elev);
 
     GetGammaSources();
+    GetBrightStars();
 
     std::cout <<__LINE__ << std::endl;
 
@@ -1838,6 +1926,9 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                     total_cr_count = 0.;
                     n_samples = 0;
                     effective_area.clear();
+                    NSB_mean = 0.;
+                    Elev_mean = 0.;
+                    Azim_mean = 0.;
                     for (int e=0;e<N_energy_bins;e++) 
                     {
                         effective_area.push_back(0.);

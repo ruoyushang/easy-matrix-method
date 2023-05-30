@@ -35,14 +35,14 @@ from spectral_cube import SpectralCube
 
 # Great examples of matplotlib plots: https://atmamani.github.io/cheatsheets/matplotlib/matplotlib_2/
 
-folder_path = 'output_nuclear'
-#folder_path = 'output_M2x2'
+#folder_path = 'output_nuclear'
+folder_path = 'output_nuclear_test'
 
 #analysis_method = 'FoV'
 #analysis_method = 'Ratio'
 #analysis_method = 'Regression'
-#analysis_method = 'Perturbation'
-analysis_method = 'Combined'
+analysis_method = 'Perturbation'
+#analysis_method = 'Combined'
 
 energy_bin = [100.,200.,251.,316.,398.,501.,794.,1259.,1995.,3162.,5011.,7943.]
 
@@ -296,8 +296,8 @@ def GetGammaSourceInfo():
     drawPulsar = True
     drawSNR = True
     drawFermi = True
-    drawHAWC = False
-    drawTeV = False
+    drawHAWC = True
+    drawTeV = True
 
     if drawBrightStar:
         star_name, star_ra, star_dec = ReadBrightStarListFromFile()
