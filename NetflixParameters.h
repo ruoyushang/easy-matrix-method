@@ -4,6 +4,10 @@ double energy_bins[N_energy_bins+1] = {100.,200.,251.,316.,398.,501.,794.,1259.,
 int matrix_rank[N_energy_bins] = {1,2,2,2,2,2,2,1,1,1,1};
 int cr_correction_xyoff_bins[N_energy_bins] = {20,20,20,10,10,3,3,1,1,1,1};
 
+double method_ratio_rms[N_energy_bins] =        {1.000,1.000,1.000,0.047,0.045,0.044,0.058,0.087,0.139,0.265,0.300};
+double method_regression_rms[N_energy_bins] =   {1.000,1.000,1.000,0.048,0.039,0.041,0.060,0.100,0.169,0.246,0.332};
+double method_pertrubation_rms[N_energy_bins] = {1.000,0.028,0.029,0.040,0.036,0.034,0.065,0.087,0.139,0.265,0.300};
+
 const int N_Xoff_bins = 1;
 const int N_Yoff_bins = 1;
 
@@ -31,7 +35,8 @@ double gamma_hadron_dim_ratio_l = 1.;
 //double gamma_hadron_dim_ratio_w = 2.;
 //double gamma_hadron_dim_ratio_l = 2.;
 
-bool use_stat_err_weight = false;
+bool use_stat_err_weight = true;
+//bool use_stat_err_weight = false;
 
 int min_NImages = 3;
 double max_Roff = 1.6;

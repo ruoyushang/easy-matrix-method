@@ -296,8 +296,8 @@ def GetGammaSourceInfo():
     drawPulsar = True
     drawSNR = True
     drawFermi = True
-    drawHAWC = True
-    drawTeV = True
+    drawHAWC = False
+    drawTeV = False
 
     if drawBrightStar:
         star_name, star_ra, star_dec = ReadBrightStarListFromFile()
@@ -400,6 +400,8 @@ def MatplotlibMap2D(hist_map,hist_tone,hist_contour,fig,label_x,label_y,label_z,
     print ('Making plot %s...'%(plotname))
 
     colormap = 'coolwarm'
+    if 'SkymapCOMap' in plotname:
+        colormap = 'gray'
 
     map_nbins_x = hist_map.GetNbinsX()
     map_nbins_y = hist_map.GetNbinsY()
@@ -541,29 +543,31 @@ def MatplotlibMap2D(hist_map,hist_tone,hist_contour,fig,label_x,label_y,label_z,
     label_y = 'Dec'
     axbig.set_xlabel(label_x)
     axbig.set_ylabel(label_y)
-    if label_z=='Significance':
+    if label_z=='Significance' and not 'SkymapHAWC' in plotname:
         max_z = 5.
         im = axbig.imshow(grid_z, origin='lower', cmap=colormap, extent=(x_axis.min(),x_axis.max(),y_axis.min(),y_axis.max()),vmin=-max_z,vmax=max_z,zorder=0)
     else:
         im = axbig.imshow(grid_z, origin='lower', cmap=colormap, extent=(x_axis.min(),x_axis.max(),y_axis.min(),y_axis.max()),vmin=min_z,vmax=max_z,zorder=0)
 
-    list_colors = ['orange','lime','deepskyblue']
+    list_colors = ['tomato','lime','deepskyblue']
     list_styles = ['solid','solid','solid']
     for ctr in range(0,len(list_grid_contour)):
         axbig.contour(list_grid_contour[len(list_grid_contour)-1-ctr], list_levels[len(list_grid_contour)-1-ctr], linestyles=list_styles[len(list_grid_contour)-1-ctr], colors=list_colors[len(list_grid_contour)-1-ctr], extent=(x_axis.min(),x_axis.max(),y_axis.min(),y_axis.max()),zorder=1)
-    favorite_color = 'red'
+    favorite_color = 'k'
+    if 'SkymapCOMap' in plotname:
+        favorite_color = 'r'
     for star in range(0,len(other_star_markers)):
         marker_size = 60
         if other_star_types[star]=='PSR':
-            axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='^', label=other_star_labels[star])
-        if other_star_types[star]=='SNR':
             axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='+', label=other_star_labels[star])
+        if other_star_types[star]=='SNR':
+            axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='^', label=other_star_labels[star])
             mycircle = plt.Circle( (other_star_markers[star][0], other_star_markers[star][1]), other_star_markers[star][2], fill = False, color=favorite_color)
             axbig.add_patch(mycircle)
         if other_star_types[star]=='HAWC':
             axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c='violet', marker='+', label=other_star_labels[star])
         if other_star_types[star]=='Fermi':
-            axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c='cyan', marker='+', label=other_star_labels[star])
+            axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='s', label=other_star_labels[star])
         if other_star_types[star]=='MSP':
             axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c='tomato', marker='+', label=other_star_labels[star])
         if other_star_types[star]=='TeV':
@@ -1001,4 +1005,108 @@ def GetRegionSpectrum(hist_data_skymap,ebin_low,ebin_up,roi_x,roi_y,roi_r,excl_r
         y_error += [flux_stat_err]
 
     return x_axis, x_error, y_axis, y_error
+
+def GetFITSMap(map_file, hist_map, isRaDec):
+
+    hist_map.Reset()
+    nbins_x = hist_map.GetNbinsX()
+    nbins_y = hist_map.GetNbinsY()
+    MapEdge_left = hist_map.GetXaxis().GetBinLowEdge(1)
+    MapEdge_right = hist_map.GetXaxis().GetBinLowEdge(hist_map.GetNbinsX()+1)
+    MapEdge_lower = hist_map.GetYaxis().GetBinLowEdge(1)
+    MapEdge_upper = hist_map.GetYaxis().GetBinLowEdge(hist_map.GetNbinsY()+1)
+    MapCenter_x = (MapEdge_left+MapEdge_right)/2.
+    MapCenter_y = (MapEdge_lower+MapEdge_upper)/2.
+
+    hdu = fits.open(map_file)[0]
+    wcs = WCS(hdu.header)
+    image_data = hdu.data
+
+    print ("wcs")
+    print (wcs)
+
+    image_shape = np.shape(image_data)
+    for binx in range(0,nbins_x):
+        for biny in range(0,nbins_y):
+            ra = hist_map.GetXaxis().GetBinCenter(binx+1)
+            dec = hist_map.GetYaxis().GetBinCenter(biny+1)
+            pixs = wcs.all_world2pix(ra,dec,1)
+            if int(pixs[0])<0: continue
+            if int(pixs[1])<0: continue
+            if int(pixs[0])>=image_shape[0]: continue
+            if int(pixs[1])>=image_shape[1]: continue
+            fits_data = image_data[int(pixs[1]),int(pixs[0])]
+            hist_map.SetBinContent(binx+1,biny+1,fits_data)
+
+    return hist_map
+
+def GetSlicedDataCubeMap(map_file, hist_map, vel_low, vel_up):
+
+    hist_map.Reset()
+    nbinsx = hist_map.GetNbinsX()
+    nbinsy = hist_map.GetNbinsY()
+    map_center_ra = hist_map.GetXaxis().GetBinCenter(int(float(nbinsx)/2.))
+    map_center_dec = hist_map.GetYaxis().GetBinCenter(int(float(nbinsy)/2.))
+    map_center_lon, map_center_lat = ConvertRaDecToGalactic(map_center_ra, map_center_dec)
+
+    filename = map_file
+
+    hdu = fits.open(filename)[0]
+    wcs = WCS(hdu.header)
+    image_data = hdu.data
+
+    pixs_start = wcs.all_world2pix(vel_low,map_center_lon,map_center_lat,1)
+    pixs_end = wcs.all_world2pix(vel_up,map_center_lon,map_center_lat,1)
+    vel_idx_start = int(pixs_start[0])
+    vel_idx_end = int(pixs_end[0])
+
+    image_data_reduced_z = np.full((image_data[:, :, vel_idx_start].shape),0.)
+    for idx in range(vel_idx_start,vel_idx_end):
+        world_coord = wcs.all_pix2world(idx,0,0,1) 
+        velocity = world_coord[0]
+        world_coord = wcs.all_pix2world(idx+1,0,0,1) 
+        velocity_next = world_coord[0]
+        delta_vel = velocity_next - velocity
+        image_data_reduced_z += image_data[:, :, idx]*delta_vel
+
+    for binx in range(0,nbinsx):
+        for biny in range(0,nbinsy):
+            map_ra = hist_map.GetXaxis().GetBinCenter(binx+1)
+            map_dec = hist_map.GetYaxis().GetBinCenter(biny+1)
+            map_lon, map_lat = ConvertRaDecToGalactic(map_ra, map_dec)
+            map_pixs = wcs.all_world2pix(vel_low, map_lon, map_lat, 1)
+            pix_lon = int(map_pixs[1])
+            pix_lat = int(map_pixs[2])
+            hist_map.SetBinContent(binx+1,biny+1,image_data_reduced_z[pix_lat,pix_lon])
+
+def GetHealpixMap(map_file, hist_map, isRaDec):
+
+    hist_map.Reset()
+    nbins_x = hist_map.GetNbinsX()
+    nbins_y = hist_map.GetNbinsY()
+    MapEdge_left = hist_map.GetXaxis().GetBinLowEdge(1)
+    MapEdge_right = hist_map.GetXaxis().GetBinLowEdge(hist_map.GetNbinsX()+1)
+    MapEdge_lower = hist_map.GetYaxis().GetBinLowEdge(1)
+    MapEdge_upper = hist_map.GetYaxis().GetBinLowEdge(hist_map.GetNbinsY()+1)
+    MapCenter_x = (MapEdge_left+MapEdge_right)/2.
+    MapCenter_y = (MapEdge_lower+MapEdge_upper)/2.
+
+    hpx, header = hp.read_map(map_file, field=0, h=True)
+    #hpx, header = hp.read_map(map_file, field=1, h=True)
+    npix = len(hpx)
+    nside = hp.npix2nside(npix)
+    for ipix in range(0,npix):
+        theta, phi = hp.pix2ang(nside, ipix)
+        ra = np.rad2deg(phi)
+        dec = np.rad2deg(0.5 * np.pi - theta)
+        fits_data = hpx[ipix]
+        binx = hist_map.GetXaxis().FindBin(ra)
+        biny = hist_map.GetYaxis().FindBin(dec)
+        if binx<1: continue
+        if biny<1: continue
+        if binx>hist_map.GetNbinsX(): continue
+        if biny>hist_map.GetNbinsY(): continue
+        hist_map.SetBinContent(binx,biny,fits_data)
+
+    return hist_map
 

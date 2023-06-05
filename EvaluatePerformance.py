@@ -320,28 +320,6 @@ for energy_idx in range(0,len(energy_bin)-1):
     array_rebin_syst_err_combined += [array_rebin_syst_err_per_energy_combined]
 
 for energy_idx in range(0,len(energy_bin)-1):
-    array_stat_err_mean = np.mean(array_rebin_stat_err[energy_idx])
-    array_syst_err_ratio_mean = np.mean(array_rebin_syst_err_ratio[energy_idx])
-    array_syst_err_regression_mean = np.mean(array_rebin_syst_err_regression[energy_idx])
-    array_syst_err_perturbation_mean = np.mean(array_rebin_syst_err_perturbation[energy_idx])
-    array_syst_err_combined_mean = np.mean(array_rebin_syst_err_combined[energy_idx])
-    array_syst_err_ratio_rms = np.sqrt(np.mean(np.square(array_rebin_syst_err_ratio[energy_idx])))
-    array_syst_err_regression_rms = np.sqrt(np.mean(np.square(array_rebin_syst_err_regression[energy_idx])))
-    array_syst_err_perturbation_rms = np.sqrt(np.mean(np.square(array_rebin_syst_err_perturbation[energy_idx])))
-    array_syst_err_combined_rms = np.sqrt(np.mean(np.square(array_rebin_syst_err_combined[energy_idx])))
-    print ('================================================================================================')
-    print ('Energy = %s'%(energy_bin[energy_idx]))
-    print ('mean of stat. error of data = %0.3f'%(array_stat_err_mean))
-    print ('mean of syst. error of simple scaling method = %0.3f'%(array_syst_err_ratio_mean))
-    print ('rms of syst. error of simple scaling method = %0.3f'%(array_syst_err_ratio_rms))
-    print ('mean of syst. error of regression method = %0.3f'%(array_syst_err_regression_mean))
-    print ('rms of syst. error of regression method = %0.3f'%(array_syst_err_regression_rms))
-    print ('mean of syst. error of perturbation method = %0.3f'%(array_syst_err_perturbation_mean))
-    print ('rms of syst. error of perturbation method = %0.3f'%(array_syst_err_perturbation_rms))
-    print ('mean of syst. error of combined method = %0.3f'%(array_syst_err_combined_mean))
-    print ('rms of syst. error of combined method = %0.3f'%(array_syst_err_combined_rms))
-
-for energy_idx in range(0,len(energy_bin)-1):
     fig.clf()
     fig.set_figheight(8)
     fig.set_figwidth(8)
@@ -482,6 +460,84 @@ for energy_idx in range(0,len(energy_bin)-1):
 #    MakeMultipleFitPlot(axbig,Hists,legends,'relative error $\epsilon$','number of entries')
 #    fig.savefig("output_plots/SystErrDist_E%s_Regression.png"%(energy_idx))
 #    axbig.remove()
+
+energy_dep_stat_err = []
+energy_dep_syst_err_ratio_mean = []
+energy_dep_syst_err_regression_mean = []
+energy_dep_syst_err_perturbation_mean = []
+energy_dep_syst_err_combined_mean = []
+energy_dep_syst_err_ratio_rms = []
+energy_dep_syst_err_regression_rms = []
+energy_dep_syst_err_perturbation_rms = []
+energy_dep_syst_err_combined_rms = []
+for energy_idx in range(0,len(energy_bin)-1):
+    array_stat_err = np.mean(array_rebin_stat_err[energy_idx])
+    array_syst_err_ratio_mean = np.mean(array_rebin_syst_err_ratio[energy_idx])
+    array_syst_err_regression_mean = np.mean(array_rebin_syst_err_regression[energy_idx])
+    array_syst_err_perturbation_mean = np.mean(array_rebin_syst_err_perturbation[energy_idx])
+    array_syst_err_combined_mean = np.mean(array_rebin_syst_err_combined[energy_idx])
+    array_syst_err_ratio_rms = np.sqrt(np.mean(np.square(array_rebin_syst_err_ratio[energy_idx])))
+    array_syst_err_regression_rms = np.sqrt(np.mean(np.square(array_rebin_syst_err_regression[energy_idx])))
+    array_syst_err_perturbation_rms = np.sqrt(np.mean(np.square(array_rebin_syst_err_perturbation[energy_idx])))
+    array_syst_err_combined_rms = np.sqrt(np.mean(np.square(array_rebin_syst_err_combined[energy_idx])))
+
+    if math.isnan(array_stat_err):
+        array_stat_err = 1.
+    if math.isnan(array_syst_err_ratio_mean):
+        array_syst_err_ratio_mean = 1.
+    if math.isnan(array_syst_err_regression_mean):
+        array_syst_err_regression_mean = 1.
+    if math.isnan(array_syst_err_perturbation_mean):
+        array_syst_err_perturbation_mean = 1.
+    if math.isnan(array_syst_err_combined_mean):
+        array_syst_err_combined_mean = 1.
+    if math.isnan(array_syst_err_ratio_rms):
+        array_syst_err_ratio_rms = 1.
+    if math.isnan(array_syst_err_regression_rms):
+        array_syst_err_regression_rms = 1.
+    if math.isnan(array_syst_err_perturbation_rms):
+        array_syst_err_perturbation_rms = 1.
+    if math.isnan(array_syst_err_combined_rms):
+        array_syst_err_combined_rms = 1.
+
+    energy_dep_stat_err += [array_stat_err]
+    energy_dep_syst_err_ratio_mean += [array_syst_err_ratio_mean]
+    energy_dep_syst_err_regression_mean += [array_syst_err_regression_mean]
+    energy_dep_syst_err_perturbation_mean += [array_syst_err_perturbation_mean]
+    energy_dep_syst_err_combined_mean += [array_syst_err_combined_mean]
+    energy_dep_syst_err_ratio_rms += [array_syst_err_ratio_rms]
+    energy_dep_syst_err_regression_rms += [array_syst_err_regression_rms]
+    energy_dep_syst_err_perturbation_rms += [array_syst_err_perturbation_rms]
+    energy_dep_syst_err_combined_rms += [array_syst_err_combined_rms]
+
+    print ('================================================================================================')
+    print ('Energy = %s'%(energy_bin[energy_idx]))
+    print ('stat. error of data = %0.3f'%(array_stat_err))
+    print ('mean of syst. error of simple scaling method = %0.3f'%(array_syst_err_ratio_mean))
+    print ('rms of syst. error of simple scaling method = %0.3f'%(array_syst_err_ratio_rms))
+    print ('mean of syst. error of regression method = %0.3f'%(array_syst_err_regression_mean))
+    print ('rms of syst. error of regression method = %0.3f'%(array_syst_err_regression_rms))
+    print ('mean of syst. error of perturbation method = %0.3f'%(array_syst_err_perturbation_mean))
+    print ('rms of syst. error of perturbation method = %0.3f'%(array_syst_err_perturbation_rms))
+    print ('mean of syst. error of combined method = %0.3f'%(array_syst_err_combined_mean))
+    print ('rms of syst. error of combined method = %0.3f'%(array_syst_err_combined_rms))
+
+print ('================================================================================================')
+txt_string = 'double method_ratio_rms[N_energy_bins] = {'
+for energy_idx in range(0,len(energy_bin)-1):
+    txt_string += '%0.3f,'%(energy_dep_syst_err_ratio_rms[energy_idx])
+txt_string += '};'
+print (txt_string)
+txt_string = 'double method_regression_rms[N_energy_bins] = {'
+for energy_idx in range(0,len(energy_bin)-1):
+    txt_string += '%0.3f,'%(energy_dep_syst_err_regression_rms[energy_idx])
+txt_string += '};'
+print (txt_string)
+txt_string = 'double method_pertrubation_rms[N_energy_bins] = {'
+for energy_idx in range(0,len(energy_bin)-1):
+    txt_string += '%0.3f,'%(energy_dep_syst_err_perturbation_rms[energy_idx])
+txt_string += '};'
+print (txt_string)
 
 print ('total_data_expo = %0.1f hrs'%(total_data_expo))
 print ('avg expo per measurement = %0.1f'%(expo_sum_all_energies/total_n_measurements))

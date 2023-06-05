@@ -1191,7 +1191,6 @@ MatrixXcd MatrixPerturbationMethod(MatrixXcd mtx_init_input, MatrixXcd mtx_data_
                     if (kth_entry>entry_size) continue;
                     if (nth_entry>entry_size) continue;
                     if (kth_entry==nth_entry) continue;
-                    //if (kth_entry!=nth_entry) continue;
                     int idx_v = idx_k*size_n + idx_n;
                     mtx_A(idx_u,idx_v) = mtx_U_init(idx_i,idx_k)*mtx_V_init(idx_j,idx_n);
                 }
@@ -1808,8 +1807,13 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         Hist_OnData_CR_Skymap_Ratio_Sum.at(e).Add(&Hist_OnData_CR_Skymap_Ratio.at(e));
                         Hist_OnData_CR_Skymap_Regression_Sum.at(e).Add(&Hist_OnData_CR_Skymap_Regression.at(e));
                         Hist_OnData_CR_Skymap_Perturbation_Sum.at(e).Add(&Hist_OnData_CR_Skymap_Perturbation.at(e));
-                        Hist_OnData_CR_Skymap_Combined_Sum.at(e).Add(&Hist_OnData_CR_Skymap_Regression.at(e),0.5);
-                        Hist_OnData_CR_Skymap_Combined_Sum.at(e).Add(&Hist_OnData_CR_Skymap_Perturbation.at(e),0.5);
+                        double ratio_method_weight = pow(1./method_ratio_rms[e],2);
+                        double regression_method_weight = pow(1./method_regression_rms[e],2);
+                        double perturbation_method_weight = pow(1./method_pertrubation_rms[e],2);
+                        double total_method_weight = ratio_method_weight+regression_method_weight+perturbation_method_weight;
+                        Hist_OnData_CR_Skymap_Combined_Sum.at(e).Add(&Hist_OnData_CR_Skymap_Ratio.at(e),ratio_method_weight/total_method_weight);
+                        Hist_OnData_CR_Skymap_Combined_Sum.at(e).Add(&Hist_OnData_CR_Skymap_Regression.at(e),regression_method_weight/total_method_weight);
+                        Hist_OnData_CR_Skymap_Combined_Sum.at(e).Add(&Hist_OnData_CR_Skymap_Perturbation.at(e),perturbation_method_weight/total_method_weight);
                     }
 
                     off_unblinded_elements.clear();
