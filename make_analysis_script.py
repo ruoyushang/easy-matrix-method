@@ -35,6 +35,8 @@ def PrepareSource(source_name, imposter_idx=0):
             for_syst += [True]
         for_imposter += [0]
 
+PrepareSource('H1426_V6_OFF') 
+PrepareSource('H1426_V5_OFF') 
 PrepareSource('UrsaMajorII_V6_OFF') 
 PrepareSource('UrsaMajorII_V5_OFF') 
 PrepareSource('UrsaMinor_V6_OFF') 
@@ -53,8 +55,6 @@ PrepareSource('Segue1_V6_OFF')
 PrepareSource('Segue1_V5_OFF') 
 PrepareSource('NGC1275_V6_OFF') 
 PrepareSource('NGC1275_V5_OFF') 
-PrepareSource('H1426_V6_OFF') 
-PrepareSource('H1426_V5_OFF') 
 PrepareSource('OJ287_V6_OFF') 
 PrepareSource('OJ287_V5_OFF') 
 PrepareSource('Draco_V6_OFF') 
@@ -85,20 +85,40 @@ PrepareSource('CrabNebula_elev_60_70_V5_OFF')
 PrepareSource('CrabNebula_elev_50_60_V5_OFF')
 PrepareSource('CrabNebula_elev_40_50_V5_OFF')
 
+PrepareSource('CrabNebula_elev_80_90_V6_ON')
+PrepareSource('CrabNebula_elev_70_80_V6_ON')
+PrepareSource('CrabNebula_elev_60_70_V6_ON')
+PrepareSource('CrabNebula_elev_50_60_V6_ON')
+PrepareSource('CrabNebula_elev_40_50_V6_ON')
+PrepareSource('CrabNebula_elev_80_90_V5_ON')
+PrepareSource('CrabNebula_elev_70_80_V5_ON')
+PrepareSource('CrabNebula_elev_60_70_V5_ON')
+PrepareSource('CrabNebula_elev_50_60_V5_ON')
+PrepareSource('CrabNebula_elev_40_50_V5_ON')
+
+PrepareSource('CrabNebula_1p0wobble_V6_ON')
+PrepareSource('CrabNebula_1p5wobble_V6_ON')
+
 imposter_analyses = []
 
-#imposter_analyses += ['1ES0647_V6']
+imposter_analyses += ['Sky_RA55Dec53_V6']
+imposter_analyses += ['1ES0229_V6']
+imposter_analyses += ['1ES0229_V5']
+imposter_analyses += ['PSR_J1907_p0602_V6']
+imposter_analyses += ['PSR_J1907_p0602_V5']
+imposter_analyses += ['PSR_J2021_p4026_V6'] # Gamma Cygni
+imposter_analyses += ['PSR_J2021_p4026_V5']
+imposter_analyses += ['SNR_G189_p03_V6'] # IC 443
+imposter_analyses += ['SNR_G189_p03_V5']
+imposter_analyses += ['Geminga_V6'] 
+imposter_analyses += ['Geminga_V5']
+imposter_analyses += ['PSR_J2021_p3651_V6'] # Dragonfly
+imposter_analyses += ['PSR_J2021_p3651_V5']
+imposter_analyses += ['SNR_G067p6_p0p9_V6']
+imposter_analyses += ['CTB109_V6']
+imposter_analyses += ['CTB109_V5']
 
-#imposter_analyses += ['CrabNebula_elev_80_90_V6']
-#imposter_analyses += ['CrabNebula_elev_70_80_V6']
-#imposter_analyses += ['CrabNebula_elev_60_70_V6']
-#imposter_analyses += ['CrabNebula_elev_50_60_V6']
-#imposter_analyses += ['CrabNebula_elev_40_50_V6']
-#imposter_analyses += ['CrabNebula_elev_80_90_V5']
-#imposter_analyses += ['CrabNebula_elev_70_80_V5']
-#imposter_analyses += ['CrabNebula_elev_60_70_V5']
-#imposter_analyses += ['CrabNebula_elev_50_60_V5']
-#imposter_analyses += ['CrabNebula_elev_40_50_V5']
+#imposter_analyses += ['SgrA_V6']
 
 
 for analysis in range(0,len(imposter_analyses)):
@@ -140,6 +160,7 @@ for s in range(0,len(source)):
     file.write('rm -r %s/%s\n'%(folder,source[s]))
     file.write('mkdir %s/%s\n'%(folder,source[s]))
     file.write('cp GetRunList.h %s/%s\n'%(folder,source[s]))
+    file.write('cp ResetPublicVariables.C %s/%s\n'%(folder,source[s]))
     file.write('cp NetflixParameters.h %s/%s\n'%(folder,source[s]))
     file.write('cp FillHistograms.C %s/%s\n'%(folder,source[s]))
     file.write('cd %s/%s\n'%(folder,source[s]))
@@ -155,7 +176,7 @@ qfile = open("run/qsub_Netflix1.sh","w")
 for s in range(0,len(source)):
     job_counts += 1
     qfile.write('qsub -V -N job_ana_%s run_Netflix1_%s.sh\n'%(source[s],source[s]))
-    qfile.write('sleep 30s\n')
+    qfile.write('sleep 15s\n')
 qfile.close() 
 
 

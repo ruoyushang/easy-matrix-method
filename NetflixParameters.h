@@ -4,9 +4,12 @@ double energy_bins[N_energy_bins+1] = {100.,200.,251.,316.,398.,501.,794.,1259.,
 int matrix_rank[N_energy_bins] = {1,2,2,2,2,2,2,1,1,1,1};
 int cr_correction_xyoff_bins[N_energy_bins] = {20,20,20,10,10,3,3,1,1,1,1};
 
-double method_ratio_rms[N_energy_bins] =        {1.000,1.000,1.000,0.047,0.045,0.044,0.058,0.087,0.139,0.265,0.300};
-double method_regression_rms[N_energy_bins] =   {1.000,1.000,1.000,0.048,0.039,0.041,0.060,0.100,0.169,0.246,0.332};
-double method_pertrubation_rms[N_energy_bins] = {1.000,0.028,0.029,0.040,0.036,0.034,0.065,0.087,0.139,0.265,0.300};
+double method_ratio_mean[N_energy_bins] =        {1.000,0.009,0.009,0.013,0.014,0.016,0.009,0.003,0.011,0.100,-0.061};
+double method_regression_mean[N_energy_bins] =   {1.000,-0.011,-0.002,0.002,0.011,0.015,-0.003,-0.019,-0.083,0.052,0.127};
+double method_pertrubation_mean[N_energy_bins] = {1.000,0.007,0.015,0.020,0.030,0.031,0.041,0.003,0.011,0.100,-0.061};
+double method_ratio_rms[N_energy_bins] =         {1.000,0.076,0.066,0.063,0.059,0.059,0.074,0.122,0.196,0.399,0.402};
+double method_regression_rms[N_energy_bins] =    {1.000,0.053,0.069,0.065,0.061,0.062,0.214,0.156,0.241,0.564,0.540};
+double method_pertrubation_rms[N_energy_bins] =  {1.000,0.037,0.043,0.052,0.059,0.061,0.096,0.122,0.196,0.399,0.402};
 
 const int N_Xoff_bins = 1;
 const int N_Yoff_bins = 1;
@@ -16,8 +19,9 @@ double Elev_cut_lower = 30.;
 double Elev_cut_upper = 90.;
 
 double expo_hour_per_analysis = 5.;
-//double min_CR_count = 100.;
+//double min_CR_count = 50000.;
 double min_CR_count = 100000.;
+//double min_CR_count = 200000.;
 
 double MSCW_cut_blind = 0.5;
 double MSCL_cut_blind = 0.7;

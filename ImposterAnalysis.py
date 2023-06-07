@@ -445,7 +445,7 @@ def MakeSpectrum(roi_x,roi_y,roi_r,roi_name,excl_roi_x,excl_roi_y,excl_roi_r):
     axbig = fig.add_subplot()
     if 'Crab' in source_name:
         axbig.plot(xdata, ydata_crab,'r-',label='1508.06442', zorder=1)
-        axbig.bar(energy_axis, 2.*real_flux_stat_err, bottom=real_flux-real_flux_stat_err, width=2.*energy_error, color='b', align='center', alpha=0.2,zorder=2)
+        axbig.bar(energy_axis, 2.*real_flux_syst_err, bottom=real_flux-real_flux_syst_err, width=2.*energy_error, color='b', align='center', alpha=0.2,zorder=2)
         axbig.errorbar(energy_axis,real_flux,real_flux_total_err,xerr=energy_error,color='k',marker='_',ls='none',label='VERITAS (this work)',zorder=3)
     elif source_name=='PSR_J1907_p0602':
         log_energy = np.linspace(log10(1e2),log10(1e5),50)
@@ -466,7 +466,7 @@ def MakeSpectrum(roi_x,roi_y,roi_r,roi_name,excl_roi_x,excl_roi_y,excl_roi_r):
         #axbig.errorbar(Tobias_energies,Tobias_fluxes,Tobias_flux_errs,color='orange',marker='s',ls='none',label='VERITAS (Tobias)',zorder=1)
         axbig.errorbar(LHAASO_energies,LHAASO_fluxes,LHAASO_flux_errs,color='m',marker='s',ls='none',label='LHAASO',zorder=7)
 
-        axbig.bar(energy_axis, 2.*real_flux_stat_err, bottom=real_flux-real_flux_stat_err, width=2.*energy_error, color='b', align='center', alpha=0.2)
+        axbig.bar(energy_axis, 2.*real_flux_syst_err, bottom=real_flux-real_flux_syst_err, width=2.*energy_error, color='b', align='center', alpha=0.2)
         axbig.errorbar(energy_axis,real_flux,real_flux_total_err,xerr=energy_error,color='k',marker='_',ls='none',label='VERITAS')
 
         PrintSpectralDataForNaima(Tobias_energies,Tobias_fluxes,Tobias_flux_errs,'Tobias')
@@ -478,7 +478,7 @@ def MakeSpectrum(roi_x,roi_y,roi_r,roi_name,excl_roi_x,excl_roi_y,excl_roi_r):
         PrintSpectralDataForNaima(energy_axis,real_flux,real_flux_total_err,'VERITAS')
 
     else:
-        axbig.bar(energy_axis, 2.*real_flux_stat_err, bottom=real_flux-real_flux_stat_err, width=2.*energy_error, color='b', align='center', alpha=0.2)
+        axbig.bar(energy_axis, 2.*real_flux_syst_err, bottom=real_flux-real_flux_syst_err, width=2.*energy_error, color='b', align='center', alpha=0.2)
         axbig.errorbar(energy_axis,real_flux,real_flux_total_err,xerr=energy_error,color='k',marker='_',ls='none',label='VERITAS')
         PrintSpectralDataForNaima(energy_axis,real_flux,real_flux_total_err,'VERITAS')
 
@@ -651,10 +651,8 @@ def MakeExtensionProfile(roi_x,roi_y,roi_r,fit_profile,roi_name,real_map,imposte
     fig.set_figwidth(figsize_x)
     axbig = fig.add_subplot()
     axbig.plot(baseline_xaxis, baseline_yaxis, color='b', ls='dashed')
-    #axbig.bar(theta2, 2.*real_profile_syst_err, bottom=-real_profile_syst_err, width=1.*theta2_err, color='b', align='center', alpha=0.2)
-    #axbig.errorbar(theta2,real_profile,real_profile_stat_err,color='k',marker='s',ls='none',label='ON data')
     axbig.errorbar(theta2,real_profile,real_profile_total_err,color='k',marker='s',ls='none',label='ON data')
-    axbig.bar(theta2, 2.*real_profile_stat_err, bottom=-real_profile_stat_err+real_profile, width=1.*theta2_err, color='b', align='center', alpha=0.2)
+    axbig.bar(theta2, 2.*real_profile_syst_err, bottom=-real_profile_syst_err+real_profile, width=1.*theta2_err, color='b', align='center', alpha=0.2)
     #if fit_profile!=0:
     #    axbig.plot(theta2,diffusion_func(theta2,*popt),color='r')
     axbig.set_ylabel('surface brightness [$\mathrm{TeV}\ \mathrm{cm}^{-2}\mathrm{s}^{-1}\mathrm{deg}^{-2}$]')
@@ -1014,18 +1012,18 @@ if 'PSR_J1907_p0602' in source_name:
     Hist_mc_column_reflect = CommonPlotFunctions.reflectXaxis(Hist_mc_column)
     CommonPlotFunctions.MatplotlibMap2D(Hist_mc_column_reflect,None,[hist_real_diff_skymap_he_reflect,hist_real_diff_skymap_le_reflect,Hist_Fermi_reflect],fig,'RA','Dec','column density [$1/cm^{2}$]','SkymapCOMap_p40p70_%s'%(plot_tag))
 
-    #Hist_Hawc = ROOT.TH2D("Hist_Hawc","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
-    #Hist_Hawc.Rebin2D(3,3)
-    #hawc_map_list = []
-    ##hawc_map_list += ['cd'] # 1-3.16 TeV
-    ##hawc_map_list += ['ef'] # 3.16-10 TeV
-    ##hawc_map_list += ['gh'] # 10-31.6 TeV
-    ##hawc_map_list += ['ij'] # 31.6-100 TeV
-    #hawc_map_list += ['kl'] # 100-316 TeV
-    #for hfile in range(0,len(hawc_map_list)):
-    #    MWL_map_file = '/home/rshang/MatrixDecompositionMethod/MWL_maps/%s-gaussGDE.fits'%(hawc_map_list[hfile])
-    #    Hist_Hawc = CommonPlotFunctions.GetHealpixMap(MWL_map_file, Hist_Hawc, True)
-    #    Hist_Hawc_reflect = CommonPlotFunctions.reflectXaxis(Hist_Hawc)
-    #    CommonPlotFunctions.MatplotlibMap2D(Hist_Hawc_reflect,None,[],fig,'RA','Dec','Significance','SkymapHAWC_%s_%s'%(hawc_map_list[hfile],plot_tag))
+    Hist_Hawc = ROOT.TH2D("Hist_Hawc","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
+    Hist_Hawc.Rebin2D(3,3)
+    hawc_map_list = []
+    #hawc_map_list += ['cd'] # 1-3.16 TeV
+    #hawc_map_list += ['ef'] # 3.16-10 TeV
+    #hawc_map_list += ['gh'] # 10-31.6 TeV
+    #hawc_map_list += ['ij'] # 31.6-100 TeV
+    hawc_map_list += ['kl'] # 100-316 TeV
+    for hfile in range(0,len(hawc_map_list)):
+        MWL_map_file = '/home/rshang/MatrixDecompositionMethod/MWL_maps/%s-gaussGDE.fits'%(hawc_map_list[hfile])
+        Hist_Hawc = CommonPlotFunctions.GetHealpixMap(MWL_map_file, Hist_Hawc, True)
+        Hist_Hawc_reflect = CommonPlotFunctions.reflectXaxis(Hist_Hawc)
+        CommonPlotFunctions.MatplotlibMap2D(Hist_Hawc_reflect,None,[],fig,'RA','Dec','Significance','SkymapHAWC_%s_%s'%(hawc_map_list[hfile],plot_tag))
 
 print ('total_data_expo = %0.1f hrs'%(total_data_expo))

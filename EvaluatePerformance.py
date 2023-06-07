@@ -413,37 +413,37 @@ for energy_idx in range(0,len(energy_bin)-1):
     fig.savefig("output_plots/Regression_vs_Perturbation_Correlation_E%s.png"%(energy_idx))
     axbig.remove()
 
-for energy_idx in range(0,len(energy_bin)-1):
-    Hists = []
-    legends = []
-    Hists += [Hist_SystErrDist_Ratio[energy_idx]]
-    legends += ['Simple Scaling']
-    Hists += [Hist_SystErrDist_Combined[energy_idx]]
-    legends += ['Combined']
-
-    fig.clf()
-    fig.set_figheight(figsize_y)
-    fig.set_figwidth(figsize_x)
-    axbig = fig.add_subplot()
-    MakeMultipleFitPlot(axbig,Hists,legends,'relative error $\epsilon$','number of entries')
-    fig.savefig("output_plots/SystErrDist_E%s_Combined.png"%(energy_idx))
-    axbig.remove()
-
 #for energy_idx in range(0,len(energy_bin)-1):
 #    Hists = []
 #    legends = []
 #    Hists += [Hist_SystErrDist_Ratio[energy_idx]]
 #    legends += ['Simple Scaling']
-#    Hists += [Hist_SystErrDist_Perturbation[energy_idx]]
-#    legends += ['Low-rank Perturbation']
+#    Hists += [Hist_SystErrDist_Combined[energy_idx]]
+#    legends += ['Combined']
 #
 #    fig.clf()
 #    fig.set_figheight(figsize_y)
 #    fig.set_figwidth(figsize_x)
 #    axbig = fig.add_subplot()
 #    MakeMultipleFitPlot(axbig,Hists,legends,'relative error $\epsilon$','number of entries')
-#    fig.savefig("output_plots/SystErrDist_E%s_Perturbation.png"%(energy_idx))
+#    fig.savefig("output_plots/SystErrDist_E%s_Combined.png"%(energy_idx))
 #    axbig.remove()
+
+for energy_idx in range(0,len(energy_bin)-1):
+    Hists = []
+    legends = []
+    Hists += [Hist_SystErrDist_Ratio[energy_idx]]
+    legends += ['Simple Scaling']
+    Hists += [Hist_SystErrDist_Perturbation[energy_idx]]
+    legends += ['Low-rank Perturbation']
+
+    fig.clf()
+    fig.set_figheight(figsize_y)
+    fig.set_figwidth(figsize_x)
+    axbig = fig.add_subplot()
+    MakeMultipleFitPlot(axbig,Hists,legends,'relative error $\epsilon$','number of entries')
+    fig.savefig("output_plots/SystErrDist_E%s_Perturbation.png"%(energy_idx))
+    axbig.remove()
 
 #for energy_idx in range(0,len(energy_bin)-1):
 #    Hists = []
@@ -523,19 +523,39 @@ for energy_idx in range(0,len(energy_bin)-1):
     print ('rms of syst. error of combined method = %0.3f'%(array_syst_err_combined_rms))
 
 print ('================================================================================================')
-txt_string = 'double method_ratio_rms[N_energy_bins] = {'
+txt_string = 'double method_ratio_mean[N_energy_bins] =        {'
+for energy_idx in range(0,len(energy_bin)-1):
+    txt_string += '%0.3f,'%(energy_dep_syst_err_ratio_mean[energy_idx])
+txt_string += '};'
+print (txt_string)
+txt_string = 'double method_regression_mean[N_energy_bins] =   {'
+for energy_idx in range(0,len(energy_bin)-1):
+    txt_string += '%0.3f,'%(energy_dep_syst_err_regression_mean[energy_idx])
+txt_string += '};'
+print (txt_string)
+txt_string = 'double method_pertrubation_mean[N_energy_bins] = {'
+for energy_idx in range(0,len(energy_bin)-1):
+    txt_string += '%0.3f,'%(energy_dep_syst_err_perturbation_mean[energy_idx])
+txt_string += '};'
+print (txt_string)
+txt_string = 'double method_ratio_rms[N_energy_bins] =         {'
 for energy_idx in range(0,len(energy_bin)-1):
     txt_string += '%0.3f,'%(energy_dep_syst_err_ratio_rms[energy_idx])
 txt_string += '};'
 print (txt_string)
-txt_string = 'double method_regression_rms[N_energy_bins] = {'
+txt_string = 'double method_regression_rms[N_energy_bins] =    {'
 for energy_idx in range(0,len(energy_bin)-1):
     txt_string += '%0.3f,'%(energy_dep_syst_err_regression_rms[energy_idx])
 txt_string += '};'
 print (txt_string)
-txt_string = 'double method_pertrubation_rms[N_energy_bins] = {'
+txt_string = 'double method_pertrubation_rms[N_energy_bins] =  {'
 for energy_idx in range(0,len(energy_bin)-1):
     txt_string += '%0.3f,'%(energy_dep_syst_err_perturbation_rms[energy_idx])
+txt_string += '};'
+print (txt_string)
+txt_string = 'double method_combined_rms[N_energy_bins] =      {'
+for energy_idx in range(0,len(energy_bin)-1):
+    txt_string += '%0.3f,'%(energy_dep_syst_err_combined_rms[energy_idx])
 txt_string += '};'
 print (txt_string)
 

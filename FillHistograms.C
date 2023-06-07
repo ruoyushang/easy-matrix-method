@@ -133,7 +133,9 @@ vector<TH2D> Hist_OnData_CR_Skymap_Regression_Sum;
 vector<TH2D> Hist_OnData_CR_Skymap_Perturbation_Sum;
 vector<TH2D> Hist_OnData_CR_Skymap_Combined_Sum;
 
-vector<double> CR_count_weighted;
+vector<double> CR_off_count_unweighted;
+vector<double> CR_on_count_unweighted;
+vector<double> CR_on_count_weighted;
 
 vector<vector<double>> GammaSource_Data;
 vector<vector<double>> BrightStars_Data;
@@ -452,7 +454,7 @@ vector<double> GetRunElevationList(vector<int> list)
     {
         double run_elev = GetRunElevAzim(int(list.at(run))).first;
         double run_azim = GetRunElevAzim(int(list.at(run))).second;
-        if (run_azim>180.) run_azim = 360.-run_azim;
+        //if (run_azim>180.) run_azim = 360.-run_azim;
         list_elev.push_back(run_elev);
         //list_elev.push_back(run_azim);
     }
@@ -823,6 +825,11 @@ void TrainingRunAnalysis(int int_run_number, int input_xoff_idx, int input_yoff_
         Hist_OffData_MSCLW.at(energy_idx).Fill(MSCL,MSCW);
         Hist_OffData_MSCLW_Fine.at(energy_idx).Fill(MSCL,MSCW);
 
+        if (!(MSCL<MSCL_cut_blind && MSCW<MSCW_cut_blind && MSCL>-MSCL_cut_blind && MSCW>-MSCW_cut_blind))
+        {
+            CR_off_count_unweighted.at(energy_idx) += 1.;
+        }
+
         if (MSCL>MSCL_plot_upper) continue;
         if (MSCL<MSCL_plot_lower) continue;
         if (MSCW>MSCW_plot_upper) continue;
@@ -956,6 +963,11 @@ void SingleRunAnalysis(int int_run_number, int int_run_number_real, int input_xo
         Hist_OnData_MSCLW.at(energy_idx).Fill(MSCL,MSCW);
         Hist_OnData_MSCLW_Fine.at(energy_idx).Fill(MSCL,MSCW);
 
+        if (!(MSCL<MSCL_cut_blind && MSCW<MSCW_cut_blind && MSCL>-MSCL_cut_blind && MSCW>-MSCW_cut_blind))
+        {
+            CR_on_count_unweighted.at(energy_idx) += 1.;
+        }
+
         if (MSCL>MSCL_plot_upper) continue;
         if (MSCL<MSCL_plot_lower) continue;
         if (MSCW>MSCW_plot_upper) continue;
@@ -1013,7 +1025,7 @@ void SingleRunAnalysis(int int_run_number, int int_run_number_real, int input_xo
             }
             Hist_Expo_Roff.Fill(pow(R2off,0.5),exposure_thisrun*weight);
             Hist_SingleRun_AreaTime_Skymap.Fill(ra_sky,dec_sky,evt_eff_area*exposure_thisrun*weight);
-            CR_count_weighted.at(energy_idx) += weight;
+            CR_on_count_weighted.at(energy_idx) += weight;
 
             Hist_Data_Norm_Skymap.Fill(ra_sky,dec_sky);
             Hist_Data_Elev_Skymap.Fill(ra_sky,dec_sky,tele_elev);
@@ -1320,6 +1332,26 @@ MatrixXcd fillMatrix(TH2D* hist)
     return matrix;
 }
 
+double GetCRcounts(TH2D* hist)
+{
+    double total_count = 0.;
+    for (int binx=0;binx<hist->GetNbinsX();binx++)
+    {
+        for (int biny=0;biny<hist->GetNbinsY();biny++)
+        {
+            double local_count = hist->GetBinContent(binx+1,biny+1);
+            double cell_center_x = hist->GetXaxis()->GetBinCenter(binx+1);
+            double cell_center_y = hist->GetYaxis()->GetBinCenter(biny+1);
+            if (cell_center_x<MSCL_cut_blind && cell_center_y<MSCW_cut_blind && cell_center_x>-MSCL_cut_blind && cell_center_y>-MSCW_cut_blind)
+            {
+                local_count = 0.;
+            }
+            total_count += local_count;
+        }
+    }
+    return total_count;
+}
+
 void FillHistograms(string target_data, bool isON, int doImposter)
 {
 
@@ -1437,7 +1469,9 @@ void FillHistograms(string target_data, bool isON, int doImposter)
         Hist_OffData_CR_XYoff.push_back(TH2D("Hist_OffData_CR_XYoff_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",XYoff_bins,-2.,2.,XYoff_bins,-2.,2.));
         Hist_OffData_Ratio_XYoff.push_back(TH2D("Hist_OffData_Ratio_XYoff_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",XYoff_bins,-2.,2.,XYoff_bins,-2.,2.));
 
-        CR_count_weighted.push_back(0.);
+        CR_on_count_unweighted.push_back(0.);
+        CR_off_count_unweighted.push_back(0.);
+        CR_on_count_weighted.push_back(0.);
     }
 
     binx_blind_upper_global = Hist_OnData_MSCLW_Fine.at(0).GetXaxis()->FindBin(MSCL_cut_blind+0.01)-1;
@@ -1526,11 +1560,11 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                 }
                 OffData_runlist_init = RemoveNonExistingRuns(OffData_runlist_init);
 
-                //if (OffData_runlist_init.size()<nbins_unblind)
-                //{
-                //    std::cout << "Insufficient training data..." << std::endl;
-                //    analyze_this_run = false;
-                //}
+                if (OffData_runlist_init.size()<nbins_unblind)
+                {
+                    std::cout << "Insufficient training data..." << std::endl;
+                    analyze_this_run = false;
+                }
 
                 if (analyze_this_run)
                 {
@@ -1669,7 +1703,7 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                                 double weight = 1.;
                                 if (use_stat_err_weight) 
                                 {
-                                    weight = 1./pow(off_blinded_element.at(sample).at(e),0.5);
+                                    weight = 1./pow(max(1.,off_blinded_element.at(sample).at(e)),0.5);
                                 }
                                 mtx_W(sample,sample) = weight;
                             }
@@ -1736,9 +1770,10 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                             CR_count += unblinded_elements_per_sample.at(e).at(bin);
                         }
                         double SR_predict_ratio = convert_unblind_to_blind_ratio.at(e)*CR_count; 
+                        SR_predict_ratio = SR_predict_ratio/(1.+method_ratio_mean[e]);
 
                         //CR_count_map = Hist_OnData_CR_Skymap_Ratio.at(e).Integral();
-                        CR_count_map = CR_count_weighted.at(e);
+                        CR_count_map = CR_on_count_weighted.at(e);
                         if (CR_count_map>0.)
                         {
                             Hist_OnData_CR_Skymap_Ratio.at(e).Scale(SR_predict_ratio/CR_count_map);
@@ -1760,18 +1795,21 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         double SR_predict_regression = 0.;
                         double total_truth = 0.;
                         SR_predict_regression = vtr_predict(0).real();
+                        SR_predict_regression = SR_predict_regression/(1.+method_regression_mean[e]);
                         total_truth = vtr_truth(0).real();
 
                         //CR_count_map = Hist_OnData_CR_Skymap_Regression.at(e).Integral();
-                        CR_count_map = CR_count_weighted.at(e);
+                        CR_count_map = CR_on_count_weighted.at(e);
                         if (CR_count_map>0.)
                         {
                             Hist_OnData_CR_Skymap_Regression.at(e).Scale(SR_predict_regression/CR_count_map);
                         }
 
                         // perturbation method
-                        double total_on_cr_count = CR_count + SR_predict_regression;
-                        double total_off_cr_count = Hist_OffData_MSCLW_Sum.at(e).Integral();
+                        double total_on_cr_count = GetCRcounts(&Hist_OnData_MSCLW_Fine.at(e));
+                        double total_off_cr_count = GetCRcounts(&Hist_OffData_MSCLW_Fine_Sum.at(e));
+                        //double total_on_cr_count = CR_on_count_unweighted.at(e);
+                        //double total_off_cr_count = CR_off_count_unweighted.at(e);
                         TH2D Hist_OffData_MSCLW_CR_scaled = TH2D("Hist_OffData_MSCLW_CR_scaled","",mtx_dim_l_fine+n_extra_lower_bins,MSCL_plot_lower_fine,MSCL_plot_upper,mtx_dim_w_fine+n_extra_lower_bins,MSCW_plot_lower_fine,MSCW_plot_upper);
                         if (total_off_cr_count>0.)
                         {
@@ -1782,9 +1820,10 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         MatrixXcd mtx_on_bkgd = MatrixPerturbationMethod(mtx_off_data_cr_scaled, mtx_on_data, matrix_rank[e]);
                         fill2DHistogram(&Hist_OnBkgd_MSCLW_Fine.at(e),mtx_on_bkgd);
                         double SR_predict_perturbation = Hist_OnBkgd_MSCLW_Fine.at(e).Integral(binx_blind_lower_global+1,binx_blind_upper_global,biny_blind_lower_global+1,biny_blind_upper_global);
+                        SR_predict_perturbation = SR_predict_perturbation/(1.+method_pertrubation_mean[e]);
 
                         //CR_count_map = Hist_OnData_CR_Skymap_Perturbation.at(e).Integral();
-                        CR_count_map = CR_count_weighted.at(e);
+                        CR_count_map = CR_on_count_weighted.at(e);
                         if (CR_count_map>0.)
                         {
                             if (matrix_rank[e]==1)
@@ -1837,7 +1876,9 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         Hist_OnData_CR_Skymap_Ratio.at(e).Reset();
                         Hist_OnData_CR_Skymap_Regression.at(e).Reset();
                         Hist_OnData_CR_Skymap_Perturbation.at(e).Reset();
-                        CR_count_weighted.at(e) = 0.;
+                        CR_on_count_unweighted.at(e) = 0.;
+                        CR_off_count_unweighted.at(e) = 0.;
+                        CR_on_count_weighted.at(e) = 0.;
                     }
 
                     NSB_mean = NSB_mean/double(n_samples);

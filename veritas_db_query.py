@@ -873,7 +873,8 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
 
     require_nmatch = 5
     if not is_imposter:
-        require_nmatch = 16
+        require_nmatch = 3
+        #require_nmatch = 16
 
     # setup database connection
     dbcnx=pymysql.connect(host='romulus.ucsc.edu', db='VERITAS', user='readonly', cursorclass=pymysql.cursors.DictCursor)
@@ -1076,7 +1077,7 @@ else:
     
     use_local_data = False
     my_list_on_run_ids = find_on_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range)
-    use_local_data = False
+    use_local_data = True
     my_list_off_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_on_run_ids,False,'PairList')
     my_list_imposter_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_on_run_ids,True,'ImposterList')
     my_list_imposter_off_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_imposter_run_ids,False,'ImposterPairList')
