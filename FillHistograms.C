@@ -1118,11 +1118,11 @@ VectorXcd SolutionWithConstraints(MatrixXcd mtx_big, MatrixXcd mtx_constraints_i
 }
 
 
-MatrixXcd MatrixPerturbationMethod(MatrixXcd mtx_init_input, MatrixXcd mtx_data_input, int entry_size, bool isDiagnal)
+MatrixXcd MatrixPerturbationMethod(MatrixXcd mtx_base_input, MatrixXcd mtx_init_input, MatrixXcd mtx_data_input, int rank, int max_rank, bool isDiagnal)
 {
 
     bool isBlind = true;
-    if (entry_size==1)
+    if (rank==0)
     {
         return mtx_init_input;
     }
@@ -1149,6 +1149,15 @@ MatrixXcd MatrixPerturbationMethod(MatrixXcd mtx_init_input, MatrixXcd mtx_data_
     for (int entry=0;entry<svd_init.singularValues().size();entry++)
     {
         mtx_S_init(entry,entry) = svd_init.singularValues()(entry);
+    }
+
+    JacobiSVD<MatrixXd> svd_base(mtx_base_input.real(), ComputeFullU | ComputeFullV);
+    MatrixXd mtx_U_base = svd_base.matrixU();
+    MatrixXd mtx_V_base = svd_base.matrixV();
+    MatrixXd mtx_S_base = MatrixXd::Zero(mtx_base_input.rows(),mtx_base_input.cols());
+    for (int entry=0;entry<svd_base.singularValues().size();entry++)
+    {
+        mtx_S_base(entry,entry) = svd_base.singularValues()(entry);
     }
 
     //entry_size = 1;
@@ -1204,22 +1213,14 @@ MatrixXcd MatrixPerturbationMethod(MatrixXcd mtx_init_input, MatrixXcd mtx_data_
                 for (int idx_n=0;idx_n<size_n;idx_n++)
                 {
                     int nth_entry = idx_n+1;
-                    //if (kth_entry>entry_size && nth_entry>entry_size) continue;
-                    //if (kth_entry>entry_size) continue;
-                    //if (nth_entry>entry_size) continue;
-                    //if (isDiagnal)
-                    //{
-                    //    if (kth_entry!=nth_entry) continue;
-                    //}
-                    //else
-                    //{
-                    //    if (kth_entry==nth_entry) continue;
-                    //}
                     if (kth_entry==nth_entry) continue;
-                    if (kth_entry>entry_size) continue;
-                    if (nth_entry>entry_size) continue;
+                    if (kth_entry>max_rank) continue;
+                    if (nth_entry>max_rank) continue;
+                    if (kth_entry<rank) continue;
+                    if (nth_entry<rank) continue;
+                    if (kth_entry>rank && nth_entry>rank) continue;
                     int idx_v = idx_k*size_n + idx_n;
-                    mtx_A(idx_u,idx_v) = mtx_U_init(idx_i,idx_k)*mtx_V_init(idx_j,idx_n);
+                    mtx_A(idx_u,idx_v) = mtx_U_base(idx_i,idx_k)*mtx_V_base(idx_j,idx_n);
                 }
             }
         }
@@ -1264,11 +1265,11 @@ MatrixXcd MatrixPerturbationMethod(MatrixXcd mtx_init_input, MatrixXcd mtx_data_
     for (int idx_k=0;idx_k<size_k;idx_k++)
     {
         int kth_entry = idx_k+1;
-        std::complex<double> sigma_k = mtx_S_init(idx_k,idx_k);
+        std::complex<double> sigma_k = mtx_S_base(idx_k,idx_k);
         for (int idx_n=0;idx_n<size_n;idx_n++)
         {
             int nth_entry = idx_n+1;
-            std::complex<double> sigma_n = mtx_S_init(idx_n,idx_n);
+            std::complex<double> sigma_n = mtx_S_base(idx_n,idx_n);
             int idx_kn = idx_k*size_n + idx_n;
             int idx_nk = idx_n*size_k + idx_k;
             mtx_t(idx_k,idx_n) = vtr_t(idx_kn); 
@@ -1285,9 +1286,9 @@ MatrixXcd MatrixPerturbationMethod(MatrixXcd mtx_init_input, MatrixXcd mtx_data_
             else
             {
                 mtx_E(idx_k,idx_n) = vtr_t(idx_kn); 
-                if (kth_entry<=entry_size && nth_entry<=entry_size)
+                if (kth_entry<=max_rank && nth_entry<=max_rank)
                 {
-                    mtx_CDE(idx_k,idx_n) = mtx_E(idx_k,idx_n)/abs(mtx_S_init(idx_k,idx_n));
+                    mtx_CDE(idx_k,idx_n) = mtx_E(idx_k,idx_n)/abs(mtx_S_base(idx_k,idx_n));
                 }
             }
         }
@@ -1306,18 +1307,18 @@ MatrixXcd MatrixPerturbationMethod(MatrixXcd mtx_init_input, MatrixXcd mtx_data_
                 int nth_entry = idx_n+1;
                 mtx_S_vari(idx_k,idx_k) = mtx_E(idx_k,idx_k);
                 std::complex<double> coeff_u = mtx_C(idx_k,idx_n);
-                mtx_U_vari(idx_i,idx_n) += coeff_u*mtx_U_init(idx_i,idx_k);
+                mtx_U_vari(idx_i,idx_n) += coeff_u*mtx_U_base(idx_i,idx_k);
                 std::complex<double> coeff_v = mtx_D(idx_k,idx_n);
-                mtx_V_vari(idx_i,idx_n) += coeff_v*mtx_V_init(idx_i,idx_k);
+                mtx_V_vari(idx_i,idx_n) += coeff_v*mtx_V_base(idx_i,idx_k);
             }
         }
     }
 
     mtx_output = mtx_init_input;
     MatrixXcd mtx_vari = MatrixXcd::Zero(mtx_init_input.rows(),mtx_init_input.cols());
-    mtx_vari += mtx_U_init*mtx_S_init*mtx_V_vari.transpose();
-    mtx_vari += mtx_U_vari*mtx_S_init*mtx_V_init.transpose();
-    mtx_vari += mtx_U_init*mtx_S_vari*mtx_V_init.transpose();
+    mtx_vari += mtx_U_base*mtx_S_base*mtx_V_vari.transpose();
+    mtx_vari += mtx_U_vari*mtx_S_base*mtx_V_base.transpose();
+    mtx_vari += mtx_U_base*mtx_S_vari*mtx_V_base.transpose();
     mtx_output += mtx_vari;
 
     return mtx_output;
@@ -1831,7 +1832,13 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         }
                         MatrixXcd mtx_off_data_cr_scaled = fillMatrix(&Hist_OffData_MSCLW_CR_scaled);
                         MatrixXcd mtx_on_data = fillMatrix(&Hist_OnData_MSCLW_Fine.at(e));
-                        MatrixXcd mtx_on_bkgd = MatrixPerturbationMethod(mtx_off_data_cr_scaled, mtx_on_data, matrix_rank[e], false);
+
+                        MatrixXcd mtx_on_bkgd = mtx_off_data_cr_scaled;
+                        for (int rank=0;rank<matrix_rank[e];rank++)
+                        {
+                            mtx_on_bkgd = MatrixPerturbationMethod(mtx_off_data_cr_scaled, mtx_on_bkgd, mtx_on_data, rank, matrix_rank[e], false);
+                        }
+
                         fill2DHistogram(&Hist_OnBkgd_MSCLW_Fine.at(e),mtx_on_bkgd);
                         double SR_predict_perturbation = Hist_OnBkgd_MSCLW_Fine.at(e).Integral(binx_blind_lower_global+1,binx_blind_upper_global,biny_blind_lower_global+1,biny_blind_upper_global);
                         SR_predict_perturbation = SR_predict_perturbation/(1.+method_pertrubation_mean[e]);
@@ -1840,14 +1847,7 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         CR_count_map = CR_on_count_weighted.at(e);
                         if (CR_count_map>0.)
                         {
-                            if (matrix_rank[e]==1)
-                            {
-                                Hist_OnData_CR_Skymap_Perturbation.at(e).Scale(SR_predict_ratio/CR_count_map);
-                            }
-                            else
-                            {
-                                Hist_OnData_CR_Skymap_Perturbation.at(e).Scale(SR_predict_perturbation/CR_count_map);
-                            }
+                            Hist_OnData_CR_Skymap_Perturbation.at(e).Scale(SR_predict_perturbation/CR_count_map);
                         }
                         Hist_OnData_MSCLW_Fine_Sum.at(e).Add(&Hist_OnData_MSCLW_Fine.at(e));
                         Hist_OnBkgd_MSCLW_Fine_Sum.at(e).Add(&Hist_OnBkgd_MSCLW_Fine.at(e));
