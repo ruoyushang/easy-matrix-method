@@ -528,14 +528,14 @@ for energy_idx in range(0,len(energy_bin)-1):
     txt_string += '%0.3f,'%(energy_dep_syst_err_ratio_mean[energy_idx])
 txt_string += '};'
 print (txt_string)
-txt_string = 'double method_regression_mean[N_energy_bins] =   {'
-for energy_idx in range(0,len(energy_bin)-1):
-    txt_string += '%0.3f,'%(energy_dep_syst_err_regression_mean[energy_idx])
-txt_string += '};'
-print (txt_string)
 txt_string = 'double method_pertrubation_mean[N_energy_bins] = {'
 for energy_idx in range(0,len(energy_bin)-1):
     txt_string += '%0.3f,'%(energy_dep_syst_err_perturbation_mean[energy_idx])
+txt_string += '};'
+print (txt_string)
+txt_string = 'double method_regression_mean[N_energy_bins] =   {'
+for energy_idx in range(0,len(energy_bin)-1):
+    txt_string += '%0.3f,'%(energy_dep_syst_err_regression_mean[energy_idx])
 txt_string += '};'
 print (txt_string)
 txt_string = 'double method_ratio_rms[N_energy_bins] =         {'
@@ -543,14 +543,14 @@ for energy_idx in range(0,len(energy_bin)-1):
     txt_string += '%0.3f,'%(energy_dep_syst_err_ratio_rms[energy_idx])
 txt_string += '};'
 print (txt_string)
-txt_string = 'double method_regression_rms[N_energy_bins] =    {'
-for energy_idx in range(0,len(energy_bin)-1):
-    txt_string += '%0.3f,'%(energy_dep_syst_err_regression_rms[energy_idx])
-txt_string += '};'
-print (txt_string)
 txt_string = 'double method_pertrubation_rms[N_energy_bins] =  {'
 for energy_idx in range(0,len(energy_bin)-1):
     txt_string += '%0.3f,'%(energy_dep_syst_err_perturbation_rms[energy_idx])
+txt_string += '};'
+print (txt_string)
+txt_string = 'double method_regression_rms[N_energy_bins] =    {'
+for energy_idx in range(0,len(energy_bin)-1):
+    txt_string += '%0.3f,'%(energy_dep_syst_err_regression_rms[energy_idx])
 txt_string += '};'
 print (txt_string)
 txt_string = 'double method_combined_rms[N_energy_bins] =      {'

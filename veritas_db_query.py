@@ -16,6 +16,18 @@ import numpy as np
 
 all_runs_info = []
 
+def ReadLhaasoListFromFile():
+    source_name = []
+    source_ra = []
+    source_dec = []
+    file_path = 'LHAASO_1st_Catalog.txt'
+    inputFile = open(file_path)
+    for line in inputFile:
+        source_name += ['%s %s'%(line.split()[0],line.split()[1])]
+        source_ra += [float(line.split()[3])]
+        source_dec += [float(line.split()[4])]
+    return source_name, source_ra, source_dec
+
 def ReadHAWCTargetListFromFile(file_path):
     source_name = []
     source_ra = []
@@ -974,7 +986,7 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
             delta_elev = off_run_el-on_run_el
 
             if is_imposter:
-                if abs(delta_elev)>10.: continue
+                if abs(delta_elev)>5.: continue
             else:
                 if (sum_off_run_elev-sum_on_run_elev)>0.:
                     if (off_run_el-on_run_el)>0.: continue
@@ -1006,7 +1018,7 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
 
     out_file = open('output_vts_hours/%s.txt'%(obs_name),"a")
     out_file.write('++++++++++++++++++++++++++++++++++++++++++++++++++++\n')
-    out_file.write('ON runs do not have enought matches\n')
+    out_file.write('%s ON runs do not have enought matches\n'%(file_name))
     for run in range(0,len(list_on_run_ids)):
         if list_on_run_nmatch[run]<require_nmatch:
             out_file.write('%s has %s OFF runs.\n'%(list_on_run_ids[run],list_on_run_nmatch[run]))
@@ -1061,6 +1073,23 @@ elif input_name=='Galactic_Plane':
     obs_name = 'Galactic_Plane_%s'%(run_epoch)
     find_runs_near_galactic_plane(obs_name,run_epoch,run_obs_type,0.0,5.0)
 
+elif input_name=='LHAASO_Catalog':
+
+    print ('++++++++++++++++++++++++++++++++++++++++++++++++++++')
+    print ('Get all runs El Az...')
+    get_all_runs_info(run_epoch,run_obs_type)
+    print ('++++++++++++++++++++++++++++++++++++++++++++++++++++')
+
+    target_lhs_name, target_lhs_ra, target_lhs_dec = ReadLhaasoListFromFile()
+    for lhs in range(0,len(target_lhs_name)):
+        print ('Search VTS data for %s'%(target_lhs_name[lhs]))
+        obs_ra = target_lhs_ra[lhs]
+        obs_dec = target_lhs_dec[lhs]
+        obs_name = target_lhs_name[lhs].replace(' ','_').replace('+','_p').replace('-','_m')
+        obs_name += '_%s'%(run_epoch)
+        run_elev_range = [input_elev_low,input_elev_up]
+        my_list_on_run_ids = find_on_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range)
+
 else:
 
     print ('++++++++++++++++++++++++++++++++++++++++++++++++++++')
@@ -1079,6 +1108,7 @@ else:
     my_list_on_run_ids = find_on_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range)
     use_local_data = True
     my_list_off_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_on_run_ids,False,'PairList')
+    use_local_data = True
     my_list_imposter_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_on_run_ids,True,'ImposterList')
     my_list_imposter_off_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_imposter_run_ids,False,'ImposterPairList')
 

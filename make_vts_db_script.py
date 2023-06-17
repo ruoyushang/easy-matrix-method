@@ -39,8 +39,13 @@ input_params += [ ['PSR_J2021_p4026'       ,305.37  ,40.45  ,30 ,90] ] # gamma c
 input_params += [ ['SNR_G189_p03'          ,94.213  ,22.503 ,30 ,90] ] # ic 443
 input_params += [ ['Geminga'               ,98.476  ,17.770 ,30 ,90] ]
 input_params += [ ['PSR_J2021_p3651'       ,305.27  ,36.85  ,30 ,90] ] # Dragonfly
+input_params += [ ['PSR_J2032_p4127', 308.05  , 41.46  ,30 ,90] ]
 
-input_params += [ ['LHAASO_J1956_p2845', 299.05  , 28.75  ,30 ,90] ]
+input_params += [ ['LHAASO_J0622_p3754', 95.50  , 37.90  ,30 ,90] ]
+#input_params += [ ['LHAASO_J1956_p2845', 299.05  , 28.75  ,30 ,90] ]
+#input_params += [ ['PSR_J0248_p6021', 42.077  , 60.359  ,30 ,90] ]
+#input_params += [ ['PSR_J0359_p5414', 59.858  , 54.248  ,30 ,90] ]
+
 
 #input_params += [ ['Sky_RA55Dec53'         ,55.34   ,52.97  ,30 ,90] ]
 #input_params += [ ['SgrA'                  ,266.41  ,-29.00 ,20 ,90] ] # Galactic center
@@ -62,8 +67,9 @@ input_params += [ ['LHAASO_J1956_p2845', 299.05  , 28.75  ,30 ,90] ]
 #input_params += [ ['Tycho', 6.28  , 64.17  ,30 ,90] ]
 
 #input_params += [ ['Galactic_Plane', 0., 0.  ,30 ,90] ]
+#input_params += [ ['LHAASO_Catalog', 0., 0.  ,30 ,90] ]
 
-input_params += [ ['AUX_files', 0., 0.  ,30 ,90] ]
+#input_params += [ ['AUX_files', 0., 0.  ,30 ,90] ]
 
 job_counts = 0
 for s in range(0,len(input_params)):
@@ -86,6 +92,7 @@ for s in range(0,len(input_params)):
     file.write('#$ -m e\n')
     file.write('. /u/local/Modules/default/init/modules.sh\n')
     file.write('cd %s\n'%(SMI_DIR))
+    #file.write('python3 veritas_db_query.py "%s" %s %s %s %s "V4"\n'%(input_params[s][0],input_params[s][1],input_params[s][2],input_params[s][3],input_params[s][4]))
     file.write('python3 veritas_db_query.py "%s" %s %s %s %s "V5"\n'%(input_params[s][0],input_params[s][1],input_params[s][2],input_params[s][3],input_params[s][4]))
     file.write('python3 veritas_db_query.py "%s" %s %s %s %s "V6"\n'%(input_params[s][0],input_params[s][1],input_params[s][2],input_params[s][3],input_params[s][4]))
     file.close() 

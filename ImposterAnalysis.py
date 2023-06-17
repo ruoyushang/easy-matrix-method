@@ -37,6 +37,8 @@ fig.set_figwidth(figsize_x)
 
 new_nbins_x = 100
 new_nbins_y = 100
+#new_nbins_x = 80
+#new_nbins_y = 80
 #new_nbins_x = 50
 #new_nbins_y = 50
 
@@ -50,6 +52,7 @@ input_epoch = sys.argv[2] # 'V5' or 'V6' or 'V5V6'
 isON = sys.argv[3]  # 'ON' or 'OFF'
 
 energy_bin_break = 8
+doBiasCorrect = True
 
 analysis_method = CommonPlotFunctions.analysis_method
 n_xoff_bins = CommonPlotFunctions.n_xoff_bins
@@ -71,6 +74,21 @@ if 'V6' in input_epoch:
     list_epoch += ['V6']
 
 total_data_expo = 0.
+
+MSCW_lower_blind = -0.4
+MSCL_lower_blind = -0.6
+MSCW_upper_blind = 0.5
+MSCL_upper_blind = 0.6
+n_extra_lower_bins = 1
+n_extra_upper_bins = 6
+mtx_dim_w_fine = 6
+mtx_dim_l_fine = 6
+MSCW_bin_size = (MSCW_upper_blind-MSCW_lower_blind)/(mtx_dim_w_fine)
+MSCL_bin_size = (MSCL_upper_blind-MSCL_lower_blind)/(mtx_dim_l_fine)
+MSCW_plot_upper_fine = MSCW_upper_blind+n_extra_upper_bins*MSCW_bin_size
+MSCL_plot_upper_fine = MSCL_upper_blind+n_extra_upper_bins*MSCL_bin_size
+MSCW_plot_lower_fine = MSCW_lower_blind-n_extra_lower_bins*MSCW_bin_size
+MSCL_plot_lower_fine = MSCL_lower_blind-n_extra_lower_bins*MSCL_bin_size
 
 def FillSkyMapHistogram(hist_input,hist_output,scale=1.):
 
@@ -216,6 +234,13 @@ def GetHawcDiffusionFluxJ1908():
 
     return energies, fluxes, flux_errs
 
+def flux_lhaaso_wcda_j1908_func(x):
+    # TeV^{-1}cm^{-2}s^{-1}
+    # https://arxiv.org/pdf/2305.17030.pdf
+    Flux_N0 = 7.97 
+    Gamma_index = 2.42
+    return Flux_N0*pow(10,-13)*pow(x*1./3000.,-Gamma_index)
+
 def GetHawcSaraFluxJ1908():
 
     #energies = [1.38,2.58,4.58,6.89,10.88,18.23,35.56,61.32,107.69,186.29]
@@ -335,6 +360,9 @@ def MakeSpectrum(roi_x,roi_y,roi_r,roi_name,excl_roi_x,excl_roi_y,excl_roi_r):
         imposter_flux_list += [imposter_flux]
         imposter_flux_err_list += [imposter_flux_err]
     energy_axis, energy_error, real_flux, real_flux_stat_err = CommonPlotFunctions.GetRegionSpectrum(hist_real_flux_skymap,energy_bin_cut_low,energy_bin_cut_up,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
+
+    energy_axis, energy_error, real_data, real_data_stat_err = CommonPlotFunctions.GetRegionSpectrum(hist_real_data_skymap,energy_bin_cut_low,energy_bin_cut_up,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
+    energy_axis, energy_error, real_bkgd, real_bkgd_stat_err = CommonPlotFunctions.GetRegionSpectrum(hist_real_bkgd_skymap,energy_bin_cut_low,energy_bin_cut_up,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
 
     real_flux_syst_err = []
     for ebin in range(0,len(energy_axis)):
@@ -458,16 +486,28 @@ def MakeSpectrum(roi_x,roi_y,roi_r,roi_name,excl_roi_x,excl_roi_y,excl_roi_r):
         Tobias_energies, Tobias_fluxes, Tobias_flux_errs = GetVeritasTobiasFluxJ1908()
         LHAASO_energies, LHAASO_fluxes, LHAASO_flux_errs = GetLHAASOFluxJ1908()
 
-        axbig.errorbar(Jordan_energies,Jordan_fluxes,Jordan_flux_errs,color='b',marker='s',ls='none',label='Fermi-LAT',zorder=4)
-        #axbig.errorbar(HAWC_energies,HAWC_fluxes,HAWC_flux_errs,color='r',marker='s',ls='none',label='HAWC (2021 paper)',zorder=3)
-        axbig.errorbar(Sara_energies,Sara_fluxes,Sara_flux_errs,color='c',marker='s',ls='none',label='HAWC',zorder=3)
-        axbig.errorbar(HESS_energies,HESS_fluxes,HESS_flux_errs,color='g',marker='s',ls='none',label='HESS',zorder=2)
+        vectorize_f_wcda = np.vectorize(flux_lhaaso_wcda_j1908_func)
+        log_energy = np.linspace(log10(1000.),log10(25000.),50)
+        xdata = pow(10.,log_energy)
+        ydata_wcda = pow(xdata/1e3,2)*vectorize_f_wcda(xdata)
+
+        axbig.errorbar(Jordan_energies,Jordan_fluxes,Jordan_flux_errs,color='g',marker='s',ls='none',label='Fermi-LAT',zorder=1)
+
+        axbig.bar(energy_axis, 2.*real_flux_syst_err, bottom=real_flux-real_flux_syst_err, width=2.*energy_error, color='r', align='center', alpha=0.2,zorder=2)
+        axbig.errorbar(energy_axis,real_flux,real_flux_total_err,xerr=energy_error,color='r',marker='_',ls='none',label='VERITAS',zorder=3)
+
+        axbig.errorbar(HESS_energies,HESS_fluxes,HESS_flux_errs,color='cyan',marker='s',ls='none',label='HESS',zorder=4)
+
+        axbig.errorbar(Sara_energies,Sara_fluxes,Sara_flux_errs,color='purple',marker='s',ls='none',label='HAWC',zorder=5)
+
         #axbig.errorbar(OldV_energies,OldV_fluxes,OldV_flux_errs,color='orange',marker='s',ls='none',label='VERITAS (2014)',zorder=1)
         #axbig.errorbar(Tobias_energies,Tobias_fluxes,Tobias_flux_errs,color='orange',marker='s',ls='none',label='VERITAS (Tobias)',zorder=1)
-        axbig.errorbar(LHAASO_energies,LHAASO_fluxes,LHAASO_flux_errs,color='m',marker='s',ls='none',label='LHAASO',zorder=7)
 
-        axbig.bar(energy_axis, 2.*real_flux_syst_err, bottom=real_flux-real_flux_syst_err, width=2.*energy_error, color='b', align='center', alpha=0.2)
-        axbig.errorbar(energy_axis,real_flux,real_flux_total_err,xerr=energy_error,color='k',marker='_',ls='none',label='VERITAS')
+        # In the case of WCDA data, the overall systematic uncertainty can be as large as +8% −24% on the flux.
+        # https://arxiv.org/pdf/2305.17030.pdf, sec 3.3
+        axbig.fill_between(xdata, ydata_wcda-0.24*ydata_wcda, ydata_wcda+0.08*ydata_wcda,color='goldenrod', alpha=0.2, zorder=7)
+        axbig.plot(xdata, ydata_wcda,color='goldenrod',label='LHAASO (WCDA)', zorder=8)
+        axbig.errorbar(LHAASO_energies,LHAASO_fluxes,LHAASO_flux_errs,color='goldenrod',marker='s',ls='none',label='LHAASO (KM2A)',zorder=9)
 
         PrintSpectralDataForNaima(Tobias_energies,Tobias_fluxes,Tobias_flux_errs,'Tobias')
         PrintSpectralDataForNaima(HESS_energies,HESS_fluxes,HESS_flux_errs,'HESS')
@@ -487,13 +527,15 @@ def MakeSpectrum(roi_x,roi_y,roi_r,roi_name,excl_roi_x,excl_roi_y,excl_roi_r):
     axbig.set_xscale('log')
     axbig.set_yscale('log')
     axbig.legend(loc='best')
-    plotname = 'RealSpectrum_%s'%(roi_name)
+    plotname = 'RealSpectrum_%s_r%s'%(roi_name,roi_r)
     fig.savefig("output_plots/%s_%s.png"%(plotname,plot_tag),bbox_inches='tight')
     axbig.remove()
 
     zscore = []
     for eb in range(0,len(energy_axis)):
         zscore += [real_flux[eb]/pow(pow(real_flux_stat_err[eb],2)+pow(real_flux_syst_err[eb],2),0.5)]
+    print ('total count in RoI      = %s'%(real_data))
+    print ('background count in RoI = %s'%(real_bkgd))
     zscore = np.array(zscore)
     fig.clf()
     fig.set_figheight(figsize_y)
@@ -715,6 +757,8 @@ hist_elev_skymap = ROOT.TH2D("hist_elev_skymap","",nbins_x,MapEdge_left,MapEdge_
 hist_azim_skymap = ROOT.TH2D("hist_azim_skymap","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
 hist_nsb_skymap = ROOT.TH2D("hist_nsb_skymap","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
 
+hist_real_flux_skymap_le = ROOT.TH2D("hist_real_flux_skymap_le","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
+hist_real_flux_skymap_he = ROOT.TH2D("hist_real_flux_skymap_he","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
 hist_real_flux_skymap_sum = ROOT.TH2D("hist_real_flux_skymap_sum","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
 hist_real_data_skymap_sum = ROOT.TH2D("hist_real_data_skymap_sum","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
 hist_real_bkgd_skymap_sum = ROOT.TH2D("hist_real_bkgd_skymap_sum","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
@@ -722,21 +766,31 @@ hist_real_norm_skymap_sum = ROOT.TH2D("hist_real_norm_skymap_sum","",nbins_x,Map
 hist_real_diff_skymap_sum = ROOT.TH2D("hist_real_diff_skymap_sum","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
 hist_real_diff_skymap_le = ROOT.TH2D("hist_real_diff_skymap_le","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
 hist_real_diff_skymap_he = ROOT.TH2D("hist_real_diff_skymap_he","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
+hist_real_data_msclw_sum = ROOT.TH2D("hist_real_data_msclw_sum","",mtx_dim_l_fine+n_extra_lower_bins+n_extra_upper_bins,MSCL_plot_lower_fine,MSCL_plot_upper_fine,mtx_dim_w_fine+n_extra_lower_bins+n_extra_upper_bins,MSCW_plot_lower_fine,MSCW_plot_upper_fine)
+hist_real_bkgd_msclw_sum = ROOT.TH2D("hist_real_bkgd_msclw_sum","",mtx_dim_l_fine+n_extra_lower_bins+n_extra_upper_bins,MSCL_plot_lower_fine,MSCL_plot_upper_fine,mtx_dim_w_fine+n_extra_lower_bins+n_extra_upper_bins,MSCW_plot_lower_fine,MSCW_plot_upper_fine)
+hist_real_diff_msclw_sum = ROOT.TH2D("hist_real_diff_msclw_sum","",mtx_dim_l_fine+n_extra_lower_bins+n_extra_upper_bins,MSCL_plot_lower_fine,MSCL_plot_upper_fine,mtx_dim_w_fine+n_extra_lower_bins+n_extra_upper_bins,MSCW_plot_lower_fine,MSCW_plot_upper_fine)
+hist_real_sign_msclw_sum = ROOT.TH2D("hist_real_sign_msclw_sum","",mtx_dim_l_fine+n_extra_lower_bins+n_extra_upper_bins,MSCL_plot_lower_fine,MSCL_plot_upper_fine,mtx_dim_w_fine+n_extra_lower_bins+n_extra_upper_bins,MSCW_plot_lower_fine,MSCW_plot_upper_fine)
 hist_real_significance_skymap_sum = ROOT.TH2D("hist_real_significance_skymap_sum","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
 hist_real_flux_skymap = []
 hist_real_data_skymap = []
 hist_real_bkgd_skymap = []
 hist_real_diff_skymap = []
+hist_real_data_msclw = []
+hist_real_bkgd_msclw = []
 for ebin in range(0,len(energy_bin)-1):
     hist_real_flux_skymap += [ROOT.TH2D("hist_real_flux_skymap_E%s"%(ebin),"",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)]
     hist_real_data_skymap += [ROOT.TH2D("hist_real_data_skymap_E%s"%(ebin),"",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)]
     hist_real_bkgd_skymap += [ROOT.TH2D("hist_real_bkgd_skymap_E%s"%(ebin),"",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)]
     hist_real_diff_skymap += [ROOT.TH2D("hist_real_diff_skymap_E%s"%(ebin),"",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)]
+    hist_real_data_msclw += [ROOT.TH2D("hist_real_data_msclw_E%s"%(ebin),"",mtx_dim_l_fine+n_extra_lower_bins+n_extra_upper_bins,MSCL_plot_lower_fine,MSCL_plot_upper_fine,mtx_dim_w_fine+n_extra_lower_bins+n_extra_upper_bins,MSCW_plot_lower_fine,MSCW_plot_upper_fine)]
+    hist_real_bkgd_msclw += [ROOT.TH2D("hist_real_bkgd_msclw_E%s"%(ebin),"",mtx_dim_l_fine+n_extra_lower_bins+n_extra_upper_bins,MSCL_plot_lower_fine,MSCL_plot_upper_fine,mtx_dim_w_fine+n_extra_lower_bins+n_extra_upper_bins,MSCW_plot_lower_fine,MSCW_plot_upper_fine)]
 
 hist_imposter_data_skymap_sum = []
 hist_imposter_bkgd_skymap_sum = []
 hist_imposter_diff_skymap_sum = []
 hist_imposter_flux_skymap_sum = []
+hist_imposter_flux_skymap_le = []
+hist_imposter_flux_skymap_he = []
 hist_imposter_significance_skymap_sum = []
 hist_imposter_data_skymap = []
 hist_imposter_bkgd_skymap = []
@@ -748,6 +802,8 @@ for imposter in range(0,n_imposters):
     hist_imposter_bkgd_skymap_sum += [ROOT.TH2D("hist_imposter_bkgd_skymap_sum_I%s"%(imposter),"",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)]
     hist_imposter_diff_skymap_sum += [ROOT.TH2D("hist_imposter_diff_skymap_sum_I%s"%(imposter),"",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)]
     hist_imposter_flux_skymap_sum += [ROOT.TH2D("hist_imposter_flux_skymap_sum_I%s"%(imposter),"",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)]
+    hist_imposter_flux_skymap_le += [ROOT.TH2D("hist_imposter_flux_skymap_le_I%s"%(imposter),"",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)]
+    hist_imposter_flux_skymap_he += [ROOT.TH2D("hist_imposter_flux_skymap_he_I%s"%(imposter),"",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)]
     hist_imposter_data_skymap_sublist = []
     hist_imposter_bkgd_skymap_sublist = []
     hist_imposter_diff_skymap_sublist = []
@@ -805,8 +861,10 @@ for xoff_idx in range(0,n_xoff_bins):
                     FillSkyMapHistogram(InputFile.Get(HistName),hist_real_data_skymap[ebin])
                     HistName = "Hist_OnData_CR_Skymap_%s_Sum_ErecS%sto%s"%(analysis_method,int(energy_bin[ebin]),int(energy_bin[ebin+1]))
                     FillSkyMapHistogram(InputFile.Get(HistName),hist_real_bkgd_skymap[ebin])
-                    hist_real_diff_skymap[ebin].Add(hist_real_data_skymap[ebin])
-                    hist_real_diff_skymap[ebin].Add(hist_real_bkgd_skymap[ebin],-1.)
+                    HistName = "Hist_OnData_MSCLW_Fine_Sum_ErecS%sto%s"%(int(energy_bin[ebin]),int(energy_bin[ebin+1]))
+                    hist_real_data_msclw[ebin].Add(InputFile.Get(HistName))
+                    HistName = "Hist_OnBkgd_MSCLW_Fine_Sum_ErecS%sto%s"%(int(energy_bin[ebin]),int(energy_bin[ebin+1]))
+                    hist_real_bkgd_msclw[ebin].Add(InputFile.Get(HistName))
                 InputFile.Close()
 
 hist_elev_skymap.Scale(1./n_samples)
@@ -844,22 +902,46 @@ if doImposter:
                             FillSkyMapHistogram(InputFile.Get(HistName),hist_imposter_data_skymap[imposter][ebin])
                             HistName = "Hist_OnData_CR_Skymap_%s_Sum_ErecS%sto%s"%(analysis_method,int(energy_bin[ebin]),int(energy_bin[ebin+1]))
                             FillSkyMapHistogram(InputFile.Get(HistName),hist_imposter_bkgd_skymap[imposter][ebin])
-                            hist_imposter_diff_skymap[imposter][ebin].Add(hist_imposter_data_skymap[imposter][ebin])
-                            hist_imposter_diff_skymap[imposter][ebin].Add(hist_imposter_bkgd_skymap[imposter][ebin],-1.)
                         InputFile.Close()
+
+# bias correction
+if n_imposters>3 and doBiasCorrect:
+    for ebin in range(energy_bin_cut_low,energy_bin_cut_up):
+        mean_bias = 0.
+        for imposter in range(0,n_imposters):
+            truth = hist_imposter_data_skymap[imposter][ebin].Integral()
+            predict = hist_imposter_bkgd_skymap[imposter][ebin].Integral()
+            if predict>0.:
+                bias = truth/predict
+                mean_bias += bias
+        mean_bias = mean_bias/float(n_imposters)
+        hist_real_bkgd_skymap[ebin].Scale(mean_bias)
+        for imposter in range(0,n_imposters):
+            hist_imposter_bkgd_skymap[imposter][ebin].Scale(mean_bias)
+
 
 for ebin in range(0,len(energy_bin)-1):
     hist_real_norm_skymap_sum.Add(hist_real_bkgd_skymap[ebin])
 for ebin in range(energy_bin_cut_low,energy_bin_cut_up):
+    hist_real_diff_skymap[ebin].Add(hist_real_data_skymap[ebin])
+    hist_real_diff_skymap[ebin].Add(hist_real_bkgd_skymap[ebin],-1.)
     hist_real_data_skymap_sum.Add(hist_real_data_skymap[ebin])
     hist_real_bkgd_skymap_sum.Add(hist_real_bkgd_skymap[ebin])
     hist_real_diff_skymap_sum.Add(hist_real_diff_skymap[ebin])
+    hist_real_data_msclw_sum.Add(hist_real_data_msclw[ebin])
+    hist_real_bkgd_msclw_sum.Add(hist_real_bkgd_msclw[ebin])
+    print('hist_real_data_msclw[ebin].Integral() = %s'%(hist_real_data_msclw[ebin].Integral()))
+    print('hist_real_bkgd_msclw[ebin].Integral() = %s'%(hist_real_bkgd_msclw[ebin].Integral()))
+    hist_real_diff_msclw_sum.Add(hist_real_data_msclw[ebin])
+    hist_real_diff_msclw_sum.Add(hist_real_bkgd_msclw[ebin],-1.)
     if ebin<energy_bin_break:
         hist_real_diff_skymap_le.Add(hist_real_diff_skymap[ebin])
     else:
         hist_real_diff_skymap_he.Add(hist_real_diff_skymap[ebin])
 for imposter in range(0,n_imposters):
     for ebin in range(energy_bin_cut_low,energy_bin_cut_up):
+        hist_imposter_diff_skymap[imposter][ebin].Add(hist_imposter_data_skymap[imposter][ebin])
+        hist_imposter_diff_skymap[imposter][ebin].Add(hist_imposter_bkgd_skymap[imposter][ebin],-1.)
         hist_imposter_data_skymap_sum[imposter].Add(hist_imposter_data_skymap[imposter][ebin])
         hist_imposter_bkgd_skymap_sum[imposter].Add(hist_imposter_bkgd_skymap[imposter][ebin])
         hist_imposter_diff_skymap_sum[imposter].Add(hist_imposter_diff_skymap[imposter][ebin])
@@ -906,8 +988,24 @@ for imp in range(0,n_imposters):
 
 for ebin in range(energy_bin_cut_low,energy_bin_cut_up):
     hist_real_flux_skymap_sum.Add(hist_real_flux_skymap[ebin])
+    if ebin<energy_bin_break:
+        hist_real_flux_skymap_le.Add(hist_real_flux_skymap[ebin])
+    else:
+        hist_real_flux_skymap_he.Add(hist_real_flux_skymap[ebin])
     for imposter in range(0,n_imposters):
         hist_imposter_flux_skymap_sum[imposter].Add(hist_imposter_flux_skymap[imposter][ebin])
+        if ebin<energy_bin_break:
+            hist_imposter_flux_skymap_le[imposter].Add(hist_imposter_flux_skymap[imposter][ebin])
+        else:
+            hist_imposter_flux_skymap_he[imposter].Add(hist_imposter_flux_skymap[imposter][ebin])
+
+for lbin in range(0,hist_real_diff_msclw_sum.GetNbinsX()):
+    for wbin in range(0,hist_real_diff_msclw_sum.GetNbinsY()):
+        bkg_error = pow(hist_real_bkgd_msclw_sum.GetBinContent(lbin+1,wbin+1),0.5)
+        significance = hist_real_diff_msclw_sum.GetBinContent(lbin+1,wbin+1)/max(1.,bkg_error)
+        hist_real_sign_msclw_sum.SetBinContent(lbin+1,wbin+1,significance)
+CommonPlotFunctions.MatplotlibHist2D(hist_real_sign_msclw_sum,fig,'scaled length','scaled width','Significance','MatrixSign_Sum_%s'%(plot_tag),zmax=5,zmin=-5)
+CommonPlotFunctions.MatplotlibHist2D(hist_real_diff_msclw_sum,fig,'scaled length','scaled width','Residual','MatrixDiff_Sum_%s'%(plot_tag))
 
 excl_region_x = MapCenter_x
 excl_region_y = MapCenter_y
@@ -920,14 +1018,29 @@ do_fit = 0
 if 'Crab' in source_name:
     region_x = MapCenter_x
     region_y = MapCenter_y
-    region_r = CommonPlotFunctions.calibration_radius
+    #region_r = CommonPlotFunctions.calibration_radius
+    region_r = 1.0
     region_name = 'Center'
 elif 'PSR_J1907_p0602' in source_name:
+
     #3HWC J1908+063, 287.05, 6.39 
     region_x = 287.05
     region_y = 6.39
     region_r = 1.2
     region_name = '3HWC'
+
+    #SS 433 e1
+    #region_x = 288.55
+    #region_y = 4.95
+    #region_r = 0.25
+    #region_name = 'SS433e1'
+
+    #SS 433 w1
+    #region_x = 287.49
+    #region_y = 5.06
+    #region_r = 0.25
+    #region_name = 'SS433w1'
+
 elif 'PSR_J2021_p4026' in source_name:
     region_x = 305.0200000
     region_y = 40.7572222
@@ -939,6 +1052,9 @@ elif '2HWC_J1953_p294' in source_name:
     region_y = 30.88
     region_r = 1.0
     region_name = 'Center'
+
+MakeExtensionProfile(region_x,region_y,region_r,do_fit,region_name,hist_real_flux_skymap_le,hist_imposter_flux_skymap_le,'le')
+MakeExtensionProfile(region_x,region_y,region_r,do_fit,region_name,hist_real_flux_skymap_he,hist_imposter_flux_skymap_he,'he')
 MakeExtensionProfile(region_x,region_y,region_r,do_fit,region_name,hist_real_flux_skymap_sum,hist_imposter_flux_skymap_sum,'sum')
 MakeSpectrum(region_x,region_y,region_r,region_name,excl_region_x,excl_region_y,excl_region_r)
 
@@ -1012,18 +1128,24 @@ if 'PSR_J1907_p0602' in source_name:
     Hist_mc_column_reflect = CommonPlotFunctions.reflectXaxis(Hist_mc_column)
     CommonPlotFunctions.MatplotlibMap2D(Hist_mc_column_reflect,None,[hist_real_diff_skymap_he_reflect,hist_real_diff_skymap_le_reflect,Hist_Fermi_reflect],fig,'RA','Dec','column density [$1/cm^{2}$]','SkymapCOMap_p40p70_%s'%(plot_tag))
 
-    Hist_Hawc = ROOT.TH2D("Hist_Hawc","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
-    Hist_Hawc.Rebin2D(3,3)
-    hawc_map_list = []
-    #hawc_map_list += ['cd'] # 1-3.16 TeV
-    #hawc_map_list += ['ef'] # 3.16-10 TeV
-    #hawc_map_list += ['gh'] # 10-31.6 TeV
-    #hawc_map_list += ['ij'] # 31.6-100 TeV
-    hawc_map_list += ['kl'] # 100-316 TeV
-    for hfile in range(0,len(hawc_map_list)):
-        MWL_map_file = '/home/rshang/MatrixDecompositionMethod/MWL_maps/%s-gaussGDE.fits'%(hawc_map_list[hfile])
-        Hist_Hawc = CommonPlotFunctions.GetHealpixMap(MWL_map_file, Hist_Hawc, True)
-        Hist_Hawc_reflect = CommonPlotFunctions.reflectXaxis(Hist_Hawc)
-        CommonPlotFunctions.MatplotlibMap2D(Hist_Hawc_reflect,None,[],fig,'RA','Dec','Significance','SkymapHAWC_%s_%s'%(hawc_map_list[hfile],plot_tag))
+    #Hist_Hawc = ROOT.TH2D("Hist_Hawc","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
+    #Hist_Hawc.Rebin2D(3,3)
+    #hawc_map_list = []
+    ##hawc_map_list += ['cd'] # 1-3.16 TeV
+    ##hawc_map_list += ['ef'] # 3.16-10 TeV
+    ##hawc_map_list += ['gh'] # 10-31.6 TeV
+    ##hawc_map_list += ['ij'] # 31.6-100 TeV
+    #hawc_map_list += ['kl'] # 100-316 TeV
+    #for hfile in range(0,len(hawc_map_list)):
+    #    MWL_map_file = '/home/rshang/MatrixDecompositionMethod/MWL_maps/%s-gaussGDE.fits'%(hawc_map_list[hfile])
+    #    Hist_Hawc = CommonPlotFunctions.GetHealpixMap(MWL_map_file, Hist_Hawc, True)
+    #    Hist_Hawc_reflect = CommonPlotFunctions.reflectXaxis(Hist_Hawc)
+    #    CommonPlotFunctions.MatplotlibMap2D(Hist_Hawc_reflect,None,[],fig,'RA','Dec','Significance','SkymapHAWC_%s_%s'%(hawc_map_list[hfile],plot_tag))
+
+    Hist_Tobias = ROOT.TH2D("Hist_Tobias","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
+    MWL_map_file = '/home/rshang/MatrixDecompositionMethod/MWL_maps/TobiasNewMap.fits'
+    Hist_Tobias = CommonPlotFunctions.GetFITSMap(MWL_map_file, Hist_Tobias, True)
+    Hist_Tobias_reflect = CommonPlotFunctions.reflectXaxis(Hist_Tobias)
+    CommonPlotFunctions.MatplotlibMap2D(Hist_Tobias_reflect,None,[],fig,'RA','Dec','Significance','SkymapTobias_%s'%(plot_tag))
 
 print ('total_data_expo = %0.1f hrs'%(total_data_expo))

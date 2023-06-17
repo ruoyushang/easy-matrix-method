@@ -38,6 +38,9 @@ from spectral_cube import SpectralCube
 #folder_path = 'output_nuclear'
 folder_path = 'output_nuclear_test'
 
+#folder_path = 'output_4x4'
+#folder_path = 'output_8x8'
+
 #analysis_method = 'FoV'
 #analysis_method = 'Ratio'
 #analysis_method = 'Regression'
@@ -194,6 +197,18 @@ def ReadATNFTargetListFromFile(file_path):
         source_edot += [float(target_edot)]
     return source_name, source_ra, source_dec, source_dist, source_age
 
+def ReadLhaasoListFromFile():
+    source_name = []
+    source_ra = []
+    source_dec = []
+    file_path = 'LHAASO_1st_Catalog.txt'
+    inputFile = open(file_path)
+    for line in inputFile:
+        source_name += ['%s %s'%(line.split()[0],line.split()[1])]
+        source_ra += [float(line.split()[3])]
+        source_dec += [float(line.split()[4])]
+    return source_name, source_ra, source_dec
+
 def ReadFermiCatelog():
     source_name = []
     source_ra = []
@@ -295,8 +310,9 @@ def GetGammaSourceInfo():
     drawBrightStar = False
     drawPulsar = True
     drawSNR = True
+    drawLHAASO = True
     drawFermi = True
-    drawHAWC = False
+    drawHAWC = True
     drawTeV = False
 
     if drawBrightStar:
@@ -344,22 +360,6 @@ def GetGammaSourceInfo():
                         other_stars_type += ['PSR']
                 other_star_coord += [[gamma_source_ra,gamma_source_dec,0.]]
 
-    if drawFermi:
-        fermi_name, fermi_ra, fermi_dec = ReadFermiCatelog()
-        for src in range(0,len(fermi_name)):
-            gamma_source_name = fermi_name[src]
-            gamma_source_ra = fermi_ra[src]
-            gamma_source_dec = fermi_dec[src]
-            near_a_source = False
-            for entry in range(0,len(other_stars)):
-                distance = pow(gamma_source_ra-other_star_coord[entry][0],2)+pow(gamma_source_dec-other_star_coord[entry][1],2)
-                if distance<near_source_cut*near_source_cut:
-                    near_a_source = True
-            if not near_a_source:
-                other_stars += [gamma_source_name]
-                other_stars_type += ['Fermi']
-                other_star_coord += [[gamma_source_ra,gamma_source_dec,0.]]
-
     if drawHAWC:
         target_hwc_name, target_hwc_ra, target_hwc_dec = ReadHAWCTargetListFromFile('Cat_3HWC.txt')
         for src in range(0,len(target_hwc_name)):
@@ -374,6 +374,38 @@ def GetGammaSourceInfo():
             if not near_a_source:
                 other_stars += [gamma_source_name]
                 other_stars_type += ['HAWC']
+                other_star_coord += [[gamma_source_ra,gamma_source_dec,0.]]
+
+    if drawLHAASO:
+        target_lhs_name, target_lhs_ra, target_lhs_dec = ReadLhaasoListFromFile()
+        for src in range(0,len(target_lhs_name)):
+            gamma_source_name = target_lhs_name[src]
+            gamma_source_ra = target_lhs_ra[src]
+            gamma_source_dec = target_lhs_dec[src]
+            near_a_source = False
+            for entry in range(0,len(other_stars)):
+                distance = pow(gamma_source_ra-other_star_coord[entry][0],2)+pow(gamma_source_dec-other_star_coord[entry][1],2)
+                if distance<near_source_cut*near_source_cut:
+                    near_a_source = True
+            if not near_a_source:
+                other_stars += [gamma_source_name]
+                other_stars_type += ['LHAASO']
+                other_star_coord += [[gamma_source_ra,gamma_source_dec,0.]]
+
+    if drawFermi:
+        fermi_name, fermi_ra, fermi_dec = ReadFermiCatelog()
+        for src in range(0,len(fermi_name)):
+            gamma_source_name = fermi_name[src]
+            gamma_source_ra = fermi_ra[src]
+            gamma_source_dec = fermi_dec[src]
+            near_a_source = False
+            for entry in range(0,len(other_stars)):
+                distance = pow(gamma_source_ra-other_star_coord[entry][0],2)+pow(gamma_source_dec-other_star_coord[entry][1],2)
+                if distance<near_source_cut*near_source_cut:
+                    near_a_source = True
+            if not near_a_source:
+                other_stars += [gamma_source_name]
+                other_stars_type += ['Fermi']
                 other_star_coord += [[gamma_source_ra,gamma_source_dec,0.]]
 
     if drawTeV:
@@ -564,8 +596,10 @@ def MatplotlibMap2D(hist_map,hist_tone,hist_contour,fig,label_x,label_y,label_z,
             #axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='^', label=other_star_labels[star])
             mycircle = plt.Circle( (other_star_markers[star][0], other_star_markers[star][1]), other_star_markers[star][2], fill = False, color=favorite_color)
             axbig.add_patch(mycircle)
+        if other_star_types[star]=='LHAASO':
+            axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='^', label=other_star_labels[star])
         if other_star_types[star]=='HAWC':
-            axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c='violet', marker='+', label=other_star_labels[star])
+            axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='o', label=other_star_labels[star])
         if other_star_types[star]=='Fermi':
             axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='s', label=other_star_labels[star])
         if other_star_types[star]=='MSP':
@@ -1109,4 +1143,73 @@ def GetHealpixMap(map_file, hist_map, isRaDec):
         hist_map.SetBinContent(binx,biny,fits_data)
 
     return hist_map
+
+def MatplotlibHist2D(hist_map,fig,label_x,label_y,label_z,plotname,zmax=0,zmin=0):
+
+    top = cm.get_cmap('Blues_r', 128) # r means reversed version
+    bottom = cm.get_cmap('Oranges', 128)# combine it all
+    newcolors = np.vstack((top(np.linspace(0, 1, 128)),bottom(np.linspace(0, 1, 128))))# create a new colormaps with a name of OrangeBlue
+    orange_blue = ListedColormap(newcolors, name='OrangeBlue')
+    colormap = 'coolwarm'
+    #colormap = 'viridis'
+
+    map_nbins = hist_map.GetNbinsX()
+    MapEdge_left = hist_map.GetXaxis().GetBinLowEdge(1)
+    MapEdge_right = hist_map.GetXaxis().GetBinLowEdge(hist_map.GetNbinsX()+1)
+    MapEdge_lower = hist_map.GetYaxis().GetBinLowEdge(1)
+    MapEdge_upper = hist_map.GetYaxis().GetBinLowEdge(hist_map.GetNbinsY()+1)
+
+    deg_per_bin = (MapEdge_right-MapEdge_left)/map_nbins
+    nbins_per_deg = map_nbins/(MapEdge_right-MapEdge_left)
+    x_axis = np.linspace(MapEdge_left,MapEdge_right,map_nbins)
+    y_axis = np.linspace(MapEdge_lower,MapEdge_upper,map_nbins)
+    grid_z = np.zeros((map_nbins, map_nbins))
+    max_z = 0.
+    for ybin in range(0,len(y_axis)):
+        for xbin in range(0,len(x_axis)):
+            hist_bin_x = xbin+1
+            hist_bin_y = ybin+1
+            if hist_bin_x<1: continue
+            if hist_bin_y<1: continue
+            if hist_bin_x>hist_map.GetNbinsX(): continue
+            if hist_bin_y>hist_map.GetNbinsY(): continue
+            grid_z[ybin,xbin] = hist_map.GetBinContent(hist_bin_x,hist_bin_y)
+            if max_z<hist_map.GetBinContent(hist_bin_x,hist_bin_y):
+                max_z = hist_map.GetBinContent(hist_bin_x,hist_bin_y)
+
+    fig.clf()
+    figsize_x = 6.
+    figsize_y = 6.
+    fig.set_figheight(figsize_y)
+    fig.set_figwidth(figsize_x)
+    axbig = fig.add_subplot()
+    axbig.set_xlabel(label_x)
+    axbig.set_ylabel(label_y)
+    if zmax==0 and zmin==0:
+        im = axbig.imshow(grid_z, origin='lower', cmap=colormap, extent=(x_axis.min(),x_axis.max(),y_axis.min(),y_axis.max()),zorder=0)
+    else:
+        im = axbig.imshow(grid_z, origin='lower', cmap=colormap, extent=(x_axis.min(),x_axis.max(),y_axis.min(),y_axis.max()),zorder=0,vmin=zmin,vmax=zmax)
+
+    MSCW_lower_blind = -0.4
+    MSCL_lower_blind = -0.6
+    MSCW_upper_blind = 0.5
+    MSCL_upper_blind = 0.6
+    if 'Matrix' in plotname:
+        x_upper_cut = MSCL_upper_blind
+        y_upper_cut = MSCW_upper_blind
+        x_lower_cut = MSCL_lower_blind
+        y_lower_cut = MSCW_lower_blind
+        x1, y1 = [ x_lower_cut,  x_lower_cut],  [ y_lower_cut,  y_upper_cut]
+        x2, y2 = [ x_lower_cut,  x_upper_cut],  [ y_upper_cut,  y_upper_cut]
+        x3, y3 = [ x_upper_cut,  x_upper_cut],  [ y_upper_cut,  y_lower_cut]
+        x4, y4 = [ x_upper_cut,  x_lower_cut],  [ y_lower_cut,  y_lower_cut]
+        plt.plot(x1, y1, x2, y2, x3, y3, x4, y4, color='k')
+
+    divider = make_axes_locatable(axbig)
+    cax = divider.append_axes("bottom", size="5%", pad=0.7)
+    cbar = fig.colorbar(im,orientation="horizontal",cax=cax)
+    cbar.set_label(label_z)
+    
+    fig.savefig("output_plots/%s.png"%(plotname),bbox_inches='tight')
+    axbig.remove()
 
