@@ -79,7 +79,7 @@ MSCW_lower_blind = -0.4
 MSCL_lower_blind = -0.6
 MSCW_upper_blind = 0.5
 MSCL_upper_blind = 0.6
-n_extra_lower_bins = 1
+n_extra_lower_bins = 2
 n_extra_upper_bins = 6
 mtx_dim_w_fine = 6
 mtx_dim_l_fine = 6
@@ -319,18 +319,23 @@ def GetVeritasTobiasFluxJ1908():
     fluxes = [8.96e-12, 8.99e-12, 7.49e-12, 4.41e-12]
     flux_errs = []
     fluxes_imp = []
-    fluxes_imp += [[4.79e-13, 1.23e-12, 2.00e-13, -9.25e-13]]
-    fluxes_imp += [[-5.14e-13, 8.54e-14, 4.01e-13, -3.21e-13]]
-    fluxes_imp += [[5.16e-13, 7.70e-13, 1.16e-12, -5.53e-13]]
-    fluxes_imp += [[-2.54e-13, 2.10e-12, 6.83e-13, -4.54e-13]]
-    fluxes_imp += [[-5.66e-13, -4.65e-13, -5.27e-13, -3.10e-13]]
+    #fluxes_imp += [[4.79e-13, 1.23e-12, 2.00e-13, -9.25e-13]]
+    #fluxes_imp += [[-5.14e-13, 8.54e-14, 4.01e-13, -3.21e-13]]
+    #fluxes_imp += [[5.16e-13, 7.70e-13, 1.16e-12, -5.53e-13]]
+    #fluxes_imp += [[-2.54e-13, 2.10e-12, 6.83e-13, -4.54e-13]]
+    #fluxes_imp += [[-5.66e-13, -4.65e-13, -5.27e-13, -3.10e-13]]
+    fluxes_imp += [[ 3.37038558e-13,  2.32611159e-13,  1.13754728e-14, -1.10503701e-14]]
+    fluxes_imp += [[-4.54858909e-13,  1.21982883e-14,  1.70790747e-14, -3.47624119e-15]]
+    fluxes_imp += [[ 4.03344751e-13,  1.46921705e-13,  6.16650492e-14, -6.37096588e-15]]
+    fluxes_imp += [[-2.39568041e-13,  3.99530818e-13,  3.29603237e-14, -6.06316366e-15]]
+    fluxes_imp += [[-4.13799877e-13, -1.02845122e-13, -2.65226278e-14, -3.41802916e-15]]
 
     for entry in range(0,len(energies)):
         syst_err = 0.
         for imp in range(0,len(fluxes_imp)):
             syst_err += pow(fluxes_imp[imp][entry],2)
         syst_err = pow(syst_err/float(len(fluxes_imp)-1),0.5)
-        flux_errs += [syst_err]
+        flux_errs += [pow(pow(syst_err,2)+pow(0.25*fluxes[entry],2),0.5)]
 
     print ('Tobias_energies = %s'%(energies))
     print ('Tobias_fluxes = %s'%(fluxes))
@@ -447,6 +452,7 @@ def MakeSpectrum(roi_x,roi_y,roi_r,roi_name,excl_roi_x,excl_roi_y,excl_roi_r):
     real_rel_syst_err = np.array(real_rel_syst_err)
     real_flux_syst_err = np.array(real_flux_syst_err)
     real_flux_stat_err = np.array(real_flux_stat_err)
+    #real_flux_stat_err = np.array(real_bkgd_stat_err)/np.array(real_bkgd)*np.array(real_flux)
     real_flux_total_err = np.sqrt(np.square(real_flux_stat_err)+np.square(real_flux_syst_err))
     fig.clf()
     fig.set_figheight(figsize_y)
@@ -470,11 +476,21 @@ def MakeSpectrum(roi_x,roi_y,roi_r,roi_name,excl_roi_x,excl_roi_y,excl_roi_r):
     fig.clf()
     fig.set_figheight(figsize_y)
     fig.set_figwidth(figsize_x)
-    axbig = fig.add_subplot()
     if 'Crab' in source_name:
+        axbig = fig.add_subplot()
         axbig.plot(xdata, ydata_crab,'r-',label='1508.06442', zorder=1)
         axbig.bar(energy_axis, 2.*real_flux_syst_err, bottom=real_flux-real_flux_syst_err, width=2.*energy_error, color='b', align='center', alpha=0.2,zorder=2)
         axbig.errorbar(energy_axis,real_flux,real_flux_total_err,xerr=energy_error,color='k',marker='_',ls='none',label='VERITAS (this work)',zorder=3)
+
+        axbig.set_xlabel('Energy [GeV]')
+        axbig.set_ylabel('$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}$]')
+        axbig.set_xscale('log')
+        axbig.set_yscale('log')
+        axbig.legend(loc='best')
+        plotname = 'RealSpectrum_%s_r%s'%(roi_name,roi_r)
+        fig.savefig("output_plots/%s_%s.png"%(plotname,plot_tag),bbox_inches='tight')
+        axbig.remove()
+
     elif source_name=='PSR_J1907_p0602':
         log_energy = np.linspace(log10(1e2),log10(1e5),50)
         xdata_ref = pow(10.,log_energy)
@@ -491,6 +507,7 @@ def MakeSpectrum(roi_x,roi_y,roi_r,roi_name,excl_roi_x,excl_roi_y,excl_roi_r):
         xdata = pow(10.,log_energy)
         ydata_wcda = pow(xdata/1e3,2)*vectorize_f_wcda(xdata)
 
+        axbig = fig.add_subplot()
         axbig.errorbar(Jordan_energies,Jordan_fluxes,Jordan_flux_errs,color='g',marker='s',ls='none',label='Fermi-LAT',zorder=1)
 
         axbig.bar(energy_axis, 2.*real_flux_syst_err, bottom=real_flux-real_flux_syst_err, width=2.*energy_error, color='r', align='center', alpha=0.2,zorder=2)
@@ -500,14 +517,40 @@ def MakeSpectrum(roi_x,roi_y,roi_r,roi_name,excl_roi_x,excl_roi_y,excl_roi_r):
 
         axbig.errorbar(Sara_energies,Sara_fluxes,Sara_flux_errs,color='purple',marker='s',ls='none',label='HAWC',zorder=5)
 
-        #axbig.errorbar(OldV_energies,OldV_fluxes,OldV_flux_errs,color='orange',marker='s',ls='none',label='VERITAS (2014)',zorder=1)
-        #axbig.errorbar(Tobias_energies,Tobias_fluxes,Tobias_flux_errs,color='orange',marker='s',ls='none',label='VERITAS (Tobias)',zorder=1)
-
         # In the case of WCDA data, the overall systematic uncertainty can be as large as +8% −24% on the flux.
         # https://arxiv.org/pdf/2305.17030.pdf, sec 3.3
         axbig.fill_between(xdata, ydata_wcda-0.24*ydata_wcda, ydata_wcda+0.08*ydata_wcda,color='goldenrod', alpha=0.2, zorder=7)
         axbig.plot(xdata, ydata_wcda,color='goldenrod',label='LHAASO (WCDA)', zorder=8)
         axbig.errorbar(LHAASO_energies,LHAASO_fluxes,LHAASO_flux_errs,color='goldenrod',marker='s',ls='none',label='LHAASO (KM2A)',zorder=9)
+
+        axbig.set_xlabel('Energy [GeV]')
+        axbig.set_ylabel('$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}$]')
+        axbig.set_xscale('log')
+        axbig.set_yscale('log')
+        axbig.legend(loc='best')
+        plotname = 'RealSpectrum_%s_r%s'%(roi_name,roi_r)
+        fig.savefig("output_plots/%s_%s.png"%(plotname,plot_tag),bbox_inches='tight')
+        axbig.remove()
+
+        axbig = fig.add_subplot()
+        axbig.errorbar(Jordan_energies,Jordan_fluxes,Jordan_flux_errs,color='gray',marker='s',ls='none',label='Fermi-LAT',zorder=1)
+        axbig.bar(energy_axis, 2.*real_flux_syst_err, bottom=real_flux-real_flux_syst_err, width=2.*energy_error, color='r', align='center', alpha=0.2,zorder=2)
+        axbig.errorbar(energy_axis,real_flux,real_flux_total_err,xerr=energy_error,color='r',marker='_',ls='none',label='VERITAS',zorder=3)
+        axbig.errorbar(Sara_energies,Sara_fluxes,Sara_flux_errs,color='gray',marker='s',ls='none',label='HAWC',zorder=5)
+        axbig.errorbar(Tobias_energies,Tobias_fluxes,Tobias_flux_errs,color='blue',marker='s',ls='none',label='VERITAS (Tobias)',zorder=1)
+        axbig.fill_between(xdata, ydata_wcda-0.24*ydata_wcda, ydata_wcda+0.08*ydata_wcda,color='gray', alpha=0.2, zorder=7)
+        axbig.plot(xdata, ydata_wcda,color='gray',label='LHAASO (WCDA)', zorder=8)
+        axbig.errorbar(LHAASO_energies,LHAASO_fluxes,LHAASO_flux_errs,color='gray',marker='s',ls='none',label='LHAASO (KM2A)',zorder=9)
+
+        axbig.set_xlabel('Energy [GeV]')
+        axbig.set_ylabel('$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}$]')
+        axbig.set_xscale('log')
+        axbig.set_yscale('log')
+        axbig.legend(loc='best')
+        plotname = 'TobiasSpectrum_%s_r%s'%(roi_name,roi_r)
+        fig.savefig("output_plots/%s_%s.png"%(plotname,plot_tag),bbox_inches='tight')
+        axbig.remove()
+
 
         PrintSpectralDataForNaima(Tobias_energies,Tobias_fluxes,Tobias_flux_errs,'Tobias')
         PrintSpectralDataForNaima(HESS_energies,HESS_fluxes,HESS_flux_errs,'HESS')
@@ -518,24 +561,25 @@ def MakeSpectrum(roi_x,roi_y,roi_r,roi_name,excl_roi_x,excl_roi_y,excl_roi_r):
         PrintSpectralDataForNaima(energy_axis,real_flux,real_flux_total_err,'VERITAS')
 
     else:
+        axbig = fig.add_subplot()
         axbig.bar(energy_axis, 2.*real_flux_syst_err, bottom=real_flux-real_flux_syst_err, width=2.*energy_error, color='b', align='center', alpha=0.2)
         axbig.errorbar(energy_axis,real_flux,real_flux_total_err,xerr=energy_error,color='k',marker='_',ls='none',label='VERITAS')
         PrintSpectralDataForNaima(energy_axis,real_flux,real_flux_total_err,'VERITAS')
 
-    axbig.set_xlabel('Energy [GeV]')
-    axbig.set_ylabel('$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}$]')
-    axbig.set_xscale('log')
-    axbig.set_yscale('log')
-    axbig.legend(loc='best')
-    plotname = 'RealSpectrum_%s_r%s'%(roi_name,roi_r)
-    fig.savefig("output_plots/%s_%s.png"%(plotname,plot_tag),bbox_inches='tight')
-    axbig.remove()
+        axbig.set_xlabel('Energy [GeV]')
+        axbig.set_ylabel('$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}$]')
+        axbig.set_xscale('log')
+        axbig.set_yscale('log')
+        axbig.legend(loc='best')
+        plotname = 'RealSpectrum_%s_r%s'%(roi_name,roi_r)
+        fig.savefig("output_plots/%s_%s.png"%(plotname,plot_tag),bbox_inches='tight')
+        axbig.remove()
 
     zscore = []
     for eb in range(0,len(energy_axis)):
         zscore += [real_flux[eb]/pow(pow(real_flux_stat_err[eb],2)+pow(real_flux_syst_err[eb],2),0.5)]
-    print ('total count in RoI      = %s'%(real_data))
-    print ('background count in RoI = %s'%(real_bkgd))
+        print ('total count in RoI      = %s'%(real_data[eb]))
+        print ('background count in RoI = %s'%(real_bkgd[eb]))
     zscore = np.array(zscore)
     fig.clf()
     fig.set_figheight(figsize_y)
@@ -597,7 +641,7 @@ def MakeFluxMap(flux_map, data_map, bkgd_map, norm_map, elev_map):
                 local_areatime = hist_areatime_skymap.GetBinContent(binx+1,biny+1)
                 if local_areatime<=0.: continue
                 flux_content = (data_content-bkgd_content)/local_areatime*pow(energy_bin[ebin]/1e3,2)/(100.*100.*3600.)/delta_E
-                stat_data_err = pow(max(data_content,0.),0.5)
+                stat_data_err = pow(max(bkgd_content,0.),0.5)
                 flux_stat_err = max(stat_data_err,1.)/local_areatime*pow(energy_bin[ebin]/1e3,2)/(100.*100.*3600.)/delta_E
                 flux_map[ebin].SetBinContent(binx+1,biny+1,flux_content*norm_weight)
                 flux_map[ebin].SetBinError(binx+1,biny+1,flux_stat_err*norm_weight)
@@ -1119,14 +1163,109 @@ if 'PSR_J1907_p0602' in source_name:
     Hist_mc_column.Add(Hist_mc_intensity)
     Hist_mc_column.Scale(CO_intensity_to_H_column_density) # H2 column density in unit of 1/cm2
     Hist_mc_column_reflect = CommonPlotFunctions.reflectXaxis(Hist_mc_column)
-    CommonPlotFunctions.MatplotlibMap2D(Hist_mc_column_reflect,None,[hist_real_diff_skymap_he_reflect,hist_real_diff_skymap_le_reflect,Hist_Fermi_reflect],fig,'RA','Dec','column density [$1/cm^{2}$]','SkymapCOMap_p10p40_%s'%(plot_tag))
+    CommonPlotFunctions.MatplotlibMap2D(Hist_mc_column_reflect,None,[hist_real_diff_skymap_he_reflect,hist_real_diff_skymap_le_reflect,Hist_Fermi_reflect],fig,'RA','Dec','column density [$1/cm^{2}$]','SkymapRadioCOMap_p10p40_%s'%(plot_tag))
     MWL_map_file = '/home/rshang/MatrixDecompositionMethod/MWL_maps/DHT08_Quad1_interp.fits' 
     CommonPlotFunctions.GetSlicedDataCubeMap(MWL_map_file, Hist_mc_intensity, 40., 70.)
     Hist_mc_column.Reset()
     Hist_mc_column.Add(Hist_mc_intensity)
     Hist_mc_column.Scale(CO_intensity_to_H_column_density) # H2 column density in unit of 1/cm2
     Hist_mc_column_reflect = CommonPlotFunctions.reflectXaxis(Hist_mc_column)
-    CommonPlotFunctions.MatplotlibMap2D(Hist_mc_column_reflect,None,[hist_real_diff_skymap_he_reflect,hist_real_diff_skymap_le_reflect,Hist_Fermi_reflect],fig,'RA','Dec','column density [$1/cm^{2}$]','SkymapCOMap_p40p70_%s'%(plot_tag))
+    CommonPlotFunctions.MatplotlibMap2D(Hist_mc_column_reflect,None,[hist_real_diff_skymap_he_reflect,hist_real_diff_skymap_le_reflect,Hist_Fermi_reflect],fig,'RA','Dec','column density [$1/cm^{2}$]','SkymapRadioCOMap_p40p70_%s'%(plot_tag))
+
+    MWL_map_file = '/home/rshang/MatrixDecompositionMethod/MWL_maps/DHT08_Quad1_interp.fits' 
+    vel_axis_inner, column_density_axis_inner = CommonPlotFunctions.GetVelocitySpectrum(MWL_map_file, 40.7, -0.8, 0.0, 0.4)
+    vel_axis_outer, column_density_axis_outer = CommonPlotFunctions.GetVelocitySpectrum(MWL_map_file, 40.7, -0.8, 0.4, 0.8)
+    column_density_axis_inner = CO_intensity_to_H_column_density*np.array(column_density_axis_inner)
+    column_density_axis_outer = CO_intensity_to_H_column_density*np.array(column_density_axis_outer)
+    column_density_axis_diff = column_density_axis_outer - column_density_axis_inner
+
+    max_idx = np.argmax(column_density_axis_diff)
+    print ('CO velocity of highest emission = %0.1f km/s'%(vel_axis_inner[max_idx]))
+    min_idx = np.argmin(column_density_axis_diff)
+    print ('CO velocity of lowest emission = %0.1f km/s'%(vel_axis_inner[min_idx]))
+
+    fig.clf()
+    fig.set_figheight(figsize_y)
+    fig.set_figwidth(figsize_x)
+    axbig = fig.add_subplot()
+    axbig.plot(vel_axis_inner, column_density_axis_inner)
+    axbig.plot(vel_axis_inner, column_density_axis_outer)
+    axbig.set_xlabel('$V_{LSR}$ [km/s]')
+    axbig.set_ylabel('column density per channel [$1/cm^{2}/(km/s)$]')
+    fig.savefig("output_plots/VelocitySpectrumCO_Cavity.png",bbox_inches='tight')
+    axbig.remove()
+    fig.clf()
+    fig.set_figheight(figsize_y)
+    fig.set_figwidth(figsize_x)
+    axbig = fig.add_subplot()
+    axbig.plot(vel_axis_inner, column_density_axis_diff)
+    axbig.set_xlabel('$V_{LSR}$ [km/s]')
+    axbig.set_ylabel('column density per channel [$1/cm^{2}/(km/s)$]')
+    fig.savefig("output_plots/VelocitySpectrumCO_Diff.png",bbox_inches='tight')
+    axbig.remove()
+
+    #MWL_map_file = '/gamma_raid/userspace/rshang/MW_FITS/GALFA_HI_RA+DEC_284.00+02.35_N.fits' 
+    #CommonPlotFunctions.GetSlicedGalfaHIDataCubeMap(MWL_map_file, Hist_mc_intensity, 10.*1e3, 40.*1e3, True)
+    #MWL_map_file = '/gamma_raid/userspace/rshang/MW_FITS/GALFA_HI_RA+DEC_284.00+10.35_N.fits' 
+    #CommonPlotFunctions.GetSlicedGalfaHIDataCubeMap(MWL_map_file, Hist_mc_intensity, 10.*1e3, 40.*1e3, False)
+    #MWL_map_file = '/gamma_raid/userspace/rshang/MW_FITS/GALFA_HI_RA+DEC_292.00+02.35_N.fits' 
+    #CommonPlotFunctions.GetSlicedGalfaHIDataCubeMap(MWL_map_file, Hist_mc_intensity, 10.*1e3, 40.*1e3, False)
+    #MWL_map_file = '/gamma_raid/userspace/rshang/MW_FITS/GALFA_HI_RA+DEC_292.00+10.35_N.fits' 
+    #CommonPlotFunctions.GetSlicedGalfaHIDataCubeMap(MWL_map_file, Hist_mc_intensity, 10.*1e3, 40.*1e3, False)
+    #Hist_mc_column.Reset()
+    #Hist_mc_column.Add(Hist_mc_intensity)
+    #Hist_mc_column.Scale(CO_intensity_to_H_column_density) # H2 column density in unit of 1/cm2
+    #Hist_mc_column_reflect = CommonPlotFunctions.reflectXaxis(Hist_mc_column)
+    #CommonPlotFunctions.MatplotlibMap2D(Hist_mc_column_reflect,None,[hist_real_diff_skymap_he_reflect,hist_real_diff_skymap_le_reflect,Hist_Fermi_reflect],fig,'RA','Dec','column density [$1/cm^{2}$]','SkymapRadioHIMap_p10p40_%s'%(plot_tag))
+
+    #MWL_map_file = '/gamma_raid/userspace/rshang/MW_FITS/GALFA_HI_RA+DEC_284.00+02.35_N.fits' 
+    #vel_axis_inner, column_density_axis_inner = CommonPlotFunctions.GetGalfaHIVelocitySpectrum(MWL_map_file, 40.7, -0.8, 0.0, 0.4)
+    #vel_axis_outer, column_density_axis_outer = CommonPlotFunctions.GetGalfaHIVelocitySpectrum(MWL_map_file, 40.7, -0.8, 0.4, 0.8)
+    #column_density_axis_inner = CO_intensity_to_H_column_density*np.array(column_density_axis_inner)
+    #column_density_axis_outer = CO_intensity_to_H_column_density*np.array(column_density_axis_outer)
+    #MWL_map_file = '/gamma_raid/userspace/rshang/MW_FITS/GALFA_HI_RA+DEC_284.00+10.35_N.fits' 
+    #vel_axis_inner, column_density_axis_inner = CommonPlotFunctions.GetGalfaHIVelocitySpectrum(MWL_map_file, 40.7, -0.8, 0.0, 0.4)
+    #vel_axis_outer, column_density_axis_outer = CommonPlotFunctions.GetGalfaHIVelocitySpectrum(MWL_map_file, 40.7, -0.8, 0.4, 0.8)
+    #column_density_axis_inner += CO_intensity_to_H_column_density*np.array(column_density_axis_inner)
+    #column_density_axis_outer += CO_intensity_to_H_column_density*np.array(column_density_axis_outer)
+    #MWL_map_file = '/gamma_raid/userspace/rshang/MW_FITS/GALFA_HI_RA+DEC_292.00+02.35_N.fits' 
+    #vel_axis_inner, column_density_axis_inner = CommonPlotFunctions.GetGalfaHIVelocitySpectrum(MWL_map_file, 40.7, -0.8, 0.0, 0.4)
+    #vel_axis_outer, column_density_axis_outer = CommonPlotFunctions.GetGalfaHIVelocitySpectrum(MWL_map_file, 40.7, -0.8, 0.4, 0.8)
+    #column_density_axis_inner += CO_intensity_to_H_column_density*np.array(column_density_axis_inner)
+    #column_density_axis_outer += CO_intensity_to_H_column_density*np.array(column_density_axis_outer)
+    #MWL_map_file = '/gamma_raid/userspace/rshang/MW_FITS/GALFA_HI_RA+DEC_292.00+10.35_N.fits' 
+    #vel_axis_inner, column_density_axis_inner = CommonPlotFunctions.GetGalfaHIVelocitySpectrum(MWL_map_file, 40.7, -0.8, 0.0, 0.4)
+    #vel_axis_outer, column_density_axis_outer = CommonPlotFunctions.GetGalfaHIVelocitySpectrum(MWL_map_file, 40.7, -0.8, 0.4, 0.8)
+    #column_density_axis_inner += CO_intensity_to_H_column_density*np.array(column_density_axis_inner)
+    #column_density_axis_outer += CO_intensity_to_H_column_density*np.array(column_density_axis_outer)
+
+    #column_density_axis_diff = column_density_axis_outer - column_density_axis_inner
+
+    #max_idx = np.argmax(column_density_axis_diff)
+    #print ('HI velocity of highest emission = %0.1f km/s'%(vel_axis_inner[max_idx]))
+    #min_idx = np.argmin(column_density_axis_diff)
+    #print ('HI velocity of lowest emission = %0.1f km/s'%(vel_axis_inner[min_idx]))
+
+    #fig.clf()
+    #fig.set_figheight(figsize_y)
+    #fig.set_figwidth(figsize_x)
+    #axbig = fig.add_subplot()
+    #axbig.plot(vel_axis_inner, column_density_axis_inner)
+    #axbig.plot(vel_axis_inner, column_density_axis_outer)
+    #axbig.set_xlabel('$V_{LSR}$ [km/s]')
+    #axbig.set_ylabel('column density per channel [$1/cm^{2}/(km/s)$]')
+    #fig.savefig("output_plots/VelocitySpectrumHI_Cavity.png",bbox_inches='tight')
+    #axbig.remove()
+    #fig.clf()
+    #fig.set_figheight(figsize_y)
+    #fig.set_figwidth(figsize_x)
+    #axbig = fig.add_subplot()
+    #axbig.plot(vel_axis_inner, column_density_axis_diff)
+    #axbig.set_xlabel('$V_{LSR}$ [km/s]')
+    #axbig.set_ylabel('column density per channel [$1/cm^{2}/(km/s)$]')
+    #fig.savefig("output_plots/VelocitySpectrumHI_Diff.png",bbox_inches='tight')
+    #axbig.remove()
+
 
     #Hist_Hawc = ROOT.TH2D("Hist_Hawc","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
     #Hist_Hawc.Rebin2D(3,3)
@@ -1147,5 +1286,32 @@ if 'PSR_J1907_p0602' in source_name:
     Hist_Tobias = CommonPlotFunctions.GetFITSMap(MWL_map_file, Hist_Tobias, True)
     Hist_Tobias_reflect = CommonPlotFunctions.reflectXaxis(Hist_Tobias)
     CommonPlotFunctions.MatplotlibMap2D(Hist_Tobias_reflect,None,[],fig,'RA','Dec','Significance','SkymapTobias_%s'%(plot_tag))
+
+elif 'PSR_J1856_p0245' in source_name:
+
+    hist_real_diff_skymap_le_reflect = CommonPlotFunctions.reflectXaxis(hist_real_diff_skymap_le)
+    hist_real_diff_skymap_he_reflect = CommonPlotFunctions.reflectXaxis(hist_real_diff_skymap_he)
+    Hist_mc_intensity = ROOT.TH2D("Hist_mc_intensity","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
+    Hist_mc_column = ROOT.TH2D("Hist_mc_column","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
+    pc_to_cm = 3.086e+18
+    CO_intensity_to_H_column_density = 2.*1e20
+    # Dame, T. M.; Hartmann, Dap; Thaddeus, P., 2011, "Replication data for: First Quadrant, main survey (DHT08)", https://doi.org/10.7910/DVN/1PG9NV, Harvard Dataverse, V3
+    # https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/1PG9NV
+    FITS_correction = 1000.# the source FITS file has a mistake in velocity km/s -> m/s
+    MWL_map_file = '/home/rshang/MatrixDecompositionMethod/MWL_maps/DHT08_Quad1_interp.fits' 
+    CommonPlotFunctions.GetSlicedDataCubeMap(MWL_map_file, Hist_mc_intensity, 81., 102.)
+    Hist_mc_column.Reset()
+    Hist_mc_column.Add(Hist_mc_intensity)
+    Hist_mc_column.Scale(CO_intensity_to_H_column_density) # H2 column density in unit of 1/cm2
+    Hist_mc_column_reflect = CommonPlotFunctions.reflectXaxis(Hist_mc_column)
+    CommonPlotFunctions.MatplotlibMap2D(Hist_mc_column_reflect,None,[hist_real_diff_skymap_he_reflect,hist_real_diff_skymap_le_reflect],fig,'RA','Dec','column density [$1/cm^{2}$]','SkymapRadioCOMap_p81p102_%s'%(plot_tag))
+
+    MWL_map_file = '/gamma_raid/userspace/rshang/MW_FITS/GALFA_HI_RA+DEC_284.00+02.35_N.fits' 
+    CommonPlotFunctions.GetSlicedGalfaHIDataCubeMap(MWL_map_file, Hist_mc_intensity, 81.*1e3, 102.*1e3, True)
+    Hist_mc_column.Reset()
+    Hist_mc_column.Add(Hist_mc_intensity)
+    Hist_mc_column.Scale(CO_intensity_to_H_column_density) # H2 column density in unit of 1/cm2
+    Hist_mc_column_reflect = CommonPlotFunctions.reflectXaxis(Hist_mc_column)
+    CommonPlotFunctions.MatplotlibMap2D(Hist_mc_column_reflect,None,[hist_real_diff_skymap_he_reflect,hist_real_diff_skymap_le_reflect],fig,'RA','Dec','column density [$1/cm^{2}$]','SkymapRadioHIMap_p10p40_%s'%(plot_tag))
 
 print ('total_data_expo = %0.1f hrs'%(total_data_expo))

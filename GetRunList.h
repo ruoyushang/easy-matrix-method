@@ -12,6 +12,16 @@ pair<double,double> GetSourceRaDec(TString source_name)
 {
     double Source_RA = 0.;
     double Source_Dec = 0.;
+    if (source_name.Contains("PSR_J1856_p0245"))
+    {
+            Source_RA = 284.21;
+            Source_Dec = 2.76;
+    }
+    if (source_name.Contains("LHAASO_J0622_p3754"))
+    {
+            Source_RA = 95.50;
+            Source_Dec = 37.90;
+    }
     if (source_name.Contains("PSR_J0359_p5414"))
     {
             Source_RA = 59.858;

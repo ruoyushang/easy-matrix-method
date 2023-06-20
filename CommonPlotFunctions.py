@@ -38,8 +38,8 @@ from spectral_cube import SpectralCube
 #folder_path = 'output_nuclear'
 folder_path = 'output_nuclear_test'
 
-#folder_path = 'output_4x4'
-#folder_path = 'output_8x8'
+#folder_path = 'output_weight_log_m1p0'
+#folder_path = 'output_weight_log_m2p0'
 
 #analysis_method = 'FoV'
 #analysis_method = 'Ratio'
@@ -1074,6 +1074,50 @@ def GetFITSMap(map_file, hist_map, isRaDec):
 
     return hist_map
 
+def GetSlicedGalfaHIDataCubeMap(map_file, hist_map, vel_low, vel_up, reset_hist):
+
+    if reset_hist:
+        hist_map.Reset()
+    nbinsx = hist_map.GetNbinsX()
+    nbinsy = hist_map.GetNbinsY()
+    map_center_ra = hist_map.GetXaxis().GetBinCenter(int(float(nbinsx)/2.))
+    map_center_dec = hist_map.GetYaxis().GetBinCenter(int(float(nbinsy)/2.))
+
+    filename = map_file
+
+    hdu = fits.open(filename)[0]
+    wcs = WCS(hdu.header)
+    image_data = hdu.data
+    print ("wcs")
+    print (wcs)
+
+    pixs_start = wcs.all_world2pix(map_center_ra,map_center_dec,vel_low,1)
+    pixs_end = wcs.all_world2pix(map_center_ra,map_center_dec,vel_up,1)
+    vel_idx_start = int(pixs_start[2])
+    vel_idx_end = int(pixs_end[2])
+
+    image_data_reduced_z = np.full((image_data[vel_idx_start, :, :].shape),0.)
+    for idx in range(vel_idx_start,vel_idx_end):
+        world_coord = wcs.all_pix2world(0,0,idx,1) 
+        velocity = world_coord[2]
+        world_coord = wcs.all_pix2world(0,0,idx+1,1) 
+        velocity_next = world_coord[2]
+        delta_vel = velocity_next - velocity
+        image_data_reduced_z += image_data[idx, :, :]*delta_vel
+
+    for binx in range(0,nbinsx):
+        for biny in range(0,nbinsy):
+            map_ra = hist_map.GetXaxis().GetBinCenter(binx+1)
+            map_dec = hist_map.GetYaxis().GetBinCenter(biny+1)
+            map_pixs = wcs.all_world2pix(map_ra, map_dec, vel_low, 1)
+            pix_ra = int(map_pixs[0])
+            pix_dec = int(map_pixs[1])
+            if pix_ra<0: continue
+            if pix_dec<0: continue
+            if pix_ra>=image_data_reduced_z[:,:].shape[1]: continue
+            if pix_dec>=image_data_reduced_z[:,:].shape[0]: continue
+            hist_map.SetBinContent(binx+1,biny+1,image_data_reduced_z[pix_dec,pix_ra])
+
 def GetSlicedDataCubeMap(map_file, hist_map, vel_low, vel_up):
 
     hist_map.Reset()
@@ -1088,6 +1132,8 @@ def GetSlicedDataCubeMap(map_file, hist_map, vel_low, vel_up):
     hdu = fits.open(filename)[0]
     wcs = WCS(hdu.header)
     image_data = hdu.data
+    print ("wcs")
+    print (wcs)
 
     pixs_start = wcs.all_world2pix(vel_low,map_center_lon,map_center_lat,1)
     pixs_end = wcs.all_world2pix(vel_up,map_center_lon,map_center_lat,1)
@@ -1212,4 +1258,113 @@ def MatplotlibHist2D(hist_map,fig,label_x,label_y,label_z,plotname,zmax=0,zmin=0
     
     fig.savefig("output_plots/%s.png"%(plotname),bbox_inches='tight')
     axbig.remove()
+
+def ConvertGalacticToRaDec(l, b):
+    my_sky = SkyCoord(l*my_unit.deg, b*my_unit.deg, frame='galactic')
+    return my_sky.icrs.ra.deg, my_sky.icrs.dec.deg
+
+def GetVelocitySpectrum(map_file, roi_lon, roi_lat, roi_inner_ring, roi_outer_ring):
+
+    roi_ra, roi_dec = ConvertGalacticToRaDec(roi_lon,roi_lat)
+    print ('GetVelocitySpectrum, roi_ra = %0.1f, roi_dec = %0.1f'%(roi_ra,roi_dec))
+
+    hdu = fits.open(map_file)[0]
+    wcs = WCS(hdu.header)
+    image_data = hdu.data
+    dimensions = image_data.shape
+    vel_dim = dimensions[2]
+    lon_dim = dimensions[1]
+    lat_dim = dimensions[0]
+
+    lon_max = roi_lon-2.0
+    lon_min = roi_lon+2.0
+    lat_max = roi_lat+2.0
+    lat_min = roi_lat-2.0
+    pixs_min = wcs.all_world2pix(0.,lon_min,lat_min,1)
+    pixs_max = wcs.all_world2pix(0.,lon_max,lat_max,1)
+    pixs_lon_min = int(pixs_min[1])
+    pixs_lat_min = int(pixs_min[2])
+    pixs_lon_max = int(pixs_max[1])
+    pixs_lat_max = int(pixs_max[2])
+
+    vel_axis = []
+    column_density = []
+    for vel_pix in range(0,vel_dim):
+        world_coord = wcs.all_pix2world(vel_pix,0,0,1) 
+        velocity = world_coord[0]
+        vel_axis += [velocity]
+        total_pix = 0.
+        avg_density = 0.
+        for lon_pix in range(pixs_lon_min,pixs_lon_max):
+            for lat_pix in range(pixs_lat_min,pixs_lat_max):
+                world_coord = wcs.all_pix2world(vel_pix,lon_pix,lat_pix,1) 
+                velocity = world_coord[0]
+                lon = world_coord[1]
+                lat = world_coord[2]
+                distance = pow(pow(lon-roi_lon,2)+pow(lat-roi_lat,2),0.5)
+                if distance<roi_inner_ring: continue
+                if distance>roi_outer_ring: continue
+                avg_density += image_data[lat_pix,lon_pix,vel_pix]
+                total_pix += 1.
+        avg_density = avg_density/total_pix
+        column_density += [avg_density]
+
+    return vel_axis, column_density
+
+def GetGalfaHIVelocitySpectrum(map_file, roi_lon, roi_lat, roi_inner_ring, roi_outer_ring):
+
+    vel_min = 0.
+    vel_max = 50.*1e3
+
+    roi_ra, roi_dec = ConvertGalacticToRaDec(roi_lon,roi_lat)
+    print ('GetVelocitySpectrum, roi_ra = %0.1f, roi_dec = %0.1f'%(roi_ra,roi_dec))
+
+    hdu = fits.open(map_file)[0]
+    wcs = WCS(hdu.header)
+    image_data = hdu.data
+    dimensions = image_data.shape
+    vel_dim = dimensions[0]
+    dec_dim = dimensions[1]
+    ra_dim = dimensions[2]
+
+    ra_max = roi_ra-roi_outer_ring
+    ra_min = roi_ra+roi_outer_ring
+    dec_max = roi_dec+roi_outer_ring
+    dec_min = roi_dec-roi_outer_ring
+    pixs_min = wcs.all_world2pix(ra_min,dec_min, vel_min,1)
+    pixs_max = wcs.all_world2pix(ra_max,dec_max, vel_max,1)
+    pixs_ra_min = int(pixs_min[0])
+    pixs_dec_min = int(pixs_min[1])
+    pixs_vel_min = int(pixs_min[2])
+    pixs_ra_max = int(pixs_max[0])
+    pixs_dec_max = int(pixs_max[1])
+    pixs_vel_max = int(pixs_max[2])
+
+    vel_axis = []
+    column_density = []
+    for vel_pix in range(pixs_vel_min,pixs_vel_max):
+        world_coord = wcs.all_pix2world(0,0,vel_pix,1) 
+        velocity = world_coord[2]
+        vel_axis += [velocity]
+        total_pix = 0.
+        avg_density = 0.
+        for ra_pix in range(pixs_ra_min,pixs_ra_max):
+            for dec_pix in range(pixs_dec_min,pixs_dec_max):
+                if ra_pix<0: continue
+                if dec_pix<0: continue
+                if ra_pix>=image_data[:,:,:].shape[2]: continue
+                if dec_pix>=image_data[:,:,:].shape[1]: continue
+                world_coord = wcs.all_pix2world(ra_pix,dec_pix,vel_pix,1) 
+                velocity = world_coord[2]
+                ra = world_coord[0]
+                dec = world_coord[1]
+                distance = pow(pow(ra-roi_ra,2)+pow(dec-roi_dec,2),0.5)
+                if distance<roi_inner_ring: continue
+                if distance>roi_outer_ring: continue
+                avg_density += image_data[vel_pix,dec_pix,ra_pix]
+                total_pix += 1.
+        avg_density = avg_density/total_pix
+        column_density += [avg_density]
+
+    return vel_axis, column_density
 
