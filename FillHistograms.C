@@ -95,6 +95,7 @@ vector<double> effective_area;
 vector<double> data_count;
 vector<double> ratio_bkgd_count;
 vector<double> regression_bkgd_count;
+vector<double> init_perturbation_bkgd_count;
 vector<double> perturbation_bkgd_count;
 vector<double> combined_bkgd_count;
 
@@ -125,11 +126,13 @@ vector<TH2D> Hist_OnData_CR_Skymap_Mask;
 vector<TH2D> Hist_OnData_CR_Skymap_FoV;
 vector<TH2D> Hist_OnData_CR_Skymap_Ratio;
 vector<TH2D> Hist_OnData_CR_Skymap_Regression;
+vector<TH2D> Hist_OnData_CR_Skymap_Init_Perturbation;
 vector<TH2D> Hist_OnData_CR_Skymap_Perturbation;
 vector<TH2D> Hist_OnData_SR_Skymap_Sum;
 vector<TH2D> Hist_OnData_CR_Skymap_FoV_Sum;
 vector<TH2D> Hist_OnData_CR_Skymap_Ratio_Sum;
 vector<TH2D> Hist_OnData_CR_Skymap_Regression_Sum;
+vector<TH2D> Hist_OnData_CR_Skymap_Init_Perturbation_Sum;
 vector<TH2D> Hist_OnData_CR_Skymap_Perturbation_Sum;
 vector<TH2D> Hist_OnData_CR_Skymap_Combined_Sum;
 vector<TH2D> Hist_OnData_MSCLW_Fine_Sum;
@@ -996,6 +999,7 @@ void SingleRunAnalysis(int int_run_number, int int_run_number_real, int input_xo
                 Hist_OnData_CR_Skymap_FoV.at(energy_idx).Fill(complementary_ra_sky,complementary_dec_sky,weight*0.5);
                 Hist_OnData_CR_Skymap_Ratio.at(energy_idx).Fill(complementary_ra_sky,complementary_dec_sky,weight*0.5);
                 Hist_OnData_CR_Skymap_Regression.at(energy_idx).Fill(complementary_ra_sky,complementary_dec_sky,weight*0.5);
+                Hist_OnData_CR_Skymap_Init_Perturbation.at(energy_idx).Fill(complementary_ra_sky,complementary_dec_sky,weight*0.5);
                 Hist_OnData_CR_Skymap_Perturbation.at(energy_idx).Fill(complementary_ra_sky,complementary_dec_sky,weight*0.5);
                 if (pow(theta2,0.5)>0.3)
                 {
@@ -1007,6 +1011,7 @@ void SingleRunAnalysis(int int_run_number, int int_run_number_real, int input_xo
                 Hist_OnData_CR_Skymap_FoV.at(energy_idx).Fill(ra_sky,dec_sky,weight*0.5);
                 Hist_OnData_CR_Skymap_Ratio.at(energy_idx).Fill(ra_sky,dec_sky,weight*0.5);
                 Hist_OnData_CR_Skymap_Regression.at(energy_idx).Fill(ra_sky,dec_sky,weight*0.5);
+                Hist_OnData_CR_Skymap_Init_Perturbation.at(energy_idx).Fill(ra_sky,dec_sky,weight*0.5);
                 Hist_OnData_CR_Skymap_Perturbation.at(energy_idx).Fill(ra_sky,dec_sky,weight*0.5);
                 if (pow(theta2,0.5)>0.3)
                 {
@@ -1018,6 +1023,7 @@ void SingleRunAnalysis(int int_run_number, int int_run_number_real, int input_xo
                 Hist_OnData_CR_Skymap_FoV.at(energy_idx).Fill(ra_sky,dec_sky,weight);
                 Hist_OnData_CR_Skymap_Ratio.at(energy_idx).Fill(ra_sky,dec_sky,weight);
                 Hist_OnData_CR_Skymap_Regression.at(energy_idx).Fill(ra_sky,dec_sky,weight);
+                Hist_OnData_CR_Skymap_Init_Perturbation.at(energy_idx).Fill(ra_sky,dec_sky,weight);
                 Hist_OnData_CR_Skymap_Perturbation.at(energy_idx).Fill(ra_sky,dec_sky,weight);
                 if (pow(theta2,0.5)>0.3)
                 {
@@ -1552,11 +1558,13 @@ void FillHistograms(string target_data, bool isON, int doImposter)
         Hist_OnData_CR_Skymap_FoV.push_back(TH2D("Hist_OnData_CR_Skymap_FoV_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",Skymap_nbins_x,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,Skymap_nbins_y,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y));
         Hist_OnData_CR_Skymap_Ratio.push_back(TH2D("Hist_OnData_CR_Skymap_Ratio_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",Skymap_nbins_x,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,Skymap_nbins_y,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y));
         Hist_OnData_CR_Skymap_Regression.push_back(TH2D("Hist_OnData_CR_Skymap_Regression_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",Skymap_nbins_x,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,Skymap_nbins_y,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y));
+        Hist_OnData_CR_Skymap_Init_Perturbation.push_back(TH2D("Hist_OnData_CR_Skymap_Init_Perturbation_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",Skymap_nbins_x,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,Skymap_nbins_y,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y));
         Hist_OnData_CR_Skymap_Perturbation.push_back(TH2D("Hist_OnData_CR_Skymap_Perturbation_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",Skymap_nbins_x,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,Skymap_nbins_y,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y));
         Hist_OnData_SR_Skymap_Sum.push_back(TH2D("Hist_OnData_SR_Skymap_Sum_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",Skymap_nbins_x,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,Skymap_nbins_y,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y));
         Hist_OnData_CR_Skymap_FoV_Sum.push_back(TH2D("Hist_OnData_CR_Skymap_FoV_Sum_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",Skymap_nbins_x,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,Skymap_nbins_y,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y));
         Hist_OnData_CR_Skymap_Ratio_Sum.push_back(TH2D("Hist_OnData_CR_Skymap_Ratio_Sum_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",Skymap_nbins_x,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,Skymap_nbins_y,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y));
         Hist_OnData_CR_Skymap_Regression_Sum.push_back(TH2D("Hist_OnData_CR_Skymap_Regression_Sum_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",Skymap_nbins_x,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,Skymap_nbins_y,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y));
+        Hist_OnData_CR_Skymap_Init_Perturbation_Sum.push_back(TH2D("Hist_OnData_CR_Skymap_Init_Perturbation_Sum_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",Skymap_nbins_x,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,Skymap_nbins_y,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y));
         Hist_OnData_CR_Skymap_Perturbation_Sum.push_back(TH2D("Hist_OnData_CR_Skymap_Perturbation_Sum_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",Skymap_nbins_x,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,Skymap_nbins_y,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y));
         Hist_OnData_CR_Skymap_Combined_Sum.push_back(TH2D("Hist_OnData_CR_Skymap_Combined_Sum_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",Skymap_nbins_x,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,Skymap_nbins_y,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y));
 
@@ -1945,6 +1953,20 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         total_bkgd_sr_count = GetSRcounts(&Hist_OnBkgd_MSCLW_Fine.at(e));
                         std::cout << "total_data_sr_count = " << total_data_sr_count << ", total_bkgd_sr_count = " << total_bkgd_sr_count << std::endl;
 
+                        if (matrix_rank[e]==1)
+                        {
+                            fill2DHistogram(&Hist_OnBkgd_MSCLW_Fine.at(e),mtx_off_data_cr_scaled);
+                        }
+                        double SR_predict_init_perturbation = Hist_OnBkgd_MSCLW_Fine.at(e).Integral(binx_blind_lower_global+1,binx_blind_upper_global,biny_blind_lower_global+1,biny_blind_upper_global);
+                        CR_count_map = CR_on_count_weighted.at(e);
+                        if (CR_count_map>0.)
+                        {
+                            Hist_OnData_CR_Skymap_Init_Perturbation.at(e).Scale(SR_predict_init_perturbation/CR_count_map);
+                        }
+                        //std::cout << "SR_predict_init_perturbation = " << SR_predict_init_perturbation << std::endl;
+                        //std::cout << "CR_count_map = " << CR_count_map << std::endl;
+                        //std::cout << "Hist_OnData_CR_Skymap_Init_Perturbation.at(e).Integral() = " << Hist_OnData_CR_Skymap_Init_Perturbation.at(e).Integral() << std::endl;
+
                         mtx_on_t = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,matrix_rank[e],true,true,1);
                         std::cout << "mtx_on_t (blind):" << std::endl;
                         std::cout << mtx_on_t.block(0,0,4,4).real() << std::endl;
@@ -1967,11 +1989,8 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         {
                             fill2DHistogram(&Hist_OnBkgd_MSCLW_Fine.at(e),mtx_off_data_cr_scaled);
                         }
-
                         double SR_predict_perturbation = Hist_OnBkgd_MSCLW_Fine.at(e).Integral(binx_blind_lower_global+1,binx_blind_upper_global,biny_blind_lower_global+1,biny_blind_upper_global);
                         SR_predict_perturbation = SR_predict_perturbation/(1.+method_pertrubation_mean[e]);
-
-                        //CR_count_map = Hist_OnData_CR_Skymap_Perturbation.at(e).Integral();
                         CR_count_map = CR_on_count_weighted.at(e);
                         if (CR_count_map>0.)
                         {
@@ -1990,6 +2009,7 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         Hist_OnData_CR_Skymap_FoV_Sum.at(e).Add(&Hist_OnData_CR_Skymap_FoV.at(e));
                         Hist_OnData_CR_Skymap_Ratio_Sum.at(e).Add(&Hist_OnData_CR_Skymap_Ratio.at(e));
                         Hist_OnData_CR_Skymap_Regression_Sum.at(e).Add(&Hist_OnData_CR_Skymap_Regression.at(e));
+                        Hist_OnData_CR_Skymap_Init_Perturbation_Sum.at(e).Add(&Hist_OnData_CR_Skymap_Init_Perturbation.at(e));
                         Hist_OnData_CR_Skymap_Perturbation_Sum.at(e).Add(&Hist_OnData_CR_Skymap_Perturbation.at(e));
                         double ratio_method_weight = pow(1./method_ratio_rms[e],2);
                         double regression_method_weight = pow(1./method_regression_rms[e],2);
@@ -2020,6 +2040,7 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         Hist_OnData_CR_Skymap_FoV.at(e).Reset();
                         Hist_OnData_CR_Skymap_Ratio.at(e).Reset();
                         Hist_OnData_CR_Skymap_Regression.at(e).Reset();
+                        Hist_OnData_CR_Skymap_Init_Perturbation.at(e).Reset();
                         Hist_OnData_CR_Skymap_Perturbation.at(e).Reset();
                         CR_on_count_unweighted.at(e) = 0.;
                         CR_off_count_unweighted.at(e) = 0.;
@@ -2053,11 +2074,13 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         double truth = Hist_OnData_SR_Skymap_Sum.at(e).Integral();
                         double ratio_predict = Hist_OnData_CR_Skymap_Ratio_Sum.at(e).Integral();
                         double regression_predict = Hist_OnData_CR_Skymap_Regression_Sum.at(e).Integral();
+                        double init_perturbation_predict = Hist_OnData_CR_Skymap_Init_Perturbation_Sum.at(e).Integral();
                         double perturbation_predict = Hist_OnData_CR_Skymap_Perturbation_Sum.at(e).Integral();
                         double combined_predict = Hist_OnData_CR_Skymap_Combined_Sum.at(e).Integral();
                         data_count.push_back(truth);
                         ratio_bkgd_count.push_back(ratio_predict);
                         regression_bkgd_count.push_back(regression_predict);
+                        init_perturbation_bkgd_count.push_back(init_perturbation_predict);
                         perturbation_bkgd_count.push_back(perturbation_predict);
                         combined_bkgd_count.push_back(combined_predict);
 
@@ -2071,6 +2094,11 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                             "ratio_predict        = " << ratio_predict 
                             << ", " << -(ratio_predict-truth)/truth*100. << " %"
                             << ", " << -(ratio_predict-truth)/pow(truth,0.5) << " sigma"
+                            << std::endl;
+                        std::cout << 
+                            "init_perturbation_predict = " << init_perturbation_predict 
+                            << ", " << -(init_perturbation_predict-truth)/truth*100. << " %"
+                            << ", " << -(init_perturbation_predict-truth)/pow(truth,0.5) << " sigma"
                             << std::endl;
                         std::cout << 
                             "perturbation_predict = " << perturbation_predict 
@@ -2091,6 +2119,7 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         Hist_OnData_CR_Skymap_FoV_Sum.at(e).Write();
                         Hist_OnData_CR_Skymap_Ratio_Sum.at(e).Write();
                         Hist_OnData_CR_Skymap_Regression_Sum.at(e).Write();
+                        Hist_OnData_CR_Skymap_Init_Perturbation_Sum.at(e).Write();
                         Hist_OnData_CR_Skymap_Perturbation_Sum.at(e).Write();
                         Hist_OnData_CR_Skymap_Combined_Sum.at(e).Write();
                         Hist_OnData_MSCLW_Fine_Sum.at(e).Write();
@@ -2108,6 +2137,7 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                     InfoTree.Branch("data_count","std::vector<double>",&data_count);
                     InfoTree.Branch("ratio_bkgd_count","std::vector<double>",&ratio_bkgd_count);
                     InfoTree.Branch("regression_bkgd_count","std::vector<double>",&regression_bkgd_count);
+                    InfoTree.Branch("init_perturbation_bkgd_count","std::vector<double>",&init_perturbation_bkgd_count);
                     InfoTree.Branch("perturbation_bkgd_count","std::vector<double>",&perturbation_bkgd_count);
                     InfoTree.Branch("combined_bkgd_count","std::vector<double>",&combined_bkgd_count);
                     InfoTree.Fill();
@@ -2129,6 +2159,7 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                     data_count.clear();
                     ratio_bkgd_count.clear();
                     regression_bkgd_count.clear();
+                    init_perturbation_bkgd_count.clear();
                     perturbation_bkgd_count.clear();
                     combined_bkgd_count.clear();
 
@@ -2143,6 +2174,7 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         Hist_OnData_CR_Skymap_FoV_Sum.at(e).Reset();
                         Hist_OnData_CR_Skymap_Ratio_Sum.at(e).Reset();
                         Hist_OnData_CR_Skymap_Regression_Sum.at(e).Reset();
+                        Hist_OnData_CR_Skymap_Init_Perturbation_Sum.at(e).Reset();
                         Hist_OnData_CR_Skymap_Perturbation_Sum.at(e).Reset();
                         Hist_OnData_CR_Skymap_Combined_Sum.at(e).Reset();
                         Hist_OnData_MSCLW_Fine_Sum.at(e).Reset();

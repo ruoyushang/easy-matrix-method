@@ -36,9 +36,12 @@ from spectral_cube import SpectralCube
 # Great examples of matplotlib plots: https://atmamani.github.io/cheatsheets/matplotlib/matplotlib_2/
 
 #folder_path = 'output_nuclear'
-folder_path = 'output_nuclear_test'
+#folder_path = 'output_nuclear_test'
 
-#folder_path = 'output_weight_log_m1p0'
+#folder_path = 'output_weight_log_m0p0'
+#folder_path = 'output_weight_log_m0p5'
+folder_path = 'output_weight_log_m1p0'
+#folder_path = 'output_weight_log_m1p5'
 #folder_path = 'output_weight_log_m2p0'
 
 #analysis_method = 'FoV'

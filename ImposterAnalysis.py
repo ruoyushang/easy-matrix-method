@@ -35,12 +35,12 @@ figsize_y = 6.4
 fig.set_figheight(figsize_y)
 fig.set_figwidth(figsize_x)
 
-new_nbins_x = 100
-new_nbins_y = 100
+#new_nbins_x = 100
+#new_nbins_y = 100
 #new_nbins_x = 80
 #new_nbins_y = 80
-#new_nbins_x = 50
-#new_nbins_y = 50
+new_nbins_x = 50
+new_nbins_y = 50
 
 effective_area_cut = 10000.
 energy_bin = CommonPlotFunctions.energy_bin
@@ -243,17 +243,17 @@ def flux_lhaaso_wcda_j1908_func(x):
 
 def GetHawcSaraFluxJ1908():
 
-    #energies = [1.38,2.58,4.58,6.89,10.88,18.23,35.56,61.32,107.69,186.29]
-    #fluxes = [2.7211e-11,2.7457e-11,2.2287e-11,1.7933e-11,1.3624e-11,9.4346e-12,5.9615e-12,2.5984e-12,1.4372e-12,5.7010e-13]
-    #flux_errs = [2.7211e-11,2.7457e-11,2.2287e-11,1.7933e-11,1.3624e-11,9.4346e-12,5.9615e-12,2.5984e-12,1.4372e-12,5.7010e-13]
-    #flux_errs_up = [+1.3091e-12,+1.1941e-12,+1.0624e-12,+7.6946e-13,+5.3155e-13,+5.0018e-13,+3.1416e-13,+2.5557e-13,+2.3385e-13,+1.7388e-13]
-    #flux_errs_low = [-1.2902e-12,-1.2274e-12,-1.0946e-12,-7.6676e-13,-5.2608e-13,-5.1950e-13,-3.2465e-13,-2.4536e-13,-2.3011e-13,-1.7487e-13]
+    #energies = [1.53,2.78,4.75,7.14,11.15,18.68,36.15,61.99,108.69,187.51]
+    #fluxes = [7.0009e-12,9.5097e-12,8.4629e-12,6.6242e-12,5.6764e-12,4.4924e-12,3.2932e-12,1.5250e-12,9.1235e-13,4.1833e-13]
+    #flux_errs = [7.0009e-12,9.5097e-12,8.4629e-12,6.6242e-12,5.6764e-12,4.4924e-12,3.2932e-12,1.5250e-12,9.1235e-13,4.1833e-13]
+    #flux_errs_up = [+7.2024e-13,+6.3288e-13,+5.4679e-13,+3.9318e-13,+2.6768e-13,+2.9978e-13,+2.2130e-13,+1.8650e-13,+1.8756e-13,+1.5458e-13]
+    #flux_errs_low = [-7.1498e-13,-6.6198e-13,-5.2961e-13,-3.8152e-13,-2.8404e-13,-3.1157e-13,-2.0721e-13,-1.8818e-13,-1.7827e-13,-1.5612e-13]
 
     energies = [1.53,2.78,4.75,7.14,11.15,18.68,36.15,61.99,108.69,187.51]
     fluxes = [7.0009e-12,9.5097e-12,8.4629e-12,6.6242e-12,5.6764e-12,4.4924e-12,3.2932e-12,1.5250e-12,9.1235e-13,4.1833e-13]
     flux_errs = [7.0009e-12,9.5097e-12,8.4629e-12,6.6242e-12,5.6764e-12,4.4924e-12,3.2932e-12,1.5250e-12,9.1235e-13,4.1833e-13]
-    flux_errs_up = [+7.2024e-13,+6.3288e-13,+5.4679e-13,+3.9318e-13,+2.6768e-13,+2.9978e-13,+2.2130e-13,+1.8650e-13,+1.8756e-13,+1.5458e-13]
-    flux_errs_low = [-7.1498e-13,-6.6198e-13,-5.2961e-13,-3.8152e-13,-2.8404e-13,-3.1157e-13,-2.0721e-13,-1.8818e-13,-1.7827e-13,-1.5612e-13]
+    flux_errs_low = [-1.293e-12,-1.425e-12,-1.623e-12,-1.292e-12,-8.837e-13,-4.499e-13,-4.926e-13,-2.418e-13,-1.947e-13,-1.549e-13]
+    flux_errs_up = [+8.199e-13,+6.952e-13,+7.313e-13,+5.473e-13,+4.411e-13,+4.389e-13,+3.015e-13,+1.893e-13,+2.074e-13,+1.649e-13]
 
     for entry in range(0,len(energies)):
         energies[entry] = energies[entry]*1e3
@@ -1204,19 +1204,19 @@ if 'PSR_J1907_p0602' in source_name:
     fig.savefig("output_plots/VelocitySpectrumCO_Diff.png",bbox_inches='tight')
     axbig.remove()
 
-    #MWL_map_file = '/gamma_raid/userspace/rshang/MW_FITS/GALFA_HI_RA+DEC_284.00+02.35_N.fits' 
-    #CommonPlotFunctions.GetSlicedGalfaHIDataCubeMap(MWL_map_file, Hist_mc_intensity, 10.*1e3, 40.*1e3, True)
-    #MWL_map_file = '/gamma_raid/userspace/rshang/MW_FITS/GALFA_HI_RA+DEC_284.00+10.35_N.fits' 
-    #CommonPlotFunctions.GetSlicedGalfaHIDataCubeMap(MWL_map_file, Hist_mc_intensity, 10.*1e3, 40.*1e3, False)
-    #MWL_map_file = '/gamma_raid/userspace/rshang/MW_FITS/GALFA_HI_RA+DEC_292.00+02.35_N.fits' 
-    #CommonPlotFunctions.GetSlicedGalfaHIDataCubeMap(MWL_map_file, Hist_mc_intensity, 10.*1e3, 40.*1e3, False)
-    #MWL_map_file = '/gamma_raid/userspace/rshang/MW_FITS/GALFA_HI_RA+DEC_292.00+10.35_N.fits' 
-    #CommonPlotFunctions.GetSlicedGalfaHIDataCubeMap(MWL_map_file, Hist_mc_intensity, 10.*1e3, 40.*1e3, False)
-    #Hist_mc_column.Reset()
-    #Hist_mc_column.Add(Hist_mc_intensity)
-    #Hist_mc_column.Scale(CO_intensity_to_H_column_density) # H2 column density in unit of 1/cm2
-    #Hist_mc_column_reflect = CommonPlotFunctions.reflectXaxis(Hist_mc_column)
-    #CommonPlotFunctions.MatplotlibMap2D(Hist_mc_column_reflect,None,[hist_real_diff_skymap_he_reflect,hist_real_diff_skymap_le_reflect,Hist_Fermi_reflect],fig,'RA','Dec','column density [$1/cm^{2}$]','SkymapRadioHIMap_p10p40_%s'%(plot_tag))
+    MWL_map_file = '/gamma_raid/userspace/rshang/MW_FITS/GALFA_HI_RA+DEC_284.00+02.35_N.fits' 
+    CommonPlotFunctions.GetSlicedGalfaHIDataCubeMap(MWL_map_file, Hist_mc_intensity, 10.*1e3, 40.*1e3, True)
+    MWL_map_file = '/gamma_raid/userspace/rshang/MW_FITS/GALFA_HI_RA+DEC_284.00+10.35_N.fits' 
+    CommonPlotFunctions.GetSlicedGalfaHIDataCubeMap(MWL_map_file, Hist_mc_intensity, 10.*1e3, 40.*1e3, False)
+    MWL_map_file = '/gamma_raid/userspace/rshang/MW_FITS/GALFA_HI_RA+DEC_292.00+02.35_N.fits' 
+    CommonPlotFunctions.GetSlicedGalfaHIDataCubeMap(MWL_map_file, Hist_mc_intensity, 10.*1e3, 40.*1e3, False)
+    MWL_map_file = '/gamma_raid/userspace/rshang/MW_FITS/GALFA_HI_RA+DEC_292.00+10.35_N.fits' 
+    CommonPlotFunctions.GetSlicedGalfaHIDataCubeMap(MWL_map_file, Hist_mc_intensity, 10.*1e3, 40.*1e3, False)
+    Hist_mc_column.Reset()
+    Hist_mc_column.Add(Hist_mc_intensity)
+    Hist_mc_column.Scale(CO_intensity_to_H_column_density) # H2 column density in unit of 1/cm2
+    Hist_mc_column_reflect = CommonPlotFunctions.reflectXaxis(Hist_mc_column)
+    CommonPlotFunctions.MatplotlibMap2D(Hist_mc_column_reflect,None,[hist_real_diff_skymap_he_reflect,hist_real_diff_skymap_le_reflect,Hist_Fermi_reflect],fig,'RA','Dec','column density [$1/cm^{2}$]','SkymapRadioHIMap_p10p40_%s'%(plot_tag))
 
     #MWL_map_file = '/gamma_raid/userspace/rshang/MW_FITS/GALFA_HI_RA+DEC_284.00+02.35_N.fits' 
     #vel_axis_inner, column_density_axis_inner = CommonPlotFunctions.GetGalfaHIVelocitySpectrum(MWL_map_file, 40.7, -0.8, 0.0, 0.4)

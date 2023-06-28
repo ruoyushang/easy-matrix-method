@@ -40,6 +40,7 @@ input_params += [ ['SNR_G189_p03'          ,94.213  ,22.503 ,30 ,90] ] # ic 443
 input_params += [ ['Geminga'               ,98.476  ,17.770 ,30 ,90] ]
 input_params += [ ['PSR_J2021_p3651'       ,305.27  ,36.85  ,30 ,90] ] # Dragonfly
 input_params += [ ['PSR_J2032_p4127', 308.05  , 41.46  ,30 ,90] ]
+input_params += [ ['PSR_J1856_p0245', 284.21  , 2.76  ,30 ,90] ]
 
 input_params += [ ['LHAASO_J0622_p3754', 95.50  , 37.90  ,30 ,90] ]
 #input_params += [ ['LHAASO_J1956_p2845', 299.05  , 28.75  ,30 ,90] ]
