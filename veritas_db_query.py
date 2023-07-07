@@ -698,7 +698,7 @@ def find_runs_near_galactic_plane(obs_name,epoch,obs_type,gal_b_low,gal_b_up):
 
     out_file.close()
 
-def find_on_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_range):
+def find_on_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_range,search_radius):
 
     global all_runs_info
 
@@ -726,7 +726,7 @@ def find_on_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_range
         source_dec = x['decl']*180./math.pi
         source_gal_l, source_gal_b = ConvertRaDecToGalactic(source_ra,source_dec)
         distance = pow(pow(obs_ra-source_ra,2)+pow(obs_dec-source_dec,2),0.5)
-        if distance<2.0:
+        if distance<search_radius:
             list_on_sources += [source_name]
         #if distance>10.:
         #    if 'HWC' in source_name: continue
@@ -1088,7 +1088,7 @@ elif input_name=='LHAASO_Catalog':
         obs_name = target_lhs_name[lhs].replace(' ','_').replace('+','_p').replace('-','_m')
         obs_name += '_%s'%(run_epoch)
         run_elev_range = [input_elev_low,input_elev_up]
-        my_list_on_run_ids = find_on_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range)
+        my_list_on_run_ids = find_on_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,2.0)
 
 else:
 
@@ -1097,15 +1097,18 @@ else:
     get_all_runs_info(run_epoch,run_obs_type)
     print ('++++++++++++++++++++++++++++++++++++++++++++++++++++')
     
+    search_radius = 0.5
+    job_tag = '0p5deg'
+
     find_off = True
     find_imposter = True
-    obs_name = '%s_%s'%(input_name,run_epoch)
+    obs_name = '%s_%s_%s'%(input_name,job_tag,run_epoch)
     obs_ra = input_ra
     obs_dec = input_dec
     run_elev_range = [input_elev_low,input_elev_up]
     
     use_local_data = False
-    my_list_on_run_ids = find_on_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range)
+    my_list_on_run_ids = find_on_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,search_radius)
     use_local_data = True
     my_list_off_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_on_run_ids,False,'PairList')
     use_local_data = True

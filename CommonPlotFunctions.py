@@ -35,12 +35,12 @@ from spectral_cube import SpectralCube
 
 # Great examples of matplotlib plots: https://atmamani.github.io/cheatsheets/matplotlib/matplotlib_2/
 
-#folder_path = 'output_nuclear'
+folder_path = 'output_nuclear'
 #folder_path = 'output_nuclear_test'
 
 #folder_path = 'output_weight_log_m0p0'
 #folder_path = 'output_weight_log_m0p5'
-folder_path = 'output_weight_log_m1p0'
+#folder_path = 'output_weight_log_m1p0'
 #folder_path = 'output_weight_log_m1p5'
 #folder_path = 'output_weight_log_m2p0'
 
@@ -145,7 +145,7 @@ def ReadSNRTargetListFromCSVFile():
             target_min_dist = row[13]
             if target_min_dist=='':
                 target_min_dist = '1000'
-            if float(target_min_dist)>6.: continue
+            #if float(target_min_dist)>6.: continue
             target_size = row[15]
             if target_size=='':
                 target_size = 0.
@@ -313,10 +313,10 @@ def GetGammaSourceInfo():
     drawBrightStar = False
     drawPulsar = True
     drawSNR = True
-    drawLHAASO = True
-    drawFermi = True
-    drawHAWC = True
-    drawTeV = False
+    drawLHAASO = False
+    drawFermi = False
+    drawHAWC = False
+    drawTeV = True
 
     if drawBrightStar:
         star_name, star_ra, star_dec = ReadBrightStarListFromFile()
@@ -430,13 +430,13 @@ def GetGammaSourceInfo():
     return other_stars, other_stars_type, other_star_coord
 
 
-def MatplotlibMap2D(hist_map,hist_tone,hist_contour,fig,label_x,label_y,label_z,plotname,roi_x=0.,roi_y=0.,roi_r=0.,rotation_angle=0.):
+def MatplotlibMap2D(hist_map,hist_tone,hist_contour,fig,label_x,label_y,label_z,plotname,roi_x=[],roi_y=[],roi_r=[],rotation_angle=0.,colormap='coolwarm'):
 
     print ('Making plot %s...'%(plotname))
 
-    colormap = 'coolwarm'
-    if 'SkymapCOMap' in plotname:
-        colormap = 'gray'
+    #colormap = 'coolwarm'
+    #if 'SkymapCOMap' in plotname:
+    #    colormap = 'gray'
 
     map_nbins_x = hist_map.GetNbinsX()
     map_nbins_y = hist_map.GetNbinsY()
@@ -556,7 +556,7 @@ def MatplotlibMap2D(hist_map,hist_tone,hist_contour,fig,label_x,label_y,label_z,
     other_star_labels = []
     other_star_types = []
     other_star_markers = []
-    star_range = 0.7*(MapEdge_right-MapEdge_left)/2.
+    star_range = 0.9*(MapEdge_right-MapEdge_left)/2.
     source_ra = (MapEdge_left+MapEdge_right)/2.
     source_dec = (MapEdge_lower+MapEdge_upper)/2.
     n_stars = 0
@@ -589,12 +589,12 @@ def MatplotlibMap2D(hist_map,hist_tone,hist_contour,fig,label_x,label_y,label_z,
     for ctr in range(0,len(list_grid_contour)):
         axbig.contour(list_grid_contour[len(list_grid_contour)-1-ctr], list_levels[len(list_grid_contour)-1-ctr], linestyles=list_styles[len(list_grid_contour)-1-ctr], colors=list_colors[len(list_grid_contour)-1-ctr], extent=(x_axis.min(),x_axis.max(),y_axis.min(),y_axis.max()),zorder=1)
     favorite_color = 'k'
-    if 'SkymapCOMap' in plotname:
+    if colormap=='gray':
         favorite_color = 'r'
     for star in range(0,len(other_star_markers)):
         marker_size = 60
         if other_star_types[star]=='PSR':
-            axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='+', label=other_star_labels[star])
+            axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=1.5*marker_size, c=favorite_color, marker='+', label=other_star_labels[star])
         if other_star_types[star]=='SNR':
             #axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='^', label=other_star_labels[star])
             mycircle = plt.Circle( (other_star_markers[star][0], other_star_markers[star][1]), other_star_markers[star][2], fill = False, color=favorite_color)
@@ -622,12 +622,13 @@ def MatplotlibMap2D(hist_map,hist_tone,hist_contour,fig,label_x,label_y,label_z,
     axbig.set_xticklabels(x_axis_reflect)
     fig.savefig("output_plots/%s.png"%(plotname),bbox_inches='tight')
 
-    if 'SkymapSignificance_Sum' in plotname:
-        if roi_r>0.:
-            mycircle = plt.Circle((-roi_x, roi_y), roi_r, color='b', fill=False)
+    if len(roi_r)>0:
+        for roi in range(0,len(roi_r)):
+            mycircle = plt.Circle((-roi_x[roi], roi_y[roi]), roi_r[roi], color='b', fill=False)
             axbig.add_patch(mycircle)
         axbig.legend(bbox_to_anchor=(1.04, 1), borderaxespad=0, fontsize=7)
         fig.savefig("output_plots/%s_legend.png"%(plotname),bbox_inches='tight')
+
     axbig.remove()
 
     if 'SkymapSignificance_Sum' in plotname:
@@ -947,7 +948,7 @@ def FindExtension(Hist_Data_input,roi_x,roi_y,integration_range):
     global calibration_radius
 
     n_bins_2d = Hist_Data_input.GetNbinsX()
-    n_bins_1d = int(integration_range/0.2)
+    n_bins_1d = int(integration_range/0.1)
 
     n_bins_y = Hist_Data_input.GetNbinsY()
     n_bins_x = Hist_Data_input.GetNbinsX()
@@ -1014,14 +1015,18 @@ def GetRegionIntegral(hist_data_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,e
         for by in range(0,hist_data_skymap.GetNbinsY()):
             bin_ra = hist_data_skymap.GetXaxis().GetBinCenter(bx+1)
             bin_dec = hist_data_skymap.GetYaxis().GetBinCenter(by+1)
-            distance = pow(pow(bin_ra-roi_x,2) + pow(bin_dec-roi_y,2),0.5)
-            excl_distance = pow(pow(bin_ra-excl_roi_x,2) + pow(bin_dec-excl_roi_y,2),0.5)
-            if distance>roi_r: 
-                continue
-            if excl_distance<excl_roi_r: 
-                continue
-            flux_sum += hist_data_skymap.GetBinContent(bx+1,by+1)
-            flux_stat_err += pow(hist_data_skymap.GetBinError(bx+1,by+1),2)
+            keep_event = False
+            for roi in range(0,len(roi_x)):
+                distance = pow(pow(bin_ra-roi_x[roi],2) + pow(bin_dec-roi_y[roi],2),0.5)
+                if distance<roi_r[roi]: 
+                    keep_event = True
+            for roi in range(0,len(excl_roi_x)):
+                excl_distance = pow(pow(bin_ra-excl_roi_x[roi],2) + pow(bin_dec-excl_roi_y[roi],2),0.5)
+                if excl_distance<excl_roi_r[roi]: 
+                    keep_event = True
+            if keep_event:
+                flux_sum += hist_data_skymap.GetBinContent(bx+1,by+1)
+                flux_stat_err += pow(hist_data_skymap.GetBinError(bx+1,by+1),2)
     flux_stat_err = pow(flux_stat_err,0.5)
     return flux_sum, flux_stat_err
 
