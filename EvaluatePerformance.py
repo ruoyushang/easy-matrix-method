@@ -45,7 +45,7 @@ ROOT.TH1.AddDirectory(False) # without this, the histograms returned from a func
 ROOT.gStyle.SetPaintTextFormat("0.3f")
 np.set_printoptions(precision=4)
 
-measurement_rebin = 1
+measurement_rebin = 2
 
 elev_range = [30.,90.]
 #elev_range = [45.,65.]
@@ -552,7 +552,7 @@ for energy_idx in range(0,len(energy_bin)-1):
     print ('rms of syst. error of combined method = %0.3f'%(array_syst_err_combined_rms))
 
 print ('================================================================================================')
-txt_string = 'double method_ratio_mean[N_energy_bins] =        {'
+txt_string = 'double method_ratio_mean[N_energy_bins] =             {'
 for energy_idx in range(0,len(energy_bin)-1):
     txt_string += '%0.3f,'%(energy_dep_syst_err_ratio_mean[energy_idx])
 txt_string += '};'
@@ -562,17 +562,17 @@ for energy_idx in range(0,len(energy_bin)-1):
     txt_string += '%0.3f,'%(energy_dep_syst_err_init_perturbation_mean[energy_idx])
 txt_string += '};'
 print (txt_string)
-txt_string = 'double method_perturbation_mean[N_energy_bins] = {'
+txt_string = 'double method_perturbation_mean[N_energy_bins] =      {'
 for energy_idx in range(0,len(energy_bin)-1):
     txt_string += '%0.3f,'%(energy_dep_syst_err_perturbation_mean[energy_idx])
 txt_string += '};'
 print (txt_string)
-txt_string = 'double method_regression_mean[N_energy_bins] =   {'
+txt_string = 'double method_regression_mean[N_energy_bins] =        {'
 for energy_idx in range(0,len(energy_bin)-1):
     txt_string += '%0.3f,'%(energy_dep_syst_err_regression_mean[energy_idx])
 txt_string += '};'
 print (txt_string)
-txt_string = 'double method_ratio_rms[N_energy_bins] =         {'
+txt_string = 'double method_ratio_rms[N_energy_bins] =              {'
 for energy_idx in range(0,len(energy_bin)-1):
     txt_string += '%0.3f,'%(energy_dep_syst_err_ratio_rms[energy_idx])
 txt_string += '};'
@@ -582,17 +582,17 @@ for energy_idx in range(0,len(energy_bin)-1):
     txt_string += '%0.3f,'%(energy_dep_syst_err_init_perturbation_rms[energy_idx])
 txt_string += '};'
 print (txt_string)
-txt_string = 'double method_perturbation_rms[N_energy_bins] =  {'
+txt_string = 'double method_perturbation_rms[N_energy_bins] =       {'
 for energy_idx in range(0,len(energy_bin)-1):
     txt_string += '%0.3f,'%(energy_dep_syst_err_perturbation_rms[energy_idx])
 txt_string += '};'
 print (txt_string)
-txt_string = 'double method_regression_rms[N_energy_bins] =    {'
+txt_string = 'double method_regression_rms[N_energy_bins] =         {'
 for energy_idx in range(0,len(energy_bin)-1):
     txt_string += '%0.3f,'%(energy_dep_syst_err_regression_rms[energy_idx])
 txt_string += '};'
 print (txt_string)
-txt_string = 'double method_combined_rms[N_energy_bins] =      {'
+txt_string = 'double method_combined_rms[N_energy_bins] =           {'
 for energy_idx in range(0,len(energy_bin)-1):
     txt_string += '%0.3f,'%(energy_dep_syst_err_combined_rms[energy_idx])
 txt_string += '};'

@@ -1097,8 +1097,8 @@ else:
     get_all_runs_info(run_epoch,run_obs_type)
     print ('++++++++++++++++++++++++++++++++++++++++++++++++++++')
     
-    search_radius = 0.5
-    job_tag = '0p5deg'
+    search_radius = 2.0
+    job_tag = '2p0deg'
 
     find_off = True
     find_imposter = True

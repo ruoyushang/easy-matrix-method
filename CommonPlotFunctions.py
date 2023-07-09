@@ -35,8 +35,8 @@ from spectral_cube import SpectralCube
 
 # Great examples of matplotlib plots: https://atmamani.github.io/cheatsheets/matplotlib/matplotlib_2/
 
-folder_path = 'output_nuclear'
-#folder_path = 'output_nuclear_test'
+#folder_path = 'output_nuclear'
+folder_path = 'output_nuclear_test'
 
 #folder_path = 'output_weight_log_m0p0'
 #folder_path = 'output_weight_log_m0p5'
@@ -47,6 +47,7 @@ folder_path = 'output_nuclear'
 #analysis_method = 'FoV'
 #analysis_method = 'Ratio'
 #analysis_method = 'Regression'
+#analysis_method = 'Init_Perturbation'
 analysis_method = 'Perturbation'
 #analysis_method = 'Combined'
 
@@ -430,7 +431,7 @@ def GetGammaSourceInfo():
     return other_stars, other_stars_type, other_star_coord
 
 
-def MatplotlibMap2D(hist_map,hist_tone,hist_contour,fig,label_x,label_y,label_z,plotname,roi_x=[],roi_y=[],roi_r=[],rotation_angle=0.,colormap='coolwarm'):
+def MatplotlibMap2D(hist_map,hist_tone,hist_contour,fig,label_x,label_y,label_z,plotname,roi_x=[],roi_y=[],roi_r=[],rotation_angle=0.,colormap='coolwarm',psf=0.):
 
     print ('Making plot %s...'%(plotname))
 
@@ -613,6 +614,12 @@ def MatplotlibMap2D(hist_map,hist_tone,hist_contour,fig,label_x,label_y,label_z,
             axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c='k', marker='o', label=other_star_labels[star])
         text_offset_x = 0.07
         text_offset_y = 0.07
+
+    if psf>0.:
+        circle_center_x = MapCenter_x-0.8*(MapEdge_right-MapEdge_left)/2.
+        circle_center_y = MapCenter_y-0.8*(MapEdge_upper-MapEdge_lower)/2.
+        mycircle = plt.Circle((circle_center_x, circle_center_y), psf, color='white', fill=False)
+        axbig.add_patch(mycircle)
 
     divider = make_axes_locatable(axbig)
     cax = divider.append_axes("bottom", size="5%", pad=0.7)
