@@ -45,14 +45,18 @@ new_nbins_y = 100
 effective_area_cut = 10000.
 energy_bin = CommonPlotFunctions.energy_bin
 energy_bin_cut_low = int(sys.argv[4])
-energy_bin_cut_up = int(sys.argv[5])
-doImposter = int(sys.argv[6])
+energy_bin_break = int(sys.argv[5])
+energy_bin_cut_up = int(sys.argv[6])
 source_name = sys.argv[1]
 input_epoch = sys.argv[2] # 'V5' or 'V6' or 'V5V6'
 isON = sys.argv[3]  # 'ON' or 'OFF'
 
-energy_bin_break = 6
+doImposter = False
+if isON:
+    doImposter = True
+
 doBiasCorrect = True
+#doBiasCorrect = False
 
 analysis_method = CommonPlotFunctions.analysis_method
 n_xoff_bins = CommonPlotFunctions.n_xoff_bins
@@ -79,8 +83,8 @@ total_data_expo = 0.
 MSCW_lower_blind = -0.6
 MSCL_lower_blind = -0.7
 MSCW_upper_blind = 0.6
-MSCL_upper_blind = 0.2
-n_extra_lower_bins = 0
+MSCL_upper_blind = 0.3
+n_extra_lower_bins = 1
 n_extra_upper_bins = 6
 mtx_dim_w_fine = 6
 mtx_dim_l_fine = 6
@@ -161,7 +165,7 @@ def GetFluxCalibration(energy,elev):
 
     # The energy threshold needs to be as low as 100 GeV for this method to work.
 
-    str_flux_calibration = ['2.07e+02', '6.22e+00', '2.79e+00', '2.15e+00', '1.89e+00', '2.25e+00', '1.93e+00', '1.62e+00', '1.52e+00', '1.39e+00', '1.29e+00']
+    str_flux_calibration = ['1.59e+02', '4.66e+00', '2.16e+00', '1.65e+00', '1.42e+00', '1.64e+00', '1.44e+00', '1.21e+00', '1.14e+00', '1.03e+00', '1.01e+00']
 
     flux_calibration = []
     for string in str_flux_calibration:
@@ -482,7 +486,7 @@ def MakeSpectrum(roi_x,roi_y,roi_r,roi_name,excl_roi_x,excl_roi_y,excl_roi_r):
             s2b_lower_bound = 0.
             s2b = 0.
             s2b_err = 0.
-            if doImposter==1 and imposter_bkgd_list[imposter][ebin]>0. and imposter_data_avg[ebin]>0.:
+            if doImposter and imposter_bkgd_list[imposter][ebin]>0. and imposter_data_avg[ebin]>0.:
                 s2b = (imposter_data_list[imposter][ebin]-imposter_bkgd_list[imposter][ebin])/imposter_bkgd_list[imposter][ebin]
                 s2b_err = pow(imposter_data_list[imposter][ebin],0.5)/imposter_bkgd_list[imposter][ebin]
             imposter_s2b += [s2b]
@@ -733,18 +737,28 @@ def MakeSpectrum(roi_x,roi_y,roi_r,roi_name,excl_roi_x,excl_roi_y,excl_roi_r):
         energy_edge_hi += [pow(10,energy_mean_log[eb]+0.5*energy_log_delta)]
 
     zscore = []
+    total_data = 0.
+    total_bkgd = 0.
+    total_bkgd_syst_err = 0.
     for eb in range(0,len(energy_axis)):
         real_bkgd_stat_err[eb] = pow(real_data[eb],0.5)
         if real_data[eb]==0.:
             zscore += [0.]
         else:
             zscore += [(real_data[eb]-real_bkgd[eb])/pow(pow(real_bkgd_stat_err[eb],2)+pow(real_bkgd_syst_err[eb],2),0.5)]
+        total_data += real_data[eb]
+        total_bkgd += real_bkgd[eb]
+        total_bkgd_syst_err += pow(real_bkgd_syst_err[eb],2)
         print ('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
         print ('Energy                  = %0.2f-%0.2f TeV'%(energy_edge_lo[eb],energy_edge_hi[eb]))
         print ('significance in RoI     = %0.2f'%(zscore[eb]))
         print ('total count in RoI      = %s'%(real_data[eb]))
         print ('background count in RoI = %0.2f +/- %0.2f (stat error) +/- %0.2f (syst error)'%(real_bkgd[eb],real_bkgd_stat_err[eb],real_bkgd_syst_err[eb]))
         print ('flux in RoI             = %0.2e +/- %0.2e +/- %0.2e TeV/cm2/s'%(real_flux[eb],real_flux_stat_err[eb],real_flux_syst_err[eb]))
+    total_bkgd_syst_err = pow(total_bkgd_syst_err,0.5)
+    zscore_total = (total_data-total_bkgd)/pow(pow(total_data,1)+pow(total_bkgd_syst_err,2),0.5)
+    print ('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+    print ('total significance in RoI     = %0.2f'%(zscore_total))
     zscore = np.array(zscore)
     fig.clf()
     fig.set_figheight(figsize_y)
@@ -1054,6 +1068,11 @@ if 'Crab' in source_name:
     region_r = [CommonPlotFunctions.calibration_radius]
     #region_r = [1.0]
     region_name = 'Center'
+elif 'Geminga' in source_name:
+    region_x = [MapCenter_x]
+    region_y = [MapCenter_y]
+    region_r = [1.5]
+    region_name = 'Center'
 elif 'PSR_J1907_p0602' in source_name:
 
     #3HWC J1908+063, 287.05, 6.39 
@@ -1065,16 +1084,16 @@ elif 'PSR_J1907_p0602' in source_name:
 elif 'SS433' in source_name:
 
     #SS 433 SNR
-    region_x = [288.0833333]
-    region_y = [4.9166667]
-    region_r = [0.3]
-    region_name = 'SS433'
+    #region_x = [288.0833333]
+    #region_y = [4.9166667]
+    #region_r = [0.3]
+    #region_name = 'SS433'
 
     #SS 433 e1
-    #region_x = [288.404]
-    #region_y = [4.930]
-    #region_r = [0.3]
-    #region_name = 'SS433e1'
+    region_x = [288.404]
+    region_y = [4.930]
+    region_r = [0.3]
+    region_name = 'SS433e1'
     #region_x = [288.35,288.50,288.65,288.8]
     #region_y = [4.93,4.92,4.93,4.94]
     #region_r = [0.1,0.1,0.1,0.1]
@@ -1543,19 +1562,19 @@ if 'PSR_J1907_p0602' in source_name:
     #axbig.remove()
 
 
-    Hist_Hawc = ROOT.TH2D("Hist_Hawc","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
-    Hist_Hawc.Rebin2D(3,3)
-    hawc_map_list = []
-    #hawc_map_list += ['cd'] # 1-3.16 TeV
-    #hawc_map_list += ['ef'] # 3.16-10 TeV
-    #hawc_map_list += ['gh'] # 10-31.6 TeV
-    #hawc_map_list += ['ij'] # 31.6-100 TeV
-    hawc_map_list += ['kl'] # 100-316 TeV
-    for hfile in range(0,len(hawc_map_list)):
-        MWL_map_file = '/home/rshang/MatrixDecompositionMethod/MWL_maps/%s-gaussGDE.fits'%(hawc_map_list[hfile])
-        Hist_Hawc = CommonPlotFunctions.GetHealpixMap(MWL_map_file, Hist_Hawc, True)
-        Hist_Hawc_reflect = CommonPlotFunctions.reflectXaxis(Hist_Hawc)
-        CommonPlotFunctions.MatplotlibMap2D(Hist_Hawc_reflect,None,[],fig,'RA','Dec','Significance','SkymapHAWC_%s_%s'%(hawc_map_list[hfile],plot_tag),colormap='viridis',psf=0.1)
+    #Hist_Hawc = ROOT.TH2D("Hist_Hawc","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
+    #Hist_Hawc.Rebin2D(3,3)
+    #hawc_map_list = []
+    ##hawc_map_list += ['cd'] # 1-3.16 TeV
+    ##hawc_map_list += ['ef'] # 3.16-10 TeV
+    ##hawc_map_list += ['gh'] # 10-31.6 TeV
+    ##hawc_map_list += ['ij'] # 31.6-100 TeV
+    #hawc_map_list += ['kl'] # 100-316 TeV
+    #for hfile in range(0,len(hawc_map_list)):
+    #    MWL_map_file = '/home/rshang/MatrixDecompositionMethod/MWL_maps/%s-gaussGDE.fits'%(hawc_map_list[hfile])
+    #    Hist_Hawc = CommonPlotFunctions.GetHealpixMap(MWL_map_file, Hist_Hawc, True)
+    #    Hist_Hawc_reflect = CommonPlotFunctions.reflectXaxis(Hist_Hawc)
+    #    CommonPlotFunctions.MatplotlibMap2D(Hist_Hawc_reflect,None,[],fig,'RA','Dec','Significance','SkymapHAWC_%s_%s'%(hawc_map_list[hfile],plot_tag),colormap='viridis',psf=0.48)
 
     Hist_Tobias = ROOT.TH2D("Hist_Tobias","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
     MWL_map_file = '/home/rshang/MatrixDecompositionMethod/MWL_maps/TobiasNewMap.fits'

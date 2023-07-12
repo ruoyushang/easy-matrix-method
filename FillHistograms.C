@@ -315,6 +315,22 @@ bool FoV(double evt_ra, double evt_dec, bool isON) {
 
     return true;
 }
+bool FoV_Mask(double evt_ra, double evt_dec, TString target_name) {
+
+    double x = evt_ra-mean_tele_point_ra;
+    double y = evt_dec-mean_tele_point_dec;
+    if ((pow(x*x+y*y,0.5))<0.3) return true;
+    if (CoincideWithGammaSources(evt_ra,evt_dec,0.25)) return true;
+    if (target_name.Contains("SS433"))
+    {
+        if (pow(pow(evt_ra-288.0833333,2)+pow(evt_dec-4.9166667,2),0.5)<0.3) return true; // SS 433 SNR
+        if (pow(pow(evt_ra-288.404,2)+pow(evt_dec-4.930,2),0.5)<0.3) return true; // SS 433 e1
+        if (pow(pow(evt_ra-287.654,2)+pow(evt_dec-5.037,2),0.5)<0.3) return true; // SS 433 w1
+        if (pow(pow(evt_ra-287.05,2)+pow(evt_dec-6.39,2),0.5)<1.2) return true; // MGRO J1908+06
+    }
+
+    return false;
+}
 
 double GetRunPedestalVar(int run_number)
 {
@@ -983,7 +999,7 @@ void SingleRunAnalysis(int int_run_number, int int_run_number_real, int input_xo
         if (MSCL<MSCL_upper_blind && MSCW<MSCW_upper_blind && MSCL>MSCL_lower_blind && MSCW>MSCW_lower_blind)
         {
             Hist_OnData_SR_Skymap.at(energy_idx).Fill(ra_sky,dec_sky);
-            if (pow(theta2,0.5)>0.3)
+            if (!FoV_Mask(ra_sky, dec_sky, TString(target)))
             {
                 Hist_OnData_SR_Skymap_Mask.at(energy_idx).Fill(ra_sky,dec_sky);
             }
@@ -1001,7 +1017,7 @@ void SingleRunAnalysis(int int_run_number, int int_run_number_real, int input_xo
                 Hist_OnData_CR_Skymap_Regression.at(energy_idx).Fill(complementary_ra_sky,complementary_dec_sky,weight*0.5);
                 Hist_OnData_CR_Skymap_Init_Perturbation.at(energy_idx).Fill(complementary_ra_sky,complementary_dec_sky,weight*0.5);
                 Hist_OnData_CR_Skymap_Perturbation.at(energy_idx).Fill(complementary_ra_sky,complementary_dec_sky,weight*0.5);
-                if (pow(theta2,0.5)>0.3)
+                if (!FoV_Mask(ra_sky, dec_sky, TString(target)))
                 {
                     Hist_OnData_CR_Skymap_Mask.at(energy_idx).Fill(complementary_ra_sky,complementary_dec_sky,weight*0.5);
                 }
@@ -1013,7 +1029,7 @@ void SingleRunAnalysis(int int_run_number, int int_run_number_real, int input_xo
                 Hist_OnData_CR_Skymap_Regression.at(energy_idx).Fill(ra_sky,dec_sky,weight*0.5);
                 Hist_OnData_CR_Skymap_Init_Perturbation.at(energy_idx).Fill(ra_sky,dec_sky,weight*0.5);
                 Hist_OnData_CR_Skymap_Perturbation.at(energy_idx).Fill(ra_sky,dec_sky,weight*0.5);
-                if (pow(theta2,0.5)>0.3)
+                if (!FoV_Mask(ra_sky, dec_sky, TString(target)))
                 {
                     Hist_OnData_CR_Skymap_Mask.at(energy_idx).Fill(ra_sky,dec_sky,weight*0.5);
                 }
@@ -1025,7 +1041,7 @@ void SingleRunAnalysis(int int_run_number, int int_run_number_real, int input_xo
                 Hist_OnData_CR_Skymap_Regression.at(energy_idx).Fill(ra_sky,dec_sky,weight);
                 Hist_OnData_CR_Skymap_Init_Perturbation.at(energy_idx).Fill(ra_sky,dec_sky,weight);
                 Hist_OnData_CR_Skymap_Perturbation.at(energy_idx).Fill(ra_sky,dec_sky,weight);
-                if (pow(theta2,0.5)>0.3)
+                if (!FoV_Mask(ra_sky, dec_sky, TString(target)))
                 {
                     Hist_OnData_CR_Skymap_Mask.at(energy_idx).Fill(ra_sky,dec_sky,weight);
                 }

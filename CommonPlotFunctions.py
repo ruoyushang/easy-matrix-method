@@ -618,6 +618,9 @@ def MatplotlibMap2D(hist_map,hist_tone,hist_contour,fig,label_x,label_y,label_z,
     if psf>0.:
         circle_center_x = MapCenter_x-0.8*(MapEdge_right-MapEdge_left)/2.
         circle_center_y = MapCenter_y-0.8*(MapEdge_upper-MapEdge_lower)/2.
+        if psf>0.4:
+            circle_center_x = MapCenter_x-0.6*(MapEdge_right-MapEdge_left)/2.
+            circle_center_y = MapCenter_y-0.6*(MapEdge_upper-MapEdge_lower)/2.
         mycircle = plt.Circle((circle_center_x, circle_center_y), psf, color='white', fill=False)
         axbig.add_patch(mycircle)
 
@@ -1251,10 +1254,10 @@ def MatplotlibHist2D(hist_map,fig,label_x,label_y,label_z,plotname,zmax=0,zmin=0
     else:
         im = axbig.imshow(grid_z, origin='lower', cmap=colormap, extent=(x_axis.min(),x_axis.max(),y_axis.min(),y_axis.max()),zorder=0,vmin=zmin,vmax=zmax)
 
-    MSCW_lower_blind = -0.4
-    MSCL_lower_blind = -0.6
-    MSCW_upper_blind = 0.5
-    MSCL_upper_blind = 0.6
+    MSCW_lower_blind = -0.6
+    MSCL_lower_blind = -0.7
+    MSCW_upper_blind = 0.6
+    MSCL_upper_blind = 0.3
     if 'Matrix' in plotname:
         x_upper_cut = MSCL_upper_blind
         y_upper_cut = MSCW_upper_blind

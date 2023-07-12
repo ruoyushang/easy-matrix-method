@@ -12,7 +12,7 @@ double method_ratio_rms[N_energy_bins] =         {1.000,0.063,0.064,0.054,0.051,
 double method_pertrubation_rms[N_energy_bins] =  {1.000,0.027,0.042,0.045,0.047,0.049,0.071,0.104,0.162,0.321,0.347};
 double method_regression_rms[N_energy_bins] =    {1.000,0.040,0.080,0.074,0.050,0.056,0.090,0.108,0.197,0.288,0.567};
 
-double log_coeff_weight = -0.5;
+double log_coeff_weight = -1.0;
 
 const int N_Xoff_bins = 1;
 const int N_Yoff_bins = 1;
@@ -33,8 +33,8 @@ double min_CR_count = 100000.;
 double MSCW_lower_blind = -0.6;
 double MSCL_lower_blind = -0.7;
 double MSCW_upper_blind = 0.6;
-double MSCL_upper_blind = 0.2;
-int n_extra_lower_bins = 0;
+double MSCL_upper_blind = 0.3;
+int n_extra_lower_bins = 1;
 int n_extra_upper_bins = 6;
 int mtx_dim_w_fine = 6;
 int mtx_dim_l_fine = 6;
