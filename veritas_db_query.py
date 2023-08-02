@@ -826,10 +826,13 @@ def find_on_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_range
 
         on_run_ra, on_run_dec = get_run_ra_dec(x['run_id'])
         run_offset = pow(pow(obs_ra-on_run_ra,2)+pow(obs_dec-on_run_dec,2),0.5)
-        if '1p0wobble' in obs_name:
-            if run_offset>1.2 or run_offset<0.6: continue
-        if '1p5wobble' in obs_name:
-            if run_offset>1.8 or run_offset<1.2: continue
+        if 'CrabNebula' in obs_name:
+            if '1p0wobble' in obs_name:
+                if run_offset>1.2 or run_offset<0.6: continue
+            elif '1p5wobble' in obs_name:
+                if run_offset>1.8 or run_offset<1.2: continue
+            else:
+                if run_offset>0.6 or run_offset<0.0: continue
 
         if use_local_data:
             file_path = '/gamma_raid/userspace/rshang/analysis/Results/v487/%s.anasum.root'%(int(x['run_id']))
@@ -870,6 +873,23 @@ def find_on_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_range
     out_file.close()
 
     return list_on_run_ids
+
+def list_for_eventdisplay(all_lists,obs_name):
+
+    runlist = []
+    for alist in range(0,len(all_lists)):
+        for run in range(0,len(all_lists[alist])):
+            runnumber = int(all_lists[alist][run])
+            run_exist = False
+            for oldrun in range(0,len(runlist)):
+                if runnumber==runlist[oldrun]:
+                    run_exist = True
+            if not run_exist:
+                runlist += [runnumber]
+
+    out_file = open('output_vts_hours/EDlist_%s.txt'%(obs_name),"a")
+    for run in range(0,len(runlist)):
+        out_file.write('%s\n'%(runlist[run]))
 
 def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_range,list_on_run_ids,is_imposter,file_name):
 
@@ -995,6 +1015,7 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
                 #if abs(delta_airmass)>0.1: continue
                 if abs(delta_elev)>5.: continue
                 if abs(delta_azim)>10.: continue
+                if abs(all_runs_info[run][0]-list_on_run_ids[on_run])>20000: continue
 
             list_off_run_ids += [[int(list_on_run_ids[on_run]),int(all_runs_info[run][0]),on_run_el,off_run_el]]
             number_off_runs += 1
@@ -1097,23 +1118,26 @@ else:
     get_all_runs_info(run_epoch,run_obs_type)
     print ('++++++++++++++++++++++++++++++++++++++++++++++++++++')
     
-    search_radius = 2.0
-    job_tag = '2p0deg'
+    search_radius = 1.5
+    #job_tag = '1p5deg'
+    job_tag = ''
 
     find_off = True
     find_imposter = True
-    obs_name = '%s_%s_%s'%(input_name,job_tag,run_epoch)
     obs_ra = input_ra
+    obs_name = '%s_%s'%(input_name,run_epoch)
     obs_dec = input_dec
     run_elev_range = [input_elev_low,input_elev_up]
     
     use_local_data = False
     my_list_on_run_ids = find_on_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,search_radius)
-    use_local_data = True
+    use_local_data = False
     my_list_off_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_on_run_ids,False,'PairList')
-    use_local_data = True
+    use_local_data = False
     my_list_imposter_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_on_run_ids,True,'ImposterList')
     my_list_imposter_off_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_imposter_run_ids,False,'ImposterPairList')
+
+    list_for_eventdisplay([my_list_on_run_ids,my_list_off_run_ids,my_list_imposter_run_ids,my_list_imposter_off_run_ids],obs_name)
 
 
 run_id = 103322
