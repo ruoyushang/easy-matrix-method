@@ -8,6 +8,8 @@
 
 #include "NetflixParameters.h"
 
+string RUNLIST_DIR = string("runlist_v487");
+
 pair<double,double> GetSourceRaDec(TString source_name)
 {
     double Source_RA = 0.;
@@ -216,7 +218,7 @@ int GetImposterIDFromFile(string source, int onrun_number, int imposter_idx)
 
     string SMI_DIR;
     SMI_DIR = string(std::getenv("SMI_DIR"));
-    ifstream myfile (SMI_DIR+"/runlist/ImposterList_"+source+".txt");
+    ifstream myfile (SMI_DIR+"/"+RUNLIST_DIR+"/ImposterList_"+source+".txt");
     if (myfile.is_open())
     {
         int current_imposter_idx = 1;
@@ -285,7 +287,7 @@ vector<int> GetImposterPairListFromFile(string source, int onrun_number)
 
     string SMI_DIR;
     SMI_DIR = string(std::getenv("SMI_DIR"));
-    ifstream myfile (SMI_DIR+"/runlist/ImposterPairList_"+source+".txt");
+    ifstream myfile (SMI_DIR+"/"+RUNLIST_DIR+"/ImposterPairList_"+source+".txt");
     if (myfile.is_open())
     {
         int current_on_runnumber = 0;
@@ -345,7 +347,7 @@ vector<int> GetPairListFromFile(string source, int onrun_number)
 
     string SMI_DIR;
     SMI_DIR = string(std::getenv("SMI_DIR"));
-    ifstream myfile (SMI_DIR+"/runlist/PairList_"+source+".txt");
+    ifstream myfile (SMI_DIR+"/"+RUNLIST_DIR+"/PairList_"+source+".txt");
     if (myfile.is_open())
     {
         int current_on_runnumber = 0;
@@ -403,7 +405,7 @@ vector<int> GetRunListFromFile(string source)
 
     string SMI_DIR;
     SMI_DIR = string(std::getenv("SMI_DIR"));
-    ifstream myfile (SMI_DIR+"/runlist/RunList_"+source+".txt");
+    ifstream myfile (SMI_DIR+"/"+RUNLIST_DIR+"/RunList_"+source+".txt");
     if (myfile.is_open())
     {
         while ( getline(myfile,line) )

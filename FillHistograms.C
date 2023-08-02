@@ -871,6 +871,18 @@ void TrainingRunAnalysis(int int_run_number, int input_xoff_idx, int input_yoff_
 
 }
 
+double default_effective_area(double input_log_energy_tev)
+{
+    double log_energy_tev[23] = {-0.75, -0.65, -0.55, -0.45, -0.35, -0.25, -0.15, -0.05, 0.05, 0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95, 1.05, 1.15, 1.25, 1.35, 1.45};
+    double effective_area[22] = {15000., 15000., 15000., 20793.1, 48022, 62902.8, 75192.9, 79701.3, 84345, 86425.2, 86141.3, 81266.6, 82327.6, 81233.2, 78587.7, 74493.6, 72086.3, 70820.1, 70299.2, 67367.5, 67767.3, 64167.6};
+    TH1D Hist_EffArea = TH1D("Hist_EffArea","",22,log_energy_tev);
+    for (int bin=0;bin<Hist_EffArea.GetNbinsX();bin++)
+    {
+        Hist_EffArea.SetBinContent(bin,effective_area[bin]);
+    }
+    return Hist_EffArea.GetBinContent( Hist_EffArea.FindBin(input_log_energy_tev) );
+}
+
 void SingleRunAnalysis(int int_run_number, int int_run_number_real, int input_xoff_idx, int input_yoff_idx, bool isImposter)
 {
 
@@ -912,7 +924,8 @@ void SingleRunAnalysis(int int_run_number, int int_run_number_real, int input_xo
     TH1* i_hEffAreaP = ( TH1* )getEffAreaHistogram(filename, int_run_number, 0.5);
     for (int e=0;e<N_energy_bins;e++) 
     {
-        double eff_area = i_hEffAreaP->GetBinContent( i_hEffAreaP->FindBin( log10(0.5*(energy_bins[e]+energy_bins[e+1])/1000.)));
+        //double eff_area = i_hEffAreaP->GetBinContent( i_hEffAreaP->FindBin( log10(0.5*(energy_bins[e]+energy_bins[e+1])/1000.)));
+        double eff_area = default_effective_area( log10(0.5*(energy_bins[e]+energy_bins[e+1])/1000.) );
         effective_area.at(e) += eff_area;
     }
 
@@ -1144,7 +1157,7 @@ MatrixXcd MatrixPerturbationMethod(MatrixXcd mtx_t_input, MatrixXcd mtx_base_inp
 {
 
     MatrixXcd mtx_output = MatrixXcd::Zero(mtx_init_input.rows(),mtx_init_input.cols());
-    if (mtx_init_input.cwiseAbs().sum()==0. || mtx_data_input.cwiseAbs().sum()==0.)
+    if (mtx_init_input.cwiseAbs().sum()<1000. || mtx_data_input.cwiseAbs().sum()<1000. || mtx_base_input.cwiseAbs().sum()<1000.)
     {
         return mtx_output;
     }
@@ -1752,8 +1765,22 @@ void FillHistograms(string target_data, bool isON, int doImposter)
 
                     for (int e=0;e<N_energy_bins;e++) 
                     {
-                        Hist_OffData_Ratio_XYoff.at(e).Add(&Hist_OffData_SR_XYoff.at(e));
-                        Hist_OffData_Ratio_XYoff.at(e).Divide(&Hist_OffData_CR_XYoff.at(e));
+                        //Hist_OffData_Ratio_XYoff.at(e).Add(&Hist_OffData_SR_XYoff.at(e));
+                        //Hist_OffData_Ratio_XYoff.at(e).Divide(&Hist_OffData_CR_XYoff.at(e));
+                        for (int binx=0;binx<Hist_OffData_SR_XYoff.at(e).GetNbinsX();binx++)
+                        {
+                            for (int biny=0;biny<Hist_OffData_SR_XYoff.at(e).GetNbinsY();biny++)
+                            {
+                                double sr_count = Hist_OffData_SR_XYoff.at(e).GetBinContent(binx+1,biny+1);
+                                double cr_count = Hist_OffData_CR_XYoff.at(e).GetBinContent(binx+1,biny+1);
+                                double srcr_ratio = 0.;
+                                if (cr_count>0)
+                                {
+                                    srcr_ratio = sr_count/cr_count;
+                                }
+                                Hist_OffData_Ratio_XYoff.at(e).SetBinContent(binx+1,biny+1,srcr_ratio);
+                            }
+                        }
                         Hist_OffData_SR_XYoff.at(e).Reset();
                         Hist_OffData_CR_XYoff.at(e).Reset();
                     }
@@ -1941,7 +1968,18 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         fill2DHistogram(&Hist_OnBkgd_MSCLW_Fine.at(e),mtx_on_bkgd);
                         double total_data_sr_count = GetSRcounts(&Hist_OnData_MSCLW_Fine.at(e));
                         double total_bkgd_sr_count = GetSRcounts(&Hist_OnBkgd_MSCLW_Fine.at(e));
+                        if (isnan(total_bkgd_sr_count) || total_bkgd_sr_count==0.)
+                        {
+                            fill2DHistogram(&Hist_OnBkgd_MSCLW_Fine.at(e),mtx_off_data_cr_scaled);
+                            total_bkgd_sr_count = GetSRcounts(&Hist_OnBkgd_MSCLW_Fine.at(e));
+                        }
                         std::cout << "total_data_sr_count = " << total_data_sr_count << ", total_bkgd_sr_count = " << total_bkgd_sr_count << std::endl;
+
+                        if (total_data_sr_count==0)
+                        {
+                            Hist_OnData_MSCLW_Fine.at(e).Reset();
+                            mtx_on_data = fillMatrix(&Hist_OnData_MSCLW_Fine.at(e));
+                        }
 
                         MatrixXcd mtx_on_t = mtx_off_data_cr_scaled;
                         for (int idx_i=0;idx_i<mtx_on_t.rows();idx_i++)
@@ -1958,6 +1996,11 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         fill2DHistogram(&Hist_OnBkgd_MSCLW_Fine.at(e),mtx_on_bkgd);
                         total_data_sr_count = GetSRcounts(&Hist_OnData_MSCLW_Fine.at(e));
                         total_bkgd_sr_count = GetSRcounts(&Hist_OnBkgd_MSCLW_Fine.at(e));
+                        if (isnan(total_bkgd_sr_count) || total_bkgd_sr_count==0.)
+                        {
+                            fill2DHistogram(&Hist_OnBkgd_MSCLW_Fine.at(e),mtx_off_data_cr_scaled);
+                            total_bkgd_sr_count = GetSRcounts(&Hist_OnBkgd_MSCLW_Fine.at(e));
+                        }
                         std::cout << "total_data_sr_count = " << total_data_sr_count << ", total_bkgd_sr_count = " << total_bkgd_sr_count << std::endl;
 
                         if (matrix_rank[e]>=1)
@@ -1976,6 +2019,11 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                                 fill2DHistogram(&Hist_OnBkgd_MSCLW_Fine.at(e),mtx_on_bkgd);
                                 total_data_sr_count = GetSRcounts(&Hist_OnData_MSCLW_Fine.at(e));
                                 total_bkgd_sr_count = GetSRcounts(&Hist_OnBkgd_MSCLW_Fine.at(e));
+                                if (isnan(total_bkgd_sr_count) || total_bkgd_sr_count==0.)
+                                {
+                                    fill2DHistogram(&Hist_OnBkgd_MSCLW_Fine.at(e),mtx_off_data_cr_scaled);
+                                    total_bkgd_sr_count = GetSRcounts(&Hist_OnBkgd_MSCLW_Fine.at(e));
+                                }
                                 std::cout << "total_data_sr_count = " << total_data_sr_count << ", total_bkgd_sr_count = " << total_bkgd_sr_count << std::endl;
                             }
                         }
@@ -1994,15 +2042,45 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         //std::cout << "CR_count_map = " << CR_count_map << std::endl;
                         //std::cout << "Hist_OnData_CR_Skymap_Init_Perturbation.at(e).Integral() = " << Hist_OnData_CR_Skymap_Init_Perturbation.at(e).Integral() << std::endl;
 
-                        mtx_on_t = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,matrix_rank[e],true,true,true,1);
-                        std::cout << "mtx_on_t (blind):" << std::endl;
-                        std::cout << mtx_on_t.block(0,0,4,4).real() << std::endl;
-                        mtx_on_bkgd = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,matrix_rank[e],true,true,true, 0);
-                        fill2DHistogram(&Hist_OnBkgd_MSCLW_Fine.at(e),mtx_on_bkgd);
-                        total_data_sr_count = GetSRcounts(&Hist_OnData_MSCLW_Fine.at(e));
-                        total_bkgd_sr_count = GetSRcounts(&Hist_OnBkgd_MSCLW_Fine.at(e));
-                        std::cout << "total_data_sr_count = " << total_data_sr_count << ", total_bkgd_sr_count = " << total_bkgd_sr_count << std::endl;
+                        if (matrix_rank[e]>=1)
+                        {
+                            for (int rank=2;rank<=matrix_rank[e];rank++)
+                            {
+                                bool use_t_input = false;
+                                if (rank>2)
+                                {
+                                    use_t_input = true;
+                                }
+                                mtx_on_t = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,rank,use_t_input,false,true,1);
+                                std::cout << "mtx_on_t (blind, off-diagonal):" << std::endl;
+                                std::cout << mtx_on_t.block(0,0,4,4).real() << std::endl;
+                                mtx_on_bkgd = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,rank,use_t_input,false,true,0);
+                                fill2DHistogram(&Hist_OnBkgd_MSCLW_Fine.at(e),mtx_on_bkgd);
+                                total_data_sr_count = GetSRcounts(&Hist_OnData_MSCLW_Fine.at(e));
+                                total_bkgd_sr_count = GetSRcounts(&Hist_OnBkgd_MSCLW_Fine.at(e));
+                                if (isnan(total_bkgd_sr_count) || total_bkgd_sr_count==0.)
+                                {
+                                    fill2DHistogram(&Hist_OnBkgd_MSCLW_Fine.at(e),mtx_off_data_cr_scaled);
+                                    total_bkgd_sr_count = GetSRcounts(&Hist_OnBkgd_MSCLW_Fine.at(e));
+                                }
+                                std::cout << "total_data_sr_count = " << total_data_sr_count << ", total_bkgd_sr_count = " << total_bkgd_sr_count << std::endl;
 
+                                if (rank==matrix_rank[e]) continue;
+                                mtx_on_t = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,rank,true,true,true,1);
+                                std::cout << "mtx_on_t (blind, include diagonal):" << std::endl;
+                                std::cout << mtx_on_t.block(0,0,4,4).real() << std::endl;
+                                mtx_on_bkgd = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,rank,true,true,true,0);
+                                fill2DHistogram(&Hist_OnBkgd_MSCLW_Fine.at(e),mtx_on_bkgd);
+                                total_data_sr_count = GetSRcounts(&Hist_OnData_MSCLW_Fine.at(e));
+                                total_bkgd_sr_count = GetSRcounts(&Hist_OnBkgd_MSCLW_Fine.at(e));
+                                if (isnan(total_bkgd_sr_count) || total_bkgd_sr_count==0.)
+                                {
+                                    fill2DHistogram(&Hist_OnBkgd_MSCLW_Fine.at(e),mtx_off_data_cr_scaled);
+                                    total_bkgd_sr_count = GetSRcounts(&Hist_OnBkgd_MSCLW_Fine.at(e));
+                                }
+                                std::cout << "total_data_sr_count = " << total_data_sr_count << ", total_bkgd_sr_count = " << total_bkgd_sr_count << std::endl;
+                            }
+                        }
 
                         if (matrix_rank[e]==1)
                         {
@@ -2015,6 +2093,7 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         {
                             Hist_OnData_CR_Skymap_Perturbation.at(e).Scale(SR_predict_perturbation/CR_count_map);
                         }
+
                         Hist_OnData_MSCLW_Fine_Sum.at(e).Add(&Hist_OnData_MSCLW_Fine.at(e));
                         Hist_OnBkgd_MSCLW_Fine_Sum.at(e).Add(&Hist_OnBkgd_MSCLW_Fine.at(e));
                         Hist_OnInit_MSCLW_Fine_Sum.at(e).Add(&Hist_OffData_MSCLW_CR_scaled);

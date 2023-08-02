@@ -35,6 +35,7 @@ from spectral_cube import SpectralCube
 
 # Great examples of matplotlib plots: https://atmamani.github.io/cheatsheets/matplotlib/matplotlib_2/
 
+#folder_path = 'output_j1908_paper'
 #folder_path = 'output_nuclear'
 folder_path = 'output_nuclear_test'
 
@@ -47,8 +48,8 @@ folder_path = 'output_nuclear_test'
 #analysis_method = 'FoV'
 #analysis_method = 'Ratio'
 #analysis_method = 'Regression'
-#analysis_method = 'Init_Perturbation'
-analysis_method = 'Perturbation'
+analysis_method = 'Init_Perturbation'
+#analysis_method = 'Perturbation'
 #analysis_method = 'Combined'
 
 energy_bin = [100.,200.,251.,316.,398.,501.,794.,1259.,1995.,3162.,5011.,7943.]
@@ -317,7 +318,7 @@ def GetGammaSourceInfo():
     drawLHAASO = False
     drawFermi = False
     drawHAWC = False
-    drawTeV = True
+    drawTeV = False
 
     if drawBrightStar:
         star_name, star_ra, star_dec = ReadBrightStarListFromFile()
@@ -557,7 +558,7 @@ def MatplotlibMap2D(hist_map,hist_tone,hist_contour,fig,label_x,label_y,label_z,
     other_star_labels = []
     other_star_types = []
     other_star_markers = []
-    star_range = 0.9*(MapEdge_right-MapEdge_left)/2.
+    star_range = 0.8*(MapEdge_right-MapEdge_left)/2.
     source_ra = (MapEdge_left+MapEdge_right)/2.
     source_dec = (MapEdge_lower+MapEdge_upper)/2.
     n_stars = 0
@@ -582,6 +583,8 @@ def MatplotlibMap2D(hist_map,hist_tone,hist_contour,fig,label_x,label_y,label_z,
     if label_z=='Significance' and not 'SkymapHAWC' in plotname:
         max_z = 5.
         im = axbig.imshow(grid_z, origin='lower', cmap=colormap, extent=(x_axis.min(),x_axis.max(),y_axis.min(),y_axis.max()),vmin=-max_z,vmax=max_z,zorder=0)
+    elif 'SkymapHAWC' in plotname:
+        im = axbig.imshow(grid_z, origin='lower', cmap=colormap, extent=(x_axis.min(),x_axis.max(),y_axis.min(),y_axis.max()),vmin=0,zorder=0)
     else:
         im = axbig.imshow(grid_z, origin='lower', cmap=colormap, extent=(x_axis.min(),x_axis.max(),y_axis.min(),y_axis.max()),vmin=min_z,vmax=max_z,zorder=0)
 
@@ -632,12 +635,12 @@ def MatplotlibMap2D(hist_map,hist_tone,hist_contour,fig,label_x,label_y,label_z,
     axbig.set_xticklabels(x_axis_reflect)
     fig.savefig("output_plots/%s.png"%(plotname),bbox_inches='tight')
 
-    if len(roi_r)>0:
-        for roi in range(0,len(roi_r)):
-            mycircle = plt.Circle((-roi_x[roi], roi_y[roi]), roi_r[roi], color='b', fill=False)
-            axbig.add_patch(mycircle)
-        axbig.legend(bbox_to_anchor=(1.04, 1), borderaxespad=0, fontsize=7)
-        fig.savefig("output_plots/%s_legend.png"%(plotname),bbox_inches='tight')
+    #if len(roi_r)>0:
+    for roi in range(0,len(roi_r)):
+        mycircle = plt.Circle((-roi_x[roi], roi_y[roi]), roi_r[roi], color='w', linestyle='dashed', fill=False)
+        axbig.add_patch(mycircle)
+    #axbig.legend(bbox_to_anchor=(0.7, 1), borderaxespad=0, fontsize=7)
+    fig.savefig("output_plots/%s_legend.png"%(plotname),bbox_inches='tight')
 
     axbig.remove()
 
