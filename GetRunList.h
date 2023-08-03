@@ -8,7 +8,8 @@
 
 #include "NetflixParameters.h"
 
-string RUNLIST_DIR = string("runlist_v487");
+//string RUNLIST_DIR = string("runlist_v487");
+string RUNLIST_DIR = string("runlist");
 
 pair<double,double> GetSourceRaDec(TString source_name)
 {

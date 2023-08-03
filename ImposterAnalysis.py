@@ -84,11 +84,11 @@ if 'V6' in input_epoch:
 
 total_data_expo = 0.
 
-MSCW_lower_blind = -0.6
-MSCL_lower_blind = -0.7
+MSCW_lower_blind = -0.5
+MSCL_lower_blind = -0.6
 MSCW_upper_blind = 0.6
-MSCL_upper_blind = 0.3
-n_extra_lower_bins = 1
+MSCL_upper_blind = 0.4
+n_extra_lower_bins = 0
 n_extra_upper_bins = 6
 mtx_dim_w_fine = 6
 mtx_dim_l_fine = 6
@@ -196,7 +196,7 @@ def GetFluxCalibration(energy,elev):
     # 3-tel cut
     #str_flux_calibration = ['1.55e+02', '3.94e+00', '1.66e+00', '1.22e+00', '1.03e+00', '1.26e+00', '1.20e+00', '1.13e+00', '1.30e+00', '1.36e+00', '1.37e+00']
     # v490
-    str_flux_calibration = ['4.44e+00', '8.92e-01', '8.05e-01', '7.79e-01', '7.37e-01', '8.95e-01', '9.14e-01', '9.11e-01', '9.51e-01', '9.91e-01', '1.01e+00']
+    str_flux_calibration = ['2.10e+01', '1.59e+00', '1.26e+00', '1.17e+00', '1.07e+00', '1.39e+00', '1.33e+00', '1.27e+00', '1.28e+00', '1.23e+00', '1.37e+00']
 
     flux_calibration = []
     for string in str_flux_calibration:

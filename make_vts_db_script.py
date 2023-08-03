@@ -6,43 +6,44 @@ SMI_DIR = os.environ['SMI_DIR']
 
 input_params = []
 
-input_params += [ ['1ES0647'               ,102.694 ,25.050 ,30 ,90] ]
-input_params += [ ['1ES1011'               ,153.767 ,49.434 ,30 ,90] ]
-input_params += [ ['1ES0414'               ,64.220  ,1.089  ,30 ,90] ]
-input_params += [ ['M82'                   ,148.970 ,69.679 ,30 ,90] ]
-input_params += [ ['1ES0502'               ,76.983  ,67.623 ,30 ,90] ]
-input_params += [ ['3C264'                 ,176.271 ,19.606 ,30 ,90] ]
-input_params += [ ['BLLac'                 ,330.680 ,42.277 ,30 ,90] ]
-input_params += [ ['Draco'                 ,260.059 ,57.921 ,30 ,90] ]
-input_params += [ ['OJ287'                 ,133.705 ,20.100 ,30 ,90] ]
-input_params += [ ['H1426'                 ,217.136  ,42.673 ,30 ,90] ]
-input_params += [ ['NGC1275'               ,49.950  ,41.512 ,30 ,90] ]
-input_params += [ ['Segue1'                ,151.767 ,16.082 ,30 ,90] ]
-input_params += [ ['3C273'                 ,187.277 ,2.05   ,30 ,90] ]
-input_params += [ ['PG1553'                ,238.936 ,11.195 ,30 ,90] ]
-input_params += [ ['PKS1424'               ,216.750 ,23.783 ,30 ,90] ]
-input_params += [ ['1ES0229'               ,38.222  ,20.273 ,30 ,90] ]
-input_params += [ ['RGB_J0710_p591'        ,107.61  ,59.15  ,30 ,90] ]
-input_params += [ ['UrsaMinor'             ,227.285 ,67.222 ,30 ,90] ]
-input_params += [ ['UrsaMajorII'           ,132.875 ,63.13  ,30 ,90] ]
-input_params += [ ['CrabNebula_elev_80_90' ,83.633  ,22.014 ,80 ,90] ]
-input_params += [ ['CrabNebula_elev_70_80' ,83.633  ,22.014 ,70 ,80] ]
-input_params += [ ['CrabNebula_elev_60_70' ,83.633  ,22.014 ,60 ,70] ]
-input_params += [ ['CrabNebula_elev_50_60' ,83.633  ,22.014 ,50 ,60] ]
-input_params += [ ['CrabNebula_elev_40_50' ,83.633  ,22.014 ,40 ,50] ]
-input_params += [ ['CrabNebula_elev_30_40' ,83.633  ,22.014 ,30 ,40] ]
-input_params += [ ['CrabNebula_1p0wobble' ,83.633  ,22.014 ,30 ,90] ]
-input_params += [ ['CrabNebula_1p5wobble' ,83.633  ,22.014 ,30 ,90] ]
-
-input_params += [ ['PSR_J1907_p0602'       ,286.975 ,6.337  ,30 ,90] ]
-input_params += [ ['PSR_J2021_p4026'       ,305.37  ,40.45  ,30 ,90] ] # gamma cygni
-input_params += [ ['SNR_G189_p03'          ,94.213  ,22.503 ,30 ,90] ] # ic 443
-input_params += [ ['Geminga'               ,98.476  ,17.770 ,30 ,90] ]
-input_params += [ ['PSR_J2021_p3651'       ,305.27  ,36.85  ,30 ,90] ] # Dragonfly
-input_params += [ ['PSR_J2032_p4127', 308.05  , 41.46  ,30 ,90] ]
-input_params += [ ['PSR_J1856_p0245', 284.21  , 2.76  ,30 ,90] ]
-
-input_params += [ ['LHAASO_J0622_p3754', 95.50  , 37.90  ,30 ,90] ]
+#input_params += [ ['1ES0647'               ,102.694 ,25.050 ,30 ,90] ]
+#input_params += [ ['1ES1011'               ,153.767 ,49.434 ,30 ,90] ]
+#input_params += [ ['1ES0414'               ,64.220  ,1.089  ,30 ,90] ]
+#input_params += [ ['M82'                   ,148.970 ,69.679 ,30 ,90] ]
+#input_params += [ ['1ES0502'               ,76.983  ,67.623 ,30 ,90] ]
+#input_params += [ ['3C264'                 ,176.271 ,19.606 ,30 ,90] ]
+#input_params += [ ['BLLac'                 ,330.680 ,42.277 ,30 ,90] ]
+#input_params += [ ['Draco'                 ,260.059 ,57.921 ,30 ,90] ]
+#input_params += [ ['OJ287'                 ,133.705 ,20.100 ,30 ,90] ]
+#input_params += [ ['H1426'                 ,217.136  ,42.673 ,30 ,90] ]
+#input_params += [ ['NGC1275'               ,49.950  ,41.512 ,30 ,90] ]
+#input_params += [ ['Segue1'                ,151.767 ,16.082 ,30 ,90] ]
+#input_params += [ ['3C273'                 ,187.277 ,2.05   ,30 ,90] ]
+#input_params += [ ['PG1553'                ,238.936 ,11.195 ,30 ,90] ]
+#input_params += [ ['PKS1424'               ,216.750 ,23.783 ,30 ,90] ]
+#input_params += [ ['1ES0229'               ,38.222  ,20.273 ,30 ,90] ]
+#input_params += [ ['RGB_J0710_p591'        ,107.61  ,59.15  ,30 ,90] ]
+#input_params += [ ['UrsaMinor'             ,227.285 ,67.222 ,30 ,90] ]
+#input_params += [ ['UrsaMajorII'           ,132.875 ,63.13  ,30 ,90] ]
+#input_params += [ ['CrabNebula_elev_80_90' ,83.633  ,22.014 ,80 ,90] ]
+#input_params += [ ['CrabNebula_elev_70_80' ,83.633  ,22.014 ,70 ,80] ]
+#input_params += [ ['CrabNebula_elev_60_70' ,83.633  ,22.014 ,60 ,70] ]
+#input_params += [ ['CrabNebula_elev_50_60' ,83.633  ,22.014 ,50 ,60] ]
+#input_params += [ ['CrabNebula_elev_40_50' ,83.633  ,22.014 ,40 ,50] ]
+#input_params += [ ['CrabNebula_elev_30_40' ,83.633  ,22.014 ,30 ,40] ]
+#input_params += [ ['CrabNebula_1p0wobble' ,83.633  ,22.014 ,30 ,90] ]
+#input_params += [ ['CrabNebula_1p5wobble' ,83.633  ,22.014 ,30 ,90] ]
+##
+#input_params += [ ['PSR_J1907_p0602'       ,286.975 ,6.337  ,30 ,90] ]
+#input_params += [ ['PSR_J2021_p4026'       ,305.37  ,40.45  ,30 ,90] ] # gamma cygni
+#input_params += [ ['SNR_G189_p03'          ,94.213  ,22.503 ,30 ,90] ] # ic 443
+#input_params += [ ['Geminga'               ,98.476  ,17.770 ,30 ,90] ]
+#input_params += [ ['PSR_J2021_p3651'       ,305.27  ,36.85  ,30 ,90] ] # Dragonfly
+#input_params += [ ['PSR_J2032_p4127', 308.05  , 41.46  ,30 ,90] ]
+#input_params += [ ['PSR_J1856_p0245', 284.21  , 2.76  ,30 ,90] ]
+#
+#input_params += [ ['LHAASO_J0622_p3754', 95.50  , 37.90  ,30 ,90] ]
+#input_params += [ ['SS433'       ,288.404, 4.930  ,30 ,90] ]
 #input_params += [ ['LHAASO_J1956_p2845', 299.05  , 28.75  ,30 ,90] ]
 #input_params += [ ['PSR_J0248_p6021', 42.077  , 60.359  ,30 ,90] ]
 #input_params += [ ['PSR_J0359_p5414', 59.858  , 54.248  ,30 ,90] ]
@@ -66,11 +67,13 @@ input_params += [ ['LHAASO_J0622_p3754', 95.50  , 37.90  ,30 ,90] ]
 #input_params += [ ['PSR_J2238_p5903', 339.50  , 59.05  ,30 ,90] ]
 #input_params += [ ['TeV2032_Cyg_X3', 308.  , 41.23  ,30 ,90] ] # high-mass X-ray binary
 #input_params += [ ['Tycho', 6.28  , 64.17  ,30 ,90] ]
+#
+#input_params += [ ['Cas_A', 350.8075  , 58.8072  ,30 ,90] ]
 
 #input_params += [ ['Galactic_Plane', 0., 0.  ,30 ,90] ]
 #input_params += [ ['LHAASO_Catalog', 0., 0.  ,30 ,90] ]
 
-#input_params += [ ['AUX_files', 0., 0.  ,30 ,90] ]
+input_params += [ ['AUX_files', 0., 0.  ,30 ,90] ]
 
 job_counts = 0
 for s in range(0,len(input_params)):

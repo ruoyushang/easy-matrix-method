@@ -31,7 +31,7 @@
 #include "TCut.h"
 
 //#include "../../EventDisplay/VEvndispRunParameter.h"
-#include "/home/rshang/MatrixDecompositionMethod/EventDisplay/VEvndispRunParameter.h"
+//#include "/home/rshang/MatrixDecompositionMethod/EventDisplay/VEvndispRunParameter.h"
 
 #include <complex>
 #include "/home/rshang/MatrixDecompositionMethod/Eigen/eigen-eigen-323c052e1731/Eigen/Dense"
@@ -1255,6 +1255,7 @@ MatrixXcd MatrixPerturbationMethod(MatrixXcd mtx_t_input, MatrixXcd mtx_base_inp
                     }
                     if (kth_entry>max_rank) continue;
                     if (nth_entry>max_rank) continue;
+                    if (kth_entry==max_rank && nth_entry==max_rank) continue;
                     int idx_v = idx_k*size_n + idx_n;
                     mtx_A(idx_u,idx_v) = mtx_U_base(idx_i,idx_k)*mtx_V_base(idx_j,idx_n);
                 }
@@ -1452,6 +1453,10 @@ double GetCRcounts(TH2D* hist)
             double cell_center_x = hist->GetXaxis()->GetBinCenter(binx+1);
             double cell_center_y = hist->GetYaxis()->GetBinCenter(biny+1);
             if (cell_center_x<MSCL_upper_blind && cell_center_y<MSCW_upper_blind && cell_center_x>MSCL_lower_blind && cell_center_y>MSCW_lower_blind)
+            {
+                local_count = 0.;
+            }
+            if (cell_center_x>2.*MSCL_upper_blind || cell_center_y>2.*MSCW_upper_blind)
             {
                 local_count = 0.;
             }
@@ -1917,10 +1922,15 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         // simple ratio method
                         double total_on_cr_count = GetCRcounts(&Hist_OnData_MSCLW_Fine.at(e));
                         double total_off_cr_count = GetCRcounts(&Hist_OffData_MSCLW_Fine_Sum.at(e));
-                        double SR_predict_ratio = (Hist_OffData_MSCLW_Fine_Sum.at(e).Integral()-total_off_cr_count)*total_on_cr_count/total_off_cr_count; 
-                        SR_predict_ratio = SR_predict_ratio/(1.+method_ratio_mean[e]);
+                        double total_off_sr_count = GetSRcounts(&Hist_OffData_MSCLW_Fine_Sum.at(e));
+                        TH2D Hist_OffData_MSCLW_CR_scaled = TH2D("Hist_OffData_MSCLW_CR_scaled","",mtx_dim_l_fine+n_extra_lower_bins+n_extra_upper_bins,MSCL_plot_lower_fine,MSCL_plot_upper_fine,mtx_dim_w_fine+n_extra_lower_bins+n_extra_upper_bins,MSCW_plot_lower_fine,MSCW_plot_upper_fine);
+                        if (total_off_cr_count>0.)
+                        {
+                            Hist_OffData_MSCLW_CR_scaled.Add(&Hist_OffData_MSCLW_Fine_Sum.at(e),total_on_cr_count/total_off_cr_count);
+                        }
 
                         //CR_count_map = Hist_OnData_CR_Skymap_Ratio.at(e).Integral();
+                        double SR_predict_ratio = Hist_OffData_MSCLW_CR_scaled.Integral(binx_blind_lower_global+1,binx_blind_upper_global,biny_blind_lower_global+1,biny_blind_upper_global);
                         CR_count_map = CR_on_count_weighted.at(e);
                         if (CR_count_map>0.)
                         {
@@ -1943,7 +1953,6 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         double SR_predict_regression = 0.;
                         double total_truth = 0.;
                         SR_predict_regression = vtr_predict(0).real();
-                        SR_predict_regression = SR_predict_regression/(1.+method_regression_mean[e]);
                         total_truth = vtr_truth(0).real();
 
                         //CR_count_map = Hist_OnData_CR_Skymap_Regression.at(e).Integral();
@@ -1954,11 +1963,6 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         }
 
                         // perturbation method
-                        TH2D Hist_OffData_MSCLW_CR_scaled = TH2D("Hist_OffData_MSCLW_CR_scaled","",mtx_dim_l_fine+n_extra_lower_bins+n_extra_upper_bins,MSCL_plot_lower_fine,MSCL_plot_upper_fine,mtx_dim_w_fine+n_extra_lower_bins+n_extra_upper_bins,MSCW_plot_lower_fine,MSCW_plot_upper_fine);
-                        if (total_off_cr_count>0.)
-                        {
-                            Hist_OffData_MSCLW_CR_scaled.Add(&Hist_OffData_MSCLW_Fine_Sum.at(e),total_on_cr_count/total_off_cr_count);
-                        }
                         MatrixXcd mtx_off_data_cr_scaled = fillMatrix(&Hist_OffData_MSCLW_CR_scaled);
                         MatrixXcd mtx_on_data = fillMatrix(&Hist_OnData_MSCLW_Fine.at(e));
 
@@ -2044,42 +2048,19 @@ void FillHistograms(string target_data, bool isON, int doImposter)
 
                         if (matrix_rank[e]>=1)
                         {
-                            for (int rank=2;rank<=matrix_rank[e];rank++)
+                            mtx_on_t = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,matrix_rank[e],true,true,true,1);
+                            std::cout << "mtx_on_t (blind, include diagonal):" << std::endl;
+                            std::cout << mtx_on_t.block(0,0,4,4).real() << std::endl;
+                            mtx_on_bkgd = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,matrix_rank[e],true,true,true,0);
+                            fill2DHistogram(&Hist_OnBkgd_MSCLW_Fine.at(e),mtx_on_bkgd);
+                            total_data_sr_count = GetSRcounts(&Hist_OnData_MSCLW_Fine.at(e));
+                            total_bkgd_sr_count = GetSRcounts(&Hist_OnBkgd_MSCLW_Fine.at(e));
+                            if (isnan(total_bkgd_sr_count) || total_bkgd_sr_count==0.)
                             {
-                                bool use_t_input = false;
-                                if (rank>2)
-                                {
-                                    use_t_input = true;
-                                }
-                                mtx_on_t = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,rank,use_t_input,false,true,1);
-                                std::cout << "mtx_on_t (blind, off-diagonal):" << std::endl;
-                                std::cout << mtx_on_t.block(0,0,4,4).real() << std::endl;
-                                mtx_on_bkgd = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,rank,use_t_input,false,true,0);
-                                fill2DHistogram(&Hist_OnBkgd_MSCLW_Fine.at(e),mtx_on_bkgd);
-                                total_data_sr_count = GetSRcounts(&Hist_OnData_MSCLW_Fine.at(e));
+                                fill2DHistogram(&Hist_OnBkgd_MSCLW_Fine.at(e),mtx_off_data_cr_scaled);
                                 total_bkgd_sr_count = GetSRcounts(&Hist_OnBkgd_MSCLW_Fine.at(e));
-                                if (isnan(total_bkgd_sr_count) || total_bkgd_sr_count==0.)
-                                {
-                                    fill2DHistogram(&Hist_OnBkgd_MSCLW_Fine.at(e),mtx_off_data_cr_scaled);
-                                    total_bkgd_sr_count = GetSRcounts(&Hist_OnBkgd_MSCLW_Fine.at(e));
-                                }
-                                std::cout << "total_data_sr_count = " << total_data_sr_count << ", total_bkgd_sr_count = " << total_bkgd_sr_count << std::endl;
-
-                                if (rank==matrix_rank[e]) continue;
-                                mtx_on_t = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,rank,true,true,true,1);
-                                std::cout << "mtx_on_t (blind, include diagonal):" << std::endl;
-                                std::cout << mtx_on_t.block(0,0,4,4).real() << std::endl;
-                                mtx_on_bkgd = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,rank,true,true,true,0);
-                                fill2DHistogram(&Hist_OnBkgd_MSCLW_Fine.at(e),mtx_on_bkgd);
-                                total_data_sr_count = GetSRcounts(&Hist_OnData_MSCLW_Fine.at(e));
-                                total_bkgd_sr_count = GetSRcounts(&Hist_OnBkgd_MSCLW_Fine.at(e));
-                                if (isnan(total_bkgd_sr_count) || total_bkgd_sr_count==0.)
-                                {
-                                    fill2DHistogram(&Hist_OnBkgd_MSCLW_Fine.at(e),mtx_off_data_cr_scaled);
-                                    total_bkgd_sr_count = GetSRcounts(&Hist_OnBkgd_MSCLW_Fine.at(e));
-                                }
-                                std::cout << "total_data_sr_count = " << total_data_sr_count << ", total_bkgd_sr_count = " << total_bkgd_sr_count << std::endl;
                             }
+                            std::cout << "total_data_sr_count = " << total_data_sr_count << ", total_bkgd_sr_count = " << total_bkgd_sr_count << std::endl;
                         }
 
                         if (matrix_rank[e]==1)
@@ -2087,7 +2068,6 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                             fill2DHistogram(&Hist_OnBkgd_MSCLW_Fine.at(e),mtx_off_data_cr_scaled);
                         }
                         double SR_predict_perturbation = Hist_OnBkgd_MSCLW_Fine.at(e).Integral(binx_blind_lower_global+1,binx_blind_upper_global,biny_blind_lower_global+1,biny_blind_upper_global);
-                        SR_predict_perturbation = SR_predict_perturbation/(1.+method_pertrubation_mean[e]);
                         CR_count_map = CR_on_count_weighted.at(e);
                         if (CR_count_map>0.)
                         {
@@ -2109,11 +2089,10 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         Hist_OnData_CR_Skymap_Regression_Sum.at(e).Add(&Hist_OnData_CR_Skymap_Regression.at(e));
                         Hist_OnData_CR_Skymap_Init_Perturbation_Sum.at(e).Add(&Hist_OnData_CR_Skymap_Init_Perturbation.at(e));
                         Hist_OnData_CR_Skymap_Perturbation_Sum.at(e).Add(&Hist_OnData_CR_Skymap_Perturbation.at(e));
-                        double ratio_method_weight = pow(1./method_ratio_rms[e],2);
-                        double regression_method_weight = pow(1./method_regression_rms[e],2);
-                        double perturbation_method_weight = pow(1./method_pertrubation_rms[e],2);
-                        double total_method_weight = ratio_method_weight+regression_method_weight+perturbation_method_weight;
-                        Hist_OnData_CR_Skymap_Combined_Sum.at(e).Add(&Hist_OnData_CR_Skymap_Ratio.at(e),ratio_method_weight/total_method_weight);
+                        double ratio_method_weight = 1.;
+                        double regression_method_weight = 1.;
+                        double perturbation_method_weight = 1.;
+                        double total_method_weight = regression_method_weight+perturbation_method_weight;
                         Hist_OnData_CR_Skymap_Combined_Sum.at(e).Add(&Hist_OnData_CR_Skymap_Regression.at(e),regression_method_weight/total_method_weight);
                         Hist_OnData_CR_Skymap_Combined_Sum.at(e).Add(&Hist_OnData_CR_Skymap_Perturbation.at(e),perturbation_method_weight/total_method_weight);
                     }
