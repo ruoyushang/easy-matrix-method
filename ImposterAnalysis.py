@@ -84,8 +84,8 @@ if 'V6' in input_epoch:
 
 total_data_expo = 0.
 
-MSCW_lower_blind = -0.5
-MSCL_lower_blind = -0.6
+MSCW_lower_blind = -0.6
+MSCL_lower_blind = -0.7
 MSCW_upper_blind = 0.6
 MSCL_upper_blind = 0.4
 n_extra_lower_bins = 0
@@ -196,7 +196,9 @@ def GetFluxCalibration(energy,elev):
     # 3-tel cut
     #str_flux_calibration = ['1.55e+02', '3.94e+00', '1.66e+00', '1.22e+00', '1.03e+00', '1.26e+00', '1.20e+00', '1.13e+00', '1.30e+00', '1.36e+00', '1.37e+00']
     # v490
-    str_flux_calibration = ['2.10e+01', '1.59e+00', '1.26e+00', '1.17e+00', '1.07e+00', '1.39e+00', '1.33e+00', '1.27e+00', '1.28e+00', '1.23e+00', '1.37e+00']
+    str_flux_calibration = ['2.06e-04', '1.53e-05', '1.20e-05', '1.10e-05', '9.91e-06', '1.25e-05', '1.17e-05', '1.08e-05', '1.06e-05', '1.00e-05', '1.04e-05']
+    # v487
+    #str_flux_calibration = ['1.90e-04', '1.53e-05', '1.22e-05', '1.09e-05', '9.74e-06', '1.25e-05', '1.12e-05', '1.06e-05', '9.63e-06', '9.38e-06', '9.63e-06']
 
     flux_calibration = []
     for string in str_flux_calibration:
@@ -1394,7 +1396,7 @@ for ebin in range(energy_bin_cut_low,energy_bin_cut_up):
     hist_real_bkgd_skymap_smooth = CommonPlotFunctions.Smooth2DMap(hist_real_bkgd_skymap[ebin],smooth_size_spectroscopy,False)
     significance_skymap = CommonPlotFunctions.GetSignificanceMap(hist_real_data_skymap_smooth,hist_real_bkgd_skymap_smooth)
     hist_real_significance_skymap_reflect = CommonPlotFunctions.reflectXaxis(significance_skymap)
-    CommonPlotFunctions.MatplotlibMap2D(hist_real_significance_skymap_reflect,None,[],fig,'RA','Dec','Significance','SkymapSignificance_E%s_%s'%(ebin,plot_tag))
+    CommonPlotFunctions.MatplotlibMap2D(hist_real_significance_skymap_reflect,None,[],fig,'RA','Dec','significance','SkymapSignificance_E%s_%s'%(ebin,plot_tag))
 
 hist_real_data_skymap_le_smooth = CommonPlotFunctions.Smooth2DMap(hist_real_data_skymap_le,smooth_size_spectroscopy,False)
 hist_real_bkgd_skymap_le_smooth = CommonPlotFunctions.Smooth2DMap(hist_real_bkgd_skymap_le,smooth_size_spectroscopy,False)
@@ -1421,14 +1423,14 @@ hist_real_bkgd_skymap_sum_reflect = CommonPlotFunctions.reflectXaxis(hist_real_b
 CommonPlotFunctions.BackgroundSubtractMap(fig,hist_real_data_skymap_sum_reflect,hist_real_bkgd_skymap_sum_reflect,'RA','Dec','Count','SkymapBkgSubtraction_%s'%(plot_tag))
 
 hist_real_significance_skymap_reflect = CommonPlotFunctions.reflectXaxis(hist_real_significance_skymap_le)
-CommonPlotFunctions.MatplotlibMap2D(hist_real_significance_skymap_reflect,None,[],fig,'RA','Dec','Significance','SkymapSignificance_LE_%s'%(plot_tag),roi_x=region_x,roi_y=region_y,roi_r=region_r)
+CommonPlotFunctions.MatplotlibMap2D(hist_real_significance_skymap_reflect,None,[],fig,'RA','Dec','significance','SkymapSignificance_LE_%s'%(plot_tag),roi_x=region_x,roi_y=region_y,roi_r=region_r)
 hist_real_significance_skymap_reflect = CommonPlotFunctions.reflectXaxis(hist_real_significance_skymap_he)
-CommonPlotFunctions.MatplotlibMap2D(hist_real_significance_skymap_reflect,None,[],fig,'RA','Dec','Significance','SkymapSignificance_HE_%s'%(plot_tag),roi_x=region_x,roi_y=region_y,roi_r=region_r)
+CommonPlotFunctions.MatplotlibMap2D(hist_real_significance_skymap_reflect,None,[],fig,'RA','Dec','significance','SkymapSignificance_HE_%s'%(plot_tag),roi_x=region_x,roi_y=region_y,roi_r=region_r)
 hist_real_significance_skymap_reflect = CommonPlotFunctions.reflectXaxis(hist_real_significance_skymap_sum)
-CommonPlotFunctions.MatplotlibMap2D(hist_real_significance_skymap_reflect,None,[],fig,'RA','Dec','Significance','SkymapSignificance_Sum_%s'%(plot_tag),roi_x=region_x,roi_y=region_y,roi_r=region_r)
+CommonPlotFunctions.MatplotlibMap2D(hist_real_significance_skymap_reflect,None,[],fig,'RA','Dec','significance','SkymapSignificance_Sum_%s'%(plot_tag),roi_x=region_x,roi_y=region_y,roi_r=region_r,psf=0.08)
 for imposter in range(0,n_imposters):
     hist_imposter_significance_skymap_reflect = CommonPlotFunctions.reflectXaxis(hist_imposter_significance_skymap_sum[imposter])
-    CommonPlotFunctions.MatplotlibMap2D(hist_imposter_significance_skymap_reflect,None,[],fig,'RA','Dec','Significance','SkymapSignificanceImposter%s_Sum_%s'%(imposter,plot_tag),roi_x=region_x,roi_y=region_y,roi_r=region_r)
+    CommonPlotFunctions.MatplotlibMap2D(hist_imposter_significance_skymap_reflect,None,[],fig,'RA','Dec','significance','SkymapSignificanceImposter%s_Sum_%s'%(imposter,plot_tag),roi_x=region_x,roi_y=region_y,roi_r=region_r)
 
 hist_elev_skymap_reflect = CommonPlotFunctions.reflectXaxis(hist_elev_skymap)
 CommonPlotFunctions.MatplotlibMap2D(hist_elev_skymap_reflect,hist_elev_skymap_reflect,[],fig,'RA','Dec','Elevation [deg]','SkymapElev')
@@ -1519,9 +1521,8 @@ if 'PSR_J1907_p0602' in source_name:
     hist_real_diff_skymap_le_reflect = CommonPlotFunctions.reflectXaxis(hist_real_diff_skymap_le)
     hist_real_diff_skymap_he_reflect = CommonPlotFunctions.reflectXaxis(hist_real_diff_skymap_he)
 
-    hist_real_flux_skymap_sum = CommonPlotFunctions.Smooth2DMap(hist_real_flux_skymap_sum,smooth_size_spectroscopy,False)
-    hist_real_flux_skymap_reflect = CommonPlotFunctions.reflectXaxis(hist_real_flux_skymap_sum)
-    CommonPlotFunctions.MatplotlibMap2D(hist_real_flux_skymap_reflect,None,[hist_real_diff_skymap_he_reflect,hist_real_diff_skymap_le_reflect,Hist_Fermi_reflect],fig,'RA','Dec','$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}$]','SkymapFlux_Sum_%s'%(plot_tag),colormap='gray',psf=0.08)
+    hist_real_significance_skymap_reflect = CommonPlotFunctions.reflectXaxis(hist_real_significance_skymap_sum)
+    CommonPlotFunctions.MatplotlibMap2D(hist_real_significance_skymap_reflect,None,[hist_real_diff_skymap_he_reflect,hist_real_diff_skymap_le_reflect,Hist_Fermi_reflect],fig,'RA','Dec','Significance','SkymapIntro_%s'%(plot_tag),colormap='gray',psf=0.08)
 
 
     Hist_mc_intensity = ROOT.TH2D("Hist_mc_intensity","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)

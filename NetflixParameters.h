@@ -21,8 +21,8 @@ double min_CR_count = 100000.;
 //double min_CR_count = 200000.;
 
 int min_NImages = 3;
-double MSCW_lower_blind = -0.5;
-double MSCL_lower_blind = -0.6;
+double MSCW_lower_blind = -0.6;
+double MSCL_lower_blind = -0.7;
 double MSCW_upper_blind = 0.6;
 double MSCL_upper_blind = 0.4;
 

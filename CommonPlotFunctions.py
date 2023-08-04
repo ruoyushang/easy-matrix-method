@@ -48,8 +48,8 @@ folder_path = 'output_nuclear_test'
 #analysis_method = 'FoV'
 #analysis_method = 'Ratio'
 #analysis_method = 'Regression'
-#analysis_method = 'Init_Perturbation'
-analysis_method = 'Perturbation'
+analysis_method = 'Init_Perturbation'
+#analysis_method = 'Perturbation'
 #analysis_method = 'Combined'
 
 energy_bin = [100.,200.,251.,316.,398.,501.,794.,1259.,1995.,3162.,5011.,7943.]
@@ -549,7 +549,7 @@ def MatplotlibMap2D(hist_map,hist_tone,hist_contour,fig,label_x,label_y,label_z,
                     if hist_bin_x>hist_contour[ctr].GetNbinsX(): continue
                     if hist_bin_y>hist_contour[ctr].GetNbinsY(): continue
                     grid_contour[ybin,xbin] = hist_contour[ctr].GetBinContent(hist_bin_x,hist_bin_y)
-                    if label_z!='Significance' and max_z_contour>0.:
+                    if label_z!='significance' and max_z_contour>0.:
                         grid_contour[ybin,xbin] = hist_contour[ctr].GetBinContent(hist_bin_x,hist_bin_y)*max_z/max_z_contour
             list_grid_contour += [grid_contour]
 
@@ -580,7 +580,7 @@ def MatplotlibMap2D(hist_map,hist_tone,hist_contour,fig,label_x,label_y,label_z,
     label_y = 'Dec'
     axbig.set_xlabel(label_x)
     axbig.set_ylabel(label_y)
-    if label_z=='Significance' and not 'SkymapHAWC' in plotname:
+    if label_z=='significance' and not 'SkymapHAWC' in plotname:
         max_z = 5.
         im = axbig.imshow(grid_z, origin='lower', cmap=colormap, extent=(x_axis.min(),x_axis.max(),y_axis.min(),y_axis.max()),vmin=-max_z,vmax=max_z,zorder=0)
     elif 'SkymapHAWC' in plotname:
@@ -1257,20 +1257,20 @@ def MatplotlibHist2D(hist_map,fig,label_x,label_y,label_z,plotname,zmax=0,zmin=0
     else:
         im = axbig.imshow(grid_z, origin='lower', cmap=colormap, extent=(x_axis.min(),x_axis.max(),y_axis.min(),y_axis.max()),zorder=0,vmin=zmin,vmax=zmax)
 
-    MSCW_lower_blind = -0.6
-    MSCL_lower_blind = -0.7
-    MSCW_upper_blind = 0.6
-    MSCL_upper_blind = 0.3
-    if 'Matrix' in plotname:
-        x_upper_cut = MSCL_upper_blind
-        y_upper_cut = MSCW_upper_blind
-        x_lower_cut = MSCL_lower_blind
-        y_lower_cut = MSCW_lower_blind
-        x1, y1 = [ x_lower_cut,  x_lower_cut],  [ y_lower_cut,  y_upper_cut]
-        x2, y2 = [ x_lower_cut,  x_upper_cut],  [ y_upper_cut,  y_upper_cut]
-        x3, y3 = [ x_upper_cut,  x_upper_cut],  [ y_upper_cut,  y_lower_cut]
-        x4, y4 = [ x_upper_cut,  x_lower_cut],  [ y_lower_cut,  y_lower_cut]
-        plt.plot(x1, y1, x2, y2, x3, y3, x4, y4, color='k')
+    #MSCW_lower_blind = -0.6
+    #MSCL_lower_blind = -0.7
+    #MSCW_upper_blind = 0.6
+    #MSCL_upper_blind = 0.3
+    #if 'Matrix' in plotname:
+    #    x_upper_cut = MSCL_upper_blind
+    #    y_upper_cut = MSCW_upper_blind
+    #    x_lower_cut = MSCL_lower_blind
+    #    y_lower_cut = MSCW_lower_blind
+    #    x1, y1 = [ x_lower_cut,  x_lower_cut],  [ y_lower_cut,  y_upper_cut]
+    #    x2, y2 = [ x_lower_cut,  x_upper_cut],  [ y_upper_cut,  y_upper_cut]
+    #    x3, y3 = [ x_upper_cut,  x_upper_cut],  [ y_upper_cut,  y_lower_cut]
+    #    x4, y4 = [ x_upper_cut,  x_lower_cut],  [ y_lower_cut,  y_lower_cut]
+    #    plt.plot(x1, y1, x2, y2, x3, y3, x4, y4, color='k')
 
     divider = make_axes_locatable(axbig)
     cax = divider.append_axes("bottom", size="5%", pad=0.7)
