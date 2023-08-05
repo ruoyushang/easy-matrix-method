@@ -84,10 +84,10 @@ if 'V6' in input_epoch:
 
 total_data_expo = 0.
 
-MSCW_lower_blind = -0.6
+MSCW_lower_blind = -0.7
 MSCL_lower_blind = -0.7
 MSCW_upper_blind = 0.6
-MSCL_upper_blind = 0.4
+MSCL_upper_blind = 0.6
 n_extra_lower_bins = 0
 n_extra_upper_bins = 6
 mtx_dim_w_fine = 6
@@ -196,7 +196,7 @@ def GetFluxCalibration(energy,elev):
     # 3-tel cut
     #str_flux_calibration = ['1.55e+02', '3.94e+00', '1.66e+00', '1.22e+00', '1.03e+00', '1.26e+00', '1.20e+00', '1.13e+00', '1.30e+00', '1.36e+00', '1.37e+00']
     # v490
-    str_flux_calibration = ['2.06e-04', '1.53e-05', '1.20e-05', '1.10e-05', '9.91e-06', '1.25e-05', '1.17e-05', '1.08e-05', '1.06e-05', '1.00e-05', '1.04e-05']
+    str_flux_calibration = ['7.95e+00', '1.59e+00', '1.50e+00', '1.17e+00', '7.85e-01', '1.25e+00', '6.47e-01', '3.57e-01', '1.84e-01', '9.10e-02', '4.80e-02']
     # v487
     #str_flux_calibration = ['1.90e-04', '1.53e-05', '1.22e-05', '1.09e-05', '9.74e-06', '1.25e-05', '1.12e-05', '1.06e-05', '9.63e-06', '9.38e-06', '9.63e-06']
 
@@ -808,7 +808,7 @@ def MakeSpectrum(roi_x,roi_y,roi_r,roi_name,excl_roi_x,excl_roi_y,excl_roi_r):
 
 
 
-def MakeFluxMap(flux_map, data_map, bkgd_map, norm_map, elev_map):
+def MakeFluxMap(flux_map, data_map, bkgd_map, expo_map, norm_map, elev_map):
 
     #norm_map_smooth = CommonPlotFunctions.Smooth2DMap(norm_map,0.3,True)
     skymap_bin_size_x = data_map[0].GetXaxis().GetBinCenter(2)-data_map[0].GetXaxis().GetBinCenter(1)
@@ -850,11 +850,13 @@ def MakeFluxMap(flux_map, data_map, bkgd_map, norm_map, elev_map):
                 #flux_map[ebin].SetBinError(binx+1,biny+1,flux_stat_err)
 
                 delta_E = (energy_bin[ebin+1]-energy_bin[ebin])/(3.12e+00)
-                local_areatime = hist_areatime_skymap.GetBinContent(binx+1,biny+1)
-                if local_areatime<=0.: continue
-                flux_content = (data_content-bkgd_content)/local_areatime*pow(energy_bin[ebin]/1e3,2)/(100.*100.*3600.)/delta_E
+                new_binx = expo_map[ebin].GetXaxis().FindBin(binx_center)
+                new_biny = expo_map[ebin].GetYaxis().FindBin(biny_center)
+                local_exposure = expo_map[ebin].GetBinContent(new_binx,new_biny)
+                if local_exposure<=0.: continue
+                flux_content = (data_content-bkgd_content)/local_exposure*pow(energy_bin[ebin]/1e3,2)/(100.*100.*3600.)/delta_E
                 stat_data_err = pow(max(bkgd_content,0.),0.5)
-                flux_stat_err = max(stat_data_err,1.)/local_areatime*pow(energy_bin[ebin]/1e3,2)/(100.*100.*3600.)/delta_E
+                flux_stat_err = max(stat_data_err,1.)/local_exposure*pow(energy_bin[ebin]/1e3,2)/(100.*100.*3600.)/delta_E
                 flux_map[ebin].SetBinContent(binx+1,biny+1,flux_content*norm_weight)
                 flux_map[ebin].SetBinError(binx+1,biny+1,flux_stat_err*norm_weight)
 
@@ -1190,6 +1192,7 @@ hist_real_sign_msclw_sum = ROOT.TH2D("hist_real_sign_msclw_sum","",mtx_dim_l_fin
 hist_real_significance_skymap_sum = ROOT.TH2D("hist_real_significance_skymap_sum","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
 hist_real_significance_skymap_le = ROOT.TH2D("hist_real_significance_skymap_le","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
 hist_real_significance_skymap_he = ROOT.TH2D("hist_real_significance_skymap_he","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
+hist_real_expo_skymap = []
 hist_real_flux_skymap = []
 hist_real_data_skymap = []
 hist_real_bkgd_skymap = []
@@ -1197,6 +1200,7 @@ hist_real_diff_skymap = []
 hist_real_data_msclw = []
 hist_real_bkgd_msclw = []
 for ebin in range(0,len(energy_bin)-1):
+    hist_real_expo_skymap += [ROOT.TH2D("hist_real_expo_skymap_E%s"%(ebin),"",20,MapEdge_left,MapEdge_right,20,MapEdge_lower,MapEdge_upper)]
     hist_real_flux_skymap += [ROOT.TH2D("hist_real_flux_skymap_E%s"%(ebin),"",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)]
     hist_real_data_skymap += [ROOT.TH2D("hist_real_data_skymap_E%s"%(ebin),"",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)]
     hist_real_bkgd_skymap += [ROOT.TH2D("hist_real_bkgd_skymap_E%s"%(ebin),"",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)]
@@ -1276,6 +1280,8 @@ for xoff_idx in range(0,n_xoff_bins):
                 for ebin in range(0,len(energy_bin)-1):
                     if energy_bin_cut_low>0:
                         if effective_area[ebin] < effective_area_cut: continue
+                    HistName = "Hist_OnData_Expo_Skymap_Sum_ErecS%sto%s"%(int(energy_bin[ebin]),int(energy_bin[ebin+1]))
+                    FillSkyMapHistogram(InputFile.Get(HistName),hist_real_expo_skymap[ebin])
                     HistName = "Hist_OnData_SR_Skymap_Sum_ErecS%sto%s"%(int(energy_bin[ebin]),int(energy_bin[ebin+1]))
                     FillSkyMapHistogram(InputFile.Get(HistName),hist_real_data_skymap[ebin])
                     HistName = "Hist_OnData_CR_Skymap_%s_Sum_ErecS%sto%s"%(analysis_method,int(energy_bin[ebin]),int(energy_bin[ebin+1]))
@@ -1439,9 +1445,9 @@ CommonPlotFunctions.MatplotlibMap2D(hist_azim_skymap_reflect,hist_azim_skymap_re
 hist_nsb_skymap_reflect = CommonPlotFunctions.reflectXaxis(hist_nsb_skymap)
 CommonPlotFunctions.MatplotlibMap2D(hist_nsb_skymap_reflect,hist_nsb_skymap_reflect,[],fig,'RA','Dec','NSB','SkymapNSB')
 
-MakeFluxMap(hist_real_flux_skymap, hist_real_data_skymap, hist_real_bkgd_skymap, hist_real_norm_skymap_sum, hist_elev_skymap)
+MakeFluxMap(hist_real_flux_skymap, hist_real_data_skymap, hist_real_bkgd_skymap, hist_real_expo_skymap, hist_real_norm_skymap_sum, hist_elev_skymap)
 for imp in range(0,n_imposters):
-    MakeFluxMap(hist_imposter_flux_skymap[imp], hist_imposter_data_skymap[imp], hist_imposter_bkgd_skymap[imp], hist_real_norm_skymap_sum, hist_elev_skymap)
+    MakeFluxMap(hist_imposter_flux_skymap[imp], hist_imposter_data_skymap[imp], hist_imposter_bkgd_skymap[imp], hist_real_expo_skymap, hist_real_norm_skymap_sum, hist_elev_skymap)
 
 for ebin in range(energy_bin_cut_low,energy_bin_cut_up):
     hist_real_flux_skymap_sum.Add(hist_real_flux_skymap[ebin])

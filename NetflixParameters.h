@@ -1,8 +1,8 @@
 
 const int N_energy_bins = 11;
 double energy_bins[N_energy_bins+1] = {100.,200.,251.,316.,398.,501.,794.,1259.,1995.,3162.,5011.,7943.};
-int matrix_rank[N_energy_bins] = {1,2,2,2,2,2,2,2,1,1,1};
-//int matrix_rank[N_energy_bins] = {1,3,3,3,3,3,2,2,1,1,1};
+//int matrix_rank[N_energy_bins] = {1,2,2,2,2,2,2,2,1,1,1};
+int matrix_rank[N_energy_bins] = {1,3,3,3,3,3,2,2,1,1,1};
 //int cr_correction_xyoff_bins[N_energy_bins] = {20,20,20,10,10,3,3,1,1,1,1};
 int cr_correction_xyoff_bins[N_energy_bins] = {1,12,12,6,6,3,3,1,1,1,1};
 
@@ -21,10 +21,10 @@ double min_CR_count = 100000.;
 //double min_CR_count = 200000.;
 
 int min_NImages = 3;
-double MSCW_lower_blind = -0.6;
+double MSCW_lower_blind = -0.7;
 double MSCL_lower_blind = -0.7;
 double MSCW_upper_blind = 0.6;
-double MSCL_upper_blind = 0.4;
+double MSCL_upper_blind = 0.6;
 
 int n_extra_lower_bins = 0;
 int n_extra_upper_bins = 6;
@@ -53,6 +53,7 @@ double Skymap_size_x = 2.5;
 double Skymap_size_y = 2.5;
 int Skymap_nbins_x = 100;
 int Skymap_nbins_y = 100;
+int ExpoMap_nbins = 20;
 
 double brightness_cut = 6.0;
 double bright_star_radius_cut = 0.25;

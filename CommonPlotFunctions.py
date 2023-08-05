@@ -55,7 +55,8 @@ analysis_method = 'Init_Perturbation'
 energy_bin = [100.,200.,251.,316.,398.,501.,794.,1259.,1995.,3162.,5011.,7943.]
 
 smooth_size_spectroscopy = 0.07
-calibration_radius = 0.2 # need to be larger than the PSF and smaller than the integration radius
+calibration_radius = 0.15 # need to be larger than the PSF and smaller than the integration radius
+#calibration_radius = 0.2 # need to be larger than the PSF and smaller than the integration radius
 n_xoff_bins = 1
 n_yoff_bins = 1
 
