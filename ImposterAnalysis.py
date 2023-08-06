@@ -62,6 +62,7 @@ doBiasCorrect = False
 #if not doImposter:
 #    doBiasCorrect = False
 
+folder_tag = CommonPlotFunctions.folder_tag
 analysis_method = CommonPlotFunctions.analysis_method
 n_xoff_bins = CommonPlotFunctions.n_xoff_bins
 n_yoff_bins = CommonPlotFunctions.n_yoff_bins
@@ -73,7 +74,7 @@ if not doImposter:
 
 
 plot_tag = source_name
-plot_tag += '_'+analysis_method
+plot_tag += '_'+analysis_method+folder_tag
 plot_tag += '_E'+sys.argv[4]+'_'+sys.argv[6]
 
 list_epoch = []
@@ -719,7 +720,7 @@ def MakeSpectrum(roi_x,roi_y,roi_r,roi_name,excl_roi_x,excl_roi_y,excl_roi_r):
         #axbig.plot(cta_energies,cta_ul,color='green',label='50-h CTA-south sensitivity')
         axbig.errorbar(Tobias_energies,Tobias_fluxes,Tobias_flux_errs,color='red',marker='s',ls='none',label='VERITAS (Gammapy-3D)')
         axbig.bar(energy_axis, 2.*real_flux_syst_err, bottom=real_flux-real_flux_syst_err, width=2.*energy_error, color='b', align='center', alpha=0.2)
-        axbig.errorbar(energy_axis,real_flux,real_flux_total_err,xerr=energy_error,color='k',marker='_',ls='none',label='VERITAS (Matrix method)')
+        axbig.errorbar(energy_axis,real_flux,real_flux_total_err,xerr=energy_error,color='k',marker='_',ls='none',label='VERITAS (LPM)')
         PrintSpectralDataForNaima(energy_axis,real_flux,real_flux_total_err,'VERITAS')
 
         axbig.set_xlabel('Energy [GeV]')
@@ -1559,6 +1560,36 @@ if 'PSR_J1907_p0602' in source_name:
     column_density_axis_inner = CO_intensity_to_H_column_density*np.array(column_density_axis_inner)
     column_density_axis_outer = CO_intensity_to_H_column_density*np.array(column_density_axis_outer)
     column_density_axis_diff = column_density_axis_outer - column_density_axis_inner
+
+    vel_lower = 25.
+    vel_upper = 35.
+    avg_column_density_inner = 0.
+    avg_column_density_outer = 0.
+    n_channels = 0.
+    for idx in range(0,len(vel_axis_inner)):
+        if vel_axis_inner[idx]<vel_lower: continue
+        if vel_axis_inner[idx]>vel_upper: continue
+        n_channels += 1.
+        avg_column_density_inner += column_density_axis_inner[idx]
+        avg_column_density_outer += column_density_axis_outer[idx]
+    print ('vel_lower = %s, vel_upper = %s'%(vel_lower,vel_upper))
+    print ('avg_column_density_inner = %0.1e'%(avg_column_density_inner))
+    print ('avg_column_density_outer = %0.1e'%(avg_column_density_outer))
+
+    vel_lower = 50.
+    vel_upper = 60.
+    avg_column_density_inner = 0.
+    avg_column_density_outer = 0.
+    n_channels = 0.
+    for idx in range(0,len(vel_axis_inner)):
+        if vel_axis_inner[idx]<vel_lower: continue
+        if vel_axis_inner[idx]>vel_upper: continue
+        n_channels += 1.
+        avg_column_density_inner += column_density_axis_inner[idx]
+        avg_column_density_outer += column_density_axis_outer[idx]
+    print ('vel_lower = %s, vel_upper = %s'%(vel_lower,vel_upper))
+    print ('avg_column_density_inner = %0.1e'%(avg_column_density_inner))
+    print ('avg_column_density_outer = %0.1e'%(avg_column_density_outer))
 
     max_idx = np.argmax(column_density_axis_diff)
     print ('CO velocity of highest emission = %0.1f km/s'%(vel_axis_inner[max_idx]))

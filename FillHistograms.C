@@ -323,7 +323,7 @@ bool FoV_Mask(double evt_ra, double evt_dec, TString target_name) {
 
     double x = evt_ra-mean_tele_point_ra;
     double y = evt_dec-mean_tele_point_dec;
-    if ((pow(x*x+y*y,0.5))<0.3) return true;
+    if ((pow(x*x+y*y,0.5))<1.0) return true;
     if (CoincideWithGammaSources(evt_ra,evt_dec,0.25)) return true;
     if (target_name.Contains("SS433"))
     {
@@ -1320,18 +1320,6 @@ MatrixXcd MatrixPerturbationMethod(MatrixXcd mtx_t_input, MatrixXcd mtx_base_inp
                 int idx_u = idx_v + mtx_init_input.rows()*mtx_init_input.cols();
                 if (kth_entry>max_rank) continue;
                 if (nth_entry>max_rank) continue;
-                //if (kth_entry==nth_entry)
-                //{
-                //    mtx_W(idx_u,idx_u) = pow(10.,log_coeff_weight)*avg_weight;
-                //    mtx_A(idx_u,idx_v) = 1.;
-                //    vtr_Delta(idx_u) = 0.;
-                //}
-                //else
-                //{
-                //    mtx_W(idx_u,idx_u) = pow(10.,-1.5)*avg_weight;
-                //    mtx_A(idx_u,idx_v) = 1.;
-                //    vtr_Delta(idx_u) = mtx_t_input(idx_k,idx_n);
-                //}
                 if (abs(mtx_t_input(idx_k,idx_n))<1.)
                 {
                     mtx_W(idx_u,idx_u) = pow(10.,-2.0)*avg_weight;
@@ -1340,7 +1328,7 @@ MatrixXcd MatrixPerturbationMethod(MatrixXcd mtx_t_input, MatrixXcd mtx_base_inp
                 }
                 else
                 {
-                    mtx_W(idx_u,idx_u) = pow(10.,0.0)*avg_weight;
+                    mtx_W(idx_u,idx_u) = pow(10.,1.0)*avg_weight;
                     mtx_A(idx_u,idx_v) = 1.;
                     vtr_Delta(idx_u) = mtx_t_input(idx_k,idx_n);
                 }
@@ -1995,6 +1983,16 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         }
                         std::cout << "total_data_sr_count = " << total_data_sr_count << ", total_bkgd_sr_count = " << total_bkgd_sr_count << std::endl;
 
+                        int max_rank = matrix_rank[e];
+                        if (total_bkgd_sr_count<1000)
+                        {
+                            max_rank = 1;
+                        }
+                        if (total_bkgd_sr_count==0)
+                        {
+                            max_rank = 0;
+                        }
+
                         if (total_data_sr_count==0)
                         {
                             Hist_OnData_MSCLW_Fine.at(e).Reset();
@@ -2009,10 +2007,10 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                                 mtx_on_t(idx_i,idx_j) = 0.;
                             }
                         }
-                        mtx_on_t = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,matrix_rank[e],matrix_rank[e],false,false,1);
+                        mtx_on_t = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,max_rank,max_rank,false,false,1);
                         std::cout << "mtx_on_t (unblind):" << std::endl;
                         std::cout << mtx_on_t.block(0,0,4,4).real() << std::endl;
-                        mtx_on_bkgd = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,matrix_rank[e],matrix_rank[e],false,false,0);
+                        mtx_on_bkgd = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,max_rank,max_rank,false,false,0);
                         fill2DHistogram(&Hist_OnBkgd_MSCLW_Fine.at(e),mtx_on_bkgd);
                         total_data_sr_count = GetSRcounts(&Hist_OnData_MSCLW_Fine.at(e));
                         total_bkgd_sr_count = GetSRcounts(&Hist_OnBkgd_MSCLW_Fine.at(e));
@@ -2023,11 +2021,12 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         }
                         std::cout << "total_data_sr_count = " << total_data_sr_count << ", total_bkgd_sr_count = " << total_bkgd_sr_count << std::endl;
 
-                        if (matrix_rank[e]>=1)
+                        bool use_t_input = false;
+                        if (max_rank>=1)
                         {
-                            for (int rank=2;rank<=matrix_rank[e];rank++)
+                            for (int rank=2;rank<=max_rank;rank++)
                             {
-                                bool use_t_input = false;
+                                use_t_input = false;
                                 if (rank>2)
                                 {
                                     use_t_input = true;
@@ -2048,7 +2047,7 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                             }
                         }
 
-                        if (matrix_rank[e]==1)
+                        if (max_rank==1 || max_rank==0)
                         {
                             fill2DHistogram(&Hist_OnBkgd_MSCLW_Fine.at(e),mtx_off_data_cr_scaled);
                         }
@@ -2062,11 +2061,28 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         //std::cout << "CR_count_map = " << CR_count_map << std::endl;
                         //std::cout << "Hist_OnData_CR_Skymap_Init_Perturbation.at(e).Integral() = " << Hist_OnData_CR_Skymap_Init_Perturbation.at(e).Integral() << std::endl;
 
-                        if (matrix_rank[e]>=1)
+                        if (max_rank==1)
                         {
-                            for (int rank=2;rank<=matrix_rank[e];rank++)
+                            use_t_input = false;
+                            mtx_on_t = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,1,1,use_t_input,true,1);
+                            std::cout << "mtx_on_t (blind, diagonal):" << std::endl;
+                            std::cout << mtx_on_t.block(0,0,4,4).real() << std::endl;
+                            mtx_on_bkgd = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,1,1,use_t_input,true,0);
+                            fill2DHistogram(&Hist_OnBkgd_MSCLW_Fine.at(e),mtx_on_bkgd);
+                            total_data_sr_count = GetSRcounts(&Hist_OnData_MSCLW_Fine.at(e));
+                            total_bkgd_sr_count = GetSRcounts(&Hist_OnBkgd_MSCLW_Fine.at(e));
+                            if (isNaN(total_bkgd_sr_count) || total_bkgd_sr_count==0.)
                             {
-                                bool use_t_input = false;
+                                fill2DHistogram(&Hist_OnBkgd_MSCLW_Fine.at(e),mtx_off_data_cr_scaled);
+                                total_bkgd_sr_count = GetSRcounts(&Hist_OnBkgd_MSCLW_Fine.at(e));
+                            }
+                            std::cout << "total_data_sr_count = " << total_data_sr_count << ", total_bkgd_sr_count = " << total_bkgd_sr_count << std::endl;
+                        }
+                        if (max_rank>=2)
+                        {
+                            for (int rank=2;rank<=max_rank;rank++)
+                            {
+                                use_t_input = false;
                                 if (rank>2)
                                 {
                                     use_t_input = true;
@@ -2092,7 +2108,7 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                             }
                         }
 
-                        if (matrix_rank[e]==1)
+                        if (max_rank==0)
                         {
                             fill2DHistogram(&Hist_OnBkgd_MSCLW_Fine.at(e),mtx_off_data_cr_scaled);
                         }
@@ -2118,12 +2134,8 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         Hist_OnData_CR_Skymap_Regression_Sum.at(e).Add(&Hist_OnData_CR_Skymap_Regression.at(e));
                         Hist_OnData_CR_Skymap_Init_Perturbation_Sum.at(e).Add(&Hist_OnData_CR_Skymap_Init_Perturbation.at(e));
                         Hist_OnData_CR_Skymap_Perturbation_Sum.at(e).Add(&Hist_OnData_CR_Skymap_Perturbation.at(e));
-                        double ratio_method_weight = 1.;
-                        double regression_method_weight = 1.;
-                        double perturbation_method_weight = 1.;
-                        double total_method_weight = regression_method_weight+perturbation_method_weight;
-                        Hist_OnData_CR_Skymap_Combined_Sum.at(e).Add(&Hist_OnData_CR_Skymap_Regression.at(e),regression_method_weight/total_method_weight);
-                        Hist_OnData_CR_Skymap_Combined_Sum.at(e).Add(&Hist_OnData_CR_Skymap_Perturbation.at(e),perturbation_method_weight/total_method_weight);
+                        Hist_OnData_CR_Skymap_Combined_Sum.at(e).Add(&Hist_OnData_CR_Skymap_FoV.at(e),0.5);
+                        Hist_OnData_CR_Skymap_Combined_Sum.at(e).Add(&Hist_OnData_CR_Skymap_Perturbation.at(e),0.5);
                     }
 
                     off_unblinded_elements.clear();
