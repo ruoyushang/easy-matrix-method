@@ -29,6 +29,7 @@ pylab.rcParams.update(params)
 import CommonPlotFunctions
 
 folder_path = CommonPlotFunctions.folder_path
+folder_tag = CommonPlotFunctions.folder_tag
 energy_bin = CommonPlotFunctions.energy_bin
 n_xoff_bins = CommonPlotFunctions.n_xoff_bins
 n_yoff_bins = CommonPlotFunctions.n_yoff_bins
@@ -45,9 +46,10 @@ ROOT.TH1.AddDirectory(False) # without this, the histograms returned from a func
 ROOT.gStyle.SetPaintTextFormat("0.3f")
 np.set_printoptions(precision=4)
 
-measurement_rebin = 5
+measurement_rebin = 2
 
-elev_range = [30.,90.]
+#elev_range = [30.,90.]
+elev_range = [60.,90.]
 #elev_range = [45.,65.]
 
 total_data_expo = 0.
@@ -282,7 +284,7 @@ for energy_idx in range(0,len(energy_bin)-1):
                     print ('eff_area = %s'%(eff_area))
                     print ('data_truth = %s'%(data_truth))
                     print ('init_perturbation_bkgd = %s'%(init_perturbation_bkgd))
-                    if eff_area<10000.: continue
+                    #if eff_area<10000.: continue
                     if data_truth<10.: continue
                     total_data_truth += data_truth
                     total_ratio_bkgd += ratio_bkgd
@@ -344,7 +346,7 @@ for energy_idx in range(0,len(energy_bin)-1):
     axbig.scatter(array_cr_count[energy_idx],array_syst_err_combined[energy_idx],color='k',alpha=0.5)
     axbig.set_xlabel('Total CR count')
     axbig.set_ylabel('Combined method $\epsilon$')
-    fig.savefig("output_plots/CR_count_vs_Combined_Correlation_E%s.png"%(energy_idx))
+    fig.savefig("output_plots/CR_count_vs_Combined_Correlation_E%s_%s.png"%(energy_idx,folder_tag))
     axbig.remove()
 
     fig.clf()
@@ -368,7 +370,7 @@ for energy_idx in range(0,len(energy_bin)-1):
     axbig.errorbar(xaxis_elev+0.2*x_delta,yaxis_perturbation_mean,yaxis_perturbation_rms,color='r',marker='_',ls='none',linewidth=2)
     axbig.set_xlabel('Elevation [deg]')
     axbig.set_ylabel('Error $\epsilon$')
-    fig.savefig("output_plots/Elev_vs_Error_E%s.png"%(energy_idx))
+    fig.savefig("output_plots/Elev_vs_Error_E%s_%s.png"%(energy_idx,folder_tag))
     axbig.remove()
 
     fig.clf()
@@ -392,7 +394,7 @@ for energy_idx in range(0,len(energy_bin)-1):
     axbig.errorbar(xaxis_azim+0.2*x_delta,yaxis_perturbation_mean,yaxis_perturbation_rms,color='r',marker='_',ls='none',linewidth=2)
     axbig.set_xlabel('Azimuth [deg]')
     axbig.set_ylabel('Error $\epsilon$')
-    fig.savefig("output_plots/Azim_vs_Error_E%s.png"%(energy_idx))
+    fig.savefig("output_plots/Azim_vs_Error_E%s_%s.png"%(energy_idx,folder_tag))
     axbig.remove()
 
     fig.clf()
@@ -416,7 +418,7 @@ for energy_idx in range(0,len(energy_bin)-1):
     axbig.errorbar(xaxis_nsb+0.2*x_delta,yaxis_perturbation_mean,yaxis_perturbation_rms,color='r',marker='_',ls='none',linewidth=2)
     axbig.set_xlabel('NSB')
     axbig.set_ylabel('Error $\epsilon$')
-    fig.savefig("output_plots/NSB_vs_Error_E%s.png"%(energy_idx))
+    fig.savefig("output_plots/NSB_vs_Error_E%s_%s.png"%(energy_idx,folder_tag))
     axbig.remove()
 
 for energy_idx in range(0,len(energy_bin)-1):
@@ -427,24 +429,8 @@ for energy_idx in range(0,len(energy_bin)-1):
     axbig.scatter(array_rebin_syst_err_regression[energy_idx],array_rebin_syst_err_perturbation[energy_idx],color='b',alpha=0.5)
     axbig.set_xlabel('Regression method $\epsilon$')
     axbig.set_ylabel('Perturbation method $\epsilon$')
-    fig.savefig("output_plots/Regression_vs_Perturbation_Correlation_E%s.png"%(energy_idx))
+    fig.savefig("output_plots/Regression_vs_Perturbation_Correlation_E%s_%s.png"%(energy_idx,folder_tag))
     axbig.remove()
-
-#for energy_idx in range(0,len(energy_bin)-1):
-#    Hists = []
-#    legends = []
-#    Hists += [Hist_SystErrDist_Ratio[energy_idx]]
-#    legends += ['Simple Scaling']
-#    Hists += [Hist_SystErrDist_Combined[energy_idx]]
-#    legends += ['Combined']
-#
-#    fig.clf()
-#    fig.set_figheight(figsize_y)
-#    fig.set_figwidth(figsize_x)
-#    axbig = fig.add_subplot()
-#    MakeMultipleFitPlot(axbig,Hists,legends,'relative error $\epsilon$','number of entries')
-#    fig.savefig("output_plots/SystErrDist_E%s_Combined.png"%(energy_idx))
-#    axbig.remove()
 
 for energy_idx in range(0,len(energy_bin)-1):
     Hists = []
@@ -459,24 +445,8 @@ for energy_idx in range(0,len(energy_bin)-1):
     fig.set_figwidth(figsize_x)
     axbig = fig.add_subplot()
     MakeMultipleFitPlot(axbig,Hists,legends,'relative error $\epsilon$','number of entries')
-    fig.savefig("output_plots/SystErrDist_E%s_Perturbation.png"%(energy_idx))
+    fig.savefig("output_plots/SystErrDist_E%s_Perturbation_%s.png"%(energy_idx,folder_tag))
     axbig.remove()
-
-#for energy_idx in range(0,len(energy_bin)-1):
-#    Hists = []
-#    legends = []
-#    Hists += [Hist_SystErrDist_Ratio[energy_idx]]
-#    legends += ['Simple Scaling']
-#    Hists += [Hist_SystErrDist_Regression[energy_idx]]
-#    legends += ['Linear Regression']
-#
-#    fig.clf()
-#    fig.set_figheight(figsize_y)
-#    fig.set_figwidth(figsize_x)
-#    axbig = fig.add_subplot()
-#    MakeMultipleFitPlot(axbig,Hists,legends,'relative error $\epsilon$','number of entries')
-#    fig.savefig("output_plots/SystErrDist_E%s_Regression.png"%(energy_idx))
-#    axbig.remove()
 
 energy_dep_stat_err = []
 energy_dep_syst_err_ratio_mean = []

@@ -62,6 +62,7 @@ doBiasCorrect = False
 #if not doImposter:
 #    doBiasCorrect = False
 
+folder_path = CommonPlotFunctions.folder_path
 folder_tag = CommonPlotFunctions.folder_tag
 analysis_method = CommonPlotFunctions.analysis_method
 n_xoff_bins = CommonPlotFunctions.n_xoff_bins
@@ -199,7 +200,8 @@ def GetFluxCalibration(energy,elev):
     # v490
     str_flux_calibration = ['7.95e+00', '1.59e+00', '1.50e+00', '1.17e+00', '7.85e-01', '1.25e+00', '6.47e-01', '3.57e-01', '1.84e-01', '9.10e-02', '4.80e-02']
     # v487
-    #str_flux_calibration = ['1.90e-04', '1.53e-05', '1.22e-05', '1.09e-05', '9.74e-06', '1.25e-05', '1.12e-05', '1.06e-05', '9.63e-06', '9.38e-06', '9.63e-06']
+    if folder_path=='output_nuclear_v487':
+        str_flux_calibration = ['1.39e+01', '2.79e+00', '2.36e+00', '1.93e+00', '1.28e+00', '1.82e+00', '8.77e-01', '4.33e-01', '2.29e-01', '1.16e-01', '6.02e-02']
 
     flux_calibration = []
     for string in str_flux_calibration:
@@ -633,9 +635,9 @@ def MakeSpectrum(roi_x,roi_y,roi_r,roi_name,excl_roi_x,excl_roi_y,excl_roi_r):
         axbig = fig.add_subplot()
         axbig.errorbar(Jordan_energies,Jordan_fluxes,Jordan_flux_errs,color='gray',marker='s',ls='none',label='Fermi-LAT',zorder=1)
         axbig.bar(energy_axis, 2.*real_flux_syst_err, bottom=real_flux-real_flux_syst_err, width=2.*energy_error, color='r', align='center', alpha=0.2,zorder=2)
-        axbig.errorbar(energy_axis,real_flux,real_flux_total_err,xerr=energy_error,color='r',marker='_',ls='none',label='VERITAS (Matrix method)',zorder=3)
-        axbig.errorbar(Sara_energies,Sara_fluxes,Sara_flux_errs,color='gray',marker='s',ls='none',label='HAWC',zorder=5)
+        axbig.errorbar(energy_axis,real_flux,real_flux_total_err,xerr=energy_error,color='r',marker='_',ls='none',label='VERITAS (LPM)',zorder=3)
         axbig.errorbar(Tobias_energies,Tobias_fluxes,Tobias_flux_errs,color='blue',marker='s',ls='none',label='VERITAS (Gammapy-3D)',zorder=1)
+        axbig.errorbar(Sara_energies,Sara_fluxes,Sara_flux_errs,color='gray',marker='s',ls='none',label='HAWC',zorder=5)
         axbig.fill_between(xdata, ydata_wcda-0.24*ydata_wcda, ydata_wcda+0.08*ydata_wcda,color='gray', alpha=0.2, zorder=7)
         axbig.plot(xdata, ydata_wcda,color='gray',label='LHAASO (WCDA)', zorder=8)
         axbig.errorbar(LHAASO_energies,LHAASO_fluxes,LHAASO_flux_errs,color='gray',marker='s',ls='none',label='LHAASO (KM2A)',zorder=9)
@@ -1060,8 +1062,6 @@ def MakeExtensionProfile(roi_x,roi_y,roi_r,fit_profile,roi_name,real_map,imposte
     fig.savefig("output_plots/%s_%s_%s.png"%(plotname,erange_tag,plot_tag),bbox_inches='tight')
     axbig.remove()
 
-
-folder_path = CommonPlotFunctions.folder_path
 
 epoch_idx = 0
 SourceFilePath = "/gamma_raid/userspace/rshang/SMI_output/%s/Netflix_%s_%s_%s_G0_X0_Y0.root"%(folder_path,source_name,list_epoch[0],isON)
