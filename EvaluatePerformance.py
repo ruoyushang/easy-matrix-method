@@ -49,7 +49,7 @@ np.set_printoptions(precision=4)
 measurement_rebin = 2
 
 #elev_range = [30.,90.]
-elev_range = [60.,90.]
+elev_range = [55.,90.]
 #elev_range = [45.,65.]
 
 total_data_expo = 0.
@@ -250,37 +250,40 @@ for energy_idx in range(0,len(energy_bin)-1):
     array_rebin_syst_err_per_energy_perturbation = []
     array_rebin_syst_err_per_energy_combined = []
     for src in range(0,len(sample_list)):
-        for xoff_idx in range(0,n_xoff_bins):
-            for yoff_idx in range(0,n_yoff_bins):
-                n_groups = 0
-                file_exists = True
-                while file_exists:
-                    SourceFilePath = "/gamma_raid/userspace/rshang/SMI_output/%s/Netflix_%s_G%d_X%d_Y%d.root"%(folder_path,sample_list[src],n_groups,xoff_idx,yoff_idx)
-                    if os.path.exists(SourceFilePath):
-                        n_groups += 1
-                        #print ('Read file: %s'%(SourceFilePath))
-                        #print ('file exists.')
-                    else:
-                        file_exists = False
-                        print ('Read file: %s'%(SourceFilePath))
-                        print ('file does not exist.')
-                total_data_truth = 0.
-                total_ratio_bkgd = 0.
-                total_regression_bkgd = 0.
-                total_init_perturbation_bkgd = 0.
-                total_perturbation_bkgd = 0.
-                total_combined_bkgd = 0.
-                n_rebin = 0
-                for group in range(0,n_groups):
+        n_groups = 0
+        file_exists = True
+        xoff_idx = 0
+        yoff_idx = 0
+        while file_exists:
+            SourceFilePath = "/gamma_raid/userspace/rshang/SMI_output/%s/Netflix_%s_G%d_X%d_Y%d.root"%(folder_path,sample_list[src],n_groups,xoff_idx,yoff_idx)
+            if os.path.exists(SourceFilePath):
+                n_groups += 1
+                #print ('Read file: %s'%(SourceFilePath))
+                #print ('file exists.')
+            else:
+                file_exists = False
+                print ('Read file: %s'%(SourceFilePath))
+                print ('file does not exist.')
+        total_data_truth = 0.
+        total_ratio_bkgd = 0.
+        total_regression_bkgd = 0.
+        total_init_perturbation_bkgd = 0.
+        total_perturbation_bkgd = 0.
+        total_combined_bkgd = 0.
+        n_rebin = 0
+        for group in range(0,n_groups):
+            for xoff_idx in range(0,n_xoff_bins):
+                for yoff_idx in range(0,n_yoff_bins):
                     SourceFilePath = "/gamma_raid/userspace/rshang/SMI_output/%s/Netflix_%s_G%d_X%d_Y%d.root"%(folder_path,sample_list[src],group,xoff_idx,yoff_idx)
-                    #print ('Read file: %s'%(SourceFilePath))
+                    if not os.path.exists(SourceFilePath): continue
                     eff_area, data_truth, ratio_bkgd, regression_bkgd, init_perturbation_bkgd, perturbation_bkgd, combined_bkgd = GetGammaCounts(SourceFilePath,energy_idx)
                     data_expo, total_cr_count, elev_mean, azim_mean, nsb_mean = GetRunInfo(SourceFilePath)
                     print ('elev_mean = %s'%(elev_mean))
                     if elev_mean<elev_range[0] or elev_mean>elev_range[1]: continue
-                    expo_sum_all_energies += data_expo
-                    if energy_idx==1:
-                        total_data_expo += data_expo
+                    if xoff_idx==0 and yoff_idx==0:
+                        expo_sum_all_energies += data_expo
+                        if energy_idx==1:
+                            total_data_expo += data_expo
                     print ('eff_area = %s'%(eff_area))
                     print ('data_truth = %s'%(data_truth))
                     print ('init_perturbation_bkgd = %s'%(init_perturbation_bkgd))

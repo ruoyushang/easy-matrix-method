@@ -8,8 +8,8 @@ int cr_correction_xyoff_bins[N_energy_bins] = {1,12,12,6,6,3,3,1,1,1,1};
 
 double log_coeff_weight = -1.0;
 
-const int N_Xoff_bins = 1;
-const int N_Yoff_bins = 1;
+const int N_Xoff_bins = 2;
+const int N_Yoff_bins = 2;
 
 double source_theta_cut = 0.3;
 double Elev_cut_lower = 30.;
@@ -47,7 +47,7 @@ double max_EmissionHeight_cut = 20.;
 double min_EmissionHeight_cut = 6.;
 double max_Rcore = 400.;
 double min_Rcore = 0.;
-double max_Eerr = 1.0;
+double max_Eerr = 1.5;
 
 double Skymap_size_x = 2.5;
 double Skymap_size_y = 2.5;

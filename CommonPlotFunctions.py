@@ -37,9 +37,11 @@ from spectral_cube import SpectralCube
 
 #folder_path = 'output_j1908_paper'
 #folder_path = 'output_nuclear_v487'
-#folder_tag = '_v487'
+#folder_tag = ''
 folder_path = 'output_nuclear_test'
-folder_tag = '_v490'
+folder_tag = '_test'
+#folder_path = 'output_nuclear_3tel'
+#folder_tag = '_3tel'
 
 #folder_path = 'output_weight_log_m0p0'
 #folder_path = 'output_weight_log_m0p5'
@@ -59,8 +61,8 @@ energy_bin = [100.,200.,251.,316.,398.,501.,794.,1259.,1995.,3162.,5011.,7943.]
 smooth_size_spectroscopy = 0.07
 calibration_radius = 0.15 # need to be larger than the PSF and smaller than the integration radius
 #calibration_radius = 0.2 # need to be larger than the PSF and smaller than the integration radius
-n_xoff_bins = 1
-n_yoff_bins = 1
+n_xoff_bins = 2
+n_yoff_bins = 2
 
 def reflectXaxis(hist):
 

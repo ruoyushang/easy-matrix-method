@@ -67,6 +67,7 @@ double Xcore = 0.;
 double Ycore = 0.;
 double SizeSecondMax = 0;
 double MSCL = 0;
+double MVA = 0;
 double Time = 0;
 int MJD = 0;
 UInt_t MJD_UInt_t = 0;
@@ -495,6 +496,12 @@ bool PointingSelection(int int_run_number)
     string filename;
     filename = TString(SMI_INPUT+"/"+string(run_number)+".anasum.root");
 
+    if(gSystem->AccessPathName(filename.c_str()))
+    {
+        std::cout << "TFile does not exist: " << filename << std::endl;
+        return false;
+    }
+
     TelElevation = GetRunElevAzim(int_run_number).first;
     TelAzimuth = GetRunElevAzim(int_run_number).second;
     if (TelElevation<Elev_cut_lower) 
@@ -523,6 +530,7 @@ void SetEventDisplayDL3TreeBranch(TTree* Data_tree)
     Data_tree->SetBranchStatus("Energy_Err",1);
     Data_tree->SetBranchStatus("MSCW",1);
     Data_tree->SetBranchStatus("MSCL",1);
+    Data_tree->SetBranchStatus("MVA",1);
     Data_tree->SetBranchStatus("NImages",1);
     Data_tree->SetBranchStatus("XCore",1);
     Data_tree->SetBranchStatus("YCore",1);
@@ -537,6 +545,7 @@ void SetEventDisplayDL3TreeBranch(TTree* Data_tree)
     Data_tree->SetBranchAddress("Energy_Err",&EChi2S);
     Data_tree->SetBranchAddress("MSCW",&MSCW);
     Data_tree->SetBranchAddress("MSCL",&MSCL);
+    Data_tree->SetBranchAddress("MVA",&MVA);
     Data_tree->SetBranchAddress("NImages",&NImages);
     Data_tree->SetBranchAddress("XCore",&Xcore);
     Data_tree->SetBranchAddress("YCore",&Ycore);
@@ -786,6 +795,12 @@ void TrainingRunAnalysis(int int_run_number, int input_xoff_idx, int input_yoff_
     string filename;
     filename = TString(SMI_INPUT+"/"+string(run_number)+".anasum.root");
 
+    if(gSystem->AccessPathName(filename.c_str()))
+    {
+        std::cout << "TFile does not exist: " << filename << std::endl;
+        return;
+    }
+
     TFile*  input_file = TFile::Open(filename.c_str());
     TString root_file = "run_"+string(run_number)+"/stereo/DL3EventTree";
     TTree* Data_tree = (TTree*) input_file->Get(root_file);
@@ -831,6 +846,7 @@ void TrainingRunAnalysis(int int_run_number, int input_xoff_idx, int input_yoff_
         SizeSecondMax = 0;
         MSCW = 0;
         MSCL = 0;
+        MVA = 0;
         R2off = 0;
         Data_tree->GetEntry(entry);
         R2off = Xoff*Xoff+Yoff*Yoff;
@@ -849,6 +865,8 @@ void TrainingRunAnalysis(int int_run_number, int input_xoff_idx, int input_yoff_
         if (input_yoff_idx!=idx_yoff) continue;
 
         if (!FoV(ra_sky, dec_sky, false)) continue;
+
+        //MSCL = -1.*2.5*(MVA-0.25);
 
         Hist_OffData_MSCLW.at(energy_idx).Fill(MSCL,MSCW);
         Hist_OffData_MSCLW_Fine.at(energy_idx).Fill(MSCL,MSCW);
@@ -896,6 +914,12 @@ void SingleRunAnalysis(int int_run_number, int int_run_number_real, int input_xo
     sprintf(run_number, "%i", int_run_number);
     string filename;
     filename = TString(SMI_INPUT+"/"+string(run_number)+".anasum.root");
+    
+    if(gSystem->AccessPathName(filename.c_str()))
+    {
+        std::cout << "TFile does not exist: " << filename << std::endl;
+        return;
+    }
 
     TFile*  input_file = TFile::Open(filename.c_str());
     TString root_file = "run_"+string(run_number)+"/stereo/DL3EventTree";
@@ -966,6 +990,7 @@ void SingleRunAnalysis(int int_run_number, int int_run_number_real, int input_xo
         SizeSecondMax = 0;
         MSCW = 0;
         MSCL = 0;
+        MVA = 0.;
         R2off = 0;
         Data_tree->GetEntry(entry);
         R2off = Xoff*Xoff+Yoff*Yoff;
@@ -984,6 +1009,8 @@ void SingleRunAnalysis(int int_run_number, int int_run_number_real, int input_xo
         int idx_yoff = Hist_Yoff.FindBin(Yoff)-1;
         if (input_xoff_idx!=idx_xoff) continue;
         if (input_yoff_idx!=idx_yoff) continue;
+
+        //MSCL = -1.*2.5*(MVA-0.25);
 
         double map_right_edge = map_center_x+Skymap_size_x;
         double map_left_edge = map_center_x-Skymap_size_x;
@@ -1163,7 +1190,7 @@ VectorXcd SolutionWithConstraints(MatrixXcd mtx_big, MatrixXcd mtx_constraints_i
 }
 
 
-MatrixXcd MatrixPerturbationMethod(MatrixXcd mtx_t_input, MatrixXcd mtx_base_input, MatrixXcd mtx_init_input, MatrixXcd mtx_data_input, int max_rank, int diag_rank, bool use_mtx_t_input, bool isBlind, int return_type)
+MatrixXcd MatrixPerturbationMethod(MatrixXcd mtx_t_input, MatrixXcd mtx_base_input, MatrixXcd mtx_init_input, MatrixXcd mtx_data_input, int max_rank, int diag_rank, bool use_mtx_t_input, double log_t_input_weight, bool isBlind, int return_type)
 {
 
     MatrixXcd mtx_output = MatrixXcd::Zero(mtx_init_input.rows(),mtx_init_input.cols());
@@ -1332,7 +1359,7 @@ MatrixXcd MatrixPerturbationMethod(MatrixXcd mtx_t_input, MatrixXcd mtx_base_inp
                 }
                 else
                 {
-                    mtx_W(idx_u,idx_u) = pow(10.,1.0)*avg_weight;
+                    mtx_W(idx_u,idx_u) = pow(10.,log_t_input_weight)*avg_weight;
                     mtx_A(idx_u,idx_v) = 1.;
                     vtr_Delta(idx_u) = mtx_t_input(idx_k,idx_n);
                 }
@@ -2028,7 +2055,7 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         {
                             max_rank = 2;
                         }
-                        if (total_bkgd_sr_count<500)
+                        if (total_bkgd_sr_count<1000)
                         {
                             max_rank = 0;
                         }
@@ -2047,10 +2074,10 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                                 mtx_on_t(idx_i,idx_j) = 0.;
                             }
                         }
-                        mtx_on_t = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,max_rank,max_rank,false,false,1);
+                        mtx_on_t = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,max_rank,max_rank,false,1.0,false,1);
                         std::cout << "mtx_on_t (unblind):" << std::endl;
                         std::cout << mtx_on_t.block(0,0,4,4).real() << std::endl;
-                        mtx_on_bkgd = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,max_rank,max_rank,false,false,0);
+                        mtx_on_bkgd = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,max_rank,max_rank,false,1.0,false,0);
                         fill2DHistogram(&Hist_OnBkgd_MSCLW_Fine.at(e),mtx_on_bkgd);
                         total_data_sr_count = GetSRcounts(&Hist_OnData_MSCLW_Fine.at(e));
                         total_bkgd_sr_count = GetSRcounts(&Hist_OnBkgd_MSCLW_Fine.at(e));
@@ -2071,10 +2098,10 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                                 {
                                     use_t_input = true;
                                 }
-                                mtx_on_t = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,rank,0,use_t_input,true,1);
+                                mtx_on_t = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,rank,0,use_t_input,1.0,true,1);
                                 std::cout << "mtx_on_t (blind, off-diagonal):" << std::endl;
                                 std::cout << mtx_on_t.block(0,0,4,4).real() << std::endl;
-                                mtx_on_bkgd = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,rank,0,use_t_input,true,0);
+                                mtx_on_bkgd = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,rank,0,use_t_input,1.0,true,0);
                                 fill2DHistogram(&Hist_OnBkgd_MSCLW_Fine.at(e),mtx_on_bkgd);
                                 total_data_sr_count = GetSRcounts(&Hist_OnData_MSCLW_Fine.at(e));
                                 total_bkgd_sr_count = GetSRcounts(&Hist_OnBkgd_MSCLW_Fine.at(e));
@@ -2104,10 +2131,10 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         if (max_rank==1)
                         {
                             use_t_input = false;
-                            mtx_on_t = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,1,1,use_t_input,true,1);
+                            mtx_on_t = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,1,1,use_t_input,1.0,true,1);
                             std::cout << "mtx_on_t (blind, diagonal):" << std::endl;
                             std::cout << mtx_on_t.block(0,0,4,4).real() << std::endl;
-                            mtx_on_bkgd = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,1,1,use_t_input,true,0);
+                            mtx_on_bkgd = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,1,1,use_t_input,1.0,true,0);
                             fill2DHistogram(&Hist_OnBkgd_MSCLW_Fine.at(e),mtx_on_bkgd);
                             total_data_sr_count = GetSRcounts(&Hist_OnData_MSCLW_Fine.at(e));
                             total_bkgd_sr_count = GetSRcounts(&Hist_OnBkgd_MSCLW_Fine.at(e));
@@ -2127,15 +2154,15 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                                 {
                                     use_t_input = true;
                                 }
-                                mtx_on_t = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,rank,0,use_t_input,true,1);
+                                mtx_on_t = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,rank,0,use_t_input,1.0,true,1);
                                 std::cout << "mtx_on_t (blind, diagonal):" << std::endl;
                                 std::cout << mtx_on_t.block(0,0,4,4).real() << std::endl;
-                                mtx_on_bkgd = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,rank,0,use_t_input,true,0);
+                                mtx_on_bkgd = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,rank,0,use_t_input,1.0,true,0);
                                 use_t_input = true;
-                                mtx_on_t = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,rank,rank,use_t_input,true,1);
+                                mtx_on_t = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,rank,rank,use_t_input,1.0,true,1);
                                 std::cout << "mtx_on_t (blind, diagonal):" << std::endl;
                                 std::cout << mtx_on_t.block(0,0,4,4).real() << std::endl;
-                                mtx_on_bkgd = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,rank,rank,use_t_input,true,0);
+                                mtx_on_bkgd = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,rank,rank,use_t_input,1.0,true,0);
                                 fill2DHistogram(&Hist_OnBkgd_MSCLW_Fine.at(e),mtx_on_bkgd);
                                 total_data_sr_count = GetSRcounts(&Hist_OnData_MSCLW_Fine.at(e));
                                 total_bkgd_sr_count = GetSRcounts(&Hist_OnBkgd_MSCLW_Fine.at(e));

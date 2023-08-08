@@ -243,6 +243,27 @@ def PrintSpectralDataForNaima(energy_axis,src_flux,src_flux_err,data_name):
         print ('%.2f %.2f %.2f %.2e %.2e %s'%(energy_mean[eb],energy_edge_lo[eb],energy_edge_hi[eb],flux_mean[eb],flux_error[eb],0))
     print ('=======================================================')
 
+    qfile = open("output_plots/naima_%s.dat"%(data_name),"w") 
+    qfile.write("# %ECSV 0.9\n")
+    qfile.write("# ---\n")
+    qfile.write("# datatype:\n")
+    qfile.write("# - {name: energy, unit: TeV, datatype: float64}\n")
+    qfile.write("# - {name: energy_edge_lo, unit: TeV, datatype: float64}\n")
+    qfile.write("# - {name: energy_edge_hi, unit: TeV, datatype: float64}\n")
+    qfile.write("# - {name: flux, unit: 1 / (cm2 s TeV), datatype: float64}\n")
+    qfile.write("# - {name: flux_error, unit: 1 / (cm2 s TeV), datatype: float64}\n")
+    qfile.write("# - {name: ul, unit: '', datatype: int64}\n")
+    qfile.write("# meta: !!omap\n")
+    qfile.write("# - comments: [VHE gamma-ray spectrum of RX J1713.7-3946, 'Originally published in 2007\n")
+    qfile.write("#       from 2003, 2004, and 2005 observations. The', spectrum here is as published\n")
+    qfile.write("#       in the 2011 erratum, 'Main paper: Aharonian et al. 2007, A&A 464, 235', 'Erratum:\n")
+    qfile.write("#       Aharonian et al. 2011, A&A 531, 1', Confidence level of upper limits is 2 sigma]\n")
+    qfile.write("# - keywords: !!omap\n")
+    qfile.write("#   - cl: {value: 0.95}\n")
+    for eb in range(0,len(energy_axis)):
+        qfile.write('%.2f %.2f %.2f %.2e %.2e %s\n'%(energy_mean[eb],energy_edge_lo[eb],energy_edge_hi[eb],flux_mean[eb],flux_error[eb],0))
+    qfile.close() 
+
 def GetHawcDiffusionFluxJ1908():
 
     energies = [1.19,1.82,3.12,5.52,9.96,18.65,34.17,59.71,103.07,176.38]
@@ -444,6 +465,41 @@ def GetLHAASOFluxJ1908():
         flux_errs[entry] = 0.5*(flux_errs_up[entry]-flux_errs_low[entry])*erg_to_TeV/(energies[entry]*energies[entry]/1e6)*pow(energies[entry]/1e3,2)
 
     return energies, fluxes, flux_errs
+
+def MakeSensitivityCurve(roi_x,roi_y,roi_r,roi_name,excl_roi_x,excl_roi_y,excl_roi_r):
+
+    imposter_flux_list = []
+    imposter_flux_err_list = []
+    for imposter in range(0,n_imposters):
+        energy_axis, energy_error, imposter_flux, imposter_flux_err = CommonPlotFunctions.GetRegionSpectrum(hist_imposter_flux_skymap[imposter],energy_bin_cut_low,energy_bin_cut_up,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
+        imposter_flux_list += [imposter_flux]
+        imposter_flux_err_list += [imposter_flux_err]
+    energy_axis, energy_error, real_flux, real_flux_stat_err = CommonPlotFunctions.GetRegionSpectrum(hist_real_flux_skymap,energy_bin_cut_low,energy_bin_cut_up,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
+
+    real_flux_syst_err = []
+    for ebin in range(0,len(energy_axis)):
+        syst_err = 0.
+        for imposter in range(0,n_imposters):
+            syst_err += pow(imposter_flux_list[imposter][ebin],2)
+        if n_imposters>0:
+            syst_err = pow(syst_err/float(n_imposters),0.5)
+        real_flux_syst_err += [syst_err]
+
+    real_flux_syst_err = np.array(real_flux_syst_err)
+
+    axbig = fig.add_subplot()
+    vts_energies, vts_ul = GetVeritasSensitivity()
+    axbig.plot(vts_energies,vts_ul,color='orange',label='50-h VERITAS sensitivity')
+    axbig.plot(energy_axis, 2.*real_flux_syst_err, color='blue',label='Analysis sensitivity')
+    axbig.set_xlabel('Energy [GeV]')
+    axbig.set_ylabel('$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}$]')
+    axbig.set_xscale('log')
+    axbig.set_yscale('log')
+    axbig.legend(loc='best')
+    plotname = 'SensitivityCurve_%s_r%s'%(roi_name,roi_r)
+    fig.savefig("output_plots/%s_%s.png"%(plotname,plot_tag),bbox_inches='tight')
+    axbig.remove()
+
 
 def MakeSpectrum(roi_x,roi_y,roi_r,roi_name,excl_roi_x,excl_roi_y,excl_roi_r):
 
@@ -1095,14 +1151,15 @@ excl_region_y = [MapCenter_y]
 excl_region_r = [0.0]
 region_x = [MapCenter_x]
 region_y = [MapCenter_y]
-region_r = [0.2]
+#region_r = [0.2]
+region_r = [1.5]
 region_name = 'Center'
 do_fit = 0
 if 'Crab' in source_name:
     region_x = [MapCenter_x]
     region_y = [MapCenter_y]
     region_r = [CommonPlotFunctions.calibration_radius]
-    #region_r = [1.0]
+    #region_r = [1.5]
     region_name = 'Center'
 elif 'Geminga' in source_name:
     region_x = [MapCenter_x]
@@ -1147,12 +1204,10 @@ elif 'SS433' in source_name:
     #region_name = 'SS433w1'
 
 elif 'PSR_J1856_p0245' in source_name:
-
     region_x = [284.2958333]
     region_y = [2.6666667]
     region_r = [1.0]
     region_name = 'HESS'
-
 elif 'PSR_J2021_p4026' in source_name:
     region_x = [305.0200000]
     region_y = [40.7572222]
@@ -1163,6 +1218,11 @@ elif '2HWC_J1953_p294' in source_name:
     region_x = [299.44]
     region_y = [30.88]
     region_r = [1.0]
+    region_name = 'Center'
+elif 'SNR_G189_p03' in source_name:
+    region_x = [94.213]
+    region_y = [22.503]
+    region_r = [0.5]
     region_name = 'Center'
 
 
@@ -1475,6 +1535,7 @@ MakeExtensionProfile(region_x[0],region_y[0],region_r[0],do_fit,region_name,hist
 MakeExtensionProfile(region_x[0],region_y[0],region_r[0],do_fit,region_name,hist_real_flux_skymap_he,hist_imposter_flux_skymap_he,'he')
 MakeExtensionProfile(region_x[0],region_y[0],region_r[0],do_fit,region_name,hist_real_flux_skymap_sum,hist_imposter_flux_skymap_sum,'sum')
 MakeSpectrum(region_x,region_y,region_r,region_name,excl_region_x,excl_region_y,excl_region_r)
+MakeSensitivityCurve(region_x,region_y,region_r,region_name,excl_region_x,excl_region_y,excl_region_r)
 
 hist_real_flux_skymap_sum = CommonPlotFunctions.Smooth2DMap(hist_real_flux_skymap_sum,smooth_size_spectroscopy,False)
 hist_real_flux_skymap_reflect = CommonPlotFunctions.reflectXaxis(hist_real_flux_skymap_sum)
