@@ -62,6 +62,7 @@ doBiasCorrect = False
 #if not doImposter:
 #    doBiasCorrect = False
 
+input_path= CommonPlotFunctions.input_path
 folder_path = CommonPlotFunctions.folder_path
 folder_tag = CommonPlotFunctions.folder_tag
 analysis_method = CommonPlotFunctions.analysis_method
@@ -86,14 +87,14 @@ if 'V6' in input_epoch:
 
 total_data_expo = 0.
 
-MSCW_lower_blind = -0.7
-MSCL_lower_blind = -0.7
-MSCW_upper_blind = 0.6
-MSCL_upper_blind = 0.6
-n_extra_lower_bins = 0
-n_extra_upper_bins = 6
-mtx_dim_w_fine = 6
-mtx_dim_l_fine = 6
+MSCW_lower_blind = CommonPlotFunctions.MSCW_lower_blind
+MSCL_lower_blind = CommonPlotFunctions.MSCL_lower_blind
+MSCW_upper_blind = CommonPlotFunctions.MSCW_upper_blind
+MSCL_upper_blind = CommonPlotFunctions.MSCL_upper_blind
+n_extra_lower_bins = CommonPlotFunctions.n_extra_lower_bins
+n_extra_upper_bins = CommonPlotFunctions.n_extra_upper_bins
+mtx_dim_w_fine = CommonPlotFunctions.mtx_dim_w_fine
+mtx_dim_l_fine = CommonPlotFunctions.mtx_dim_l_fine
 MSCW_bin_size = (MSCW_upper_blind-MSCW_lower_blind)/(mtx_dim_w_fine)
 MSCL_bin_size = (MSCL_upper_blind-MSCL_lower_blind)/(mtx_dim_l_fine)
 MSCW_plot_upper_fine = MSCW_upper_blind+n_extra_upper_bins*MSCW_bin_size
@@ -1120,12 +1121,12 @@ def MakeExtensionProfile(roi_x,roi_y,roi_r,fit_profile,roi_name,real_map,imposte
 
 
 epoch_idx = 0
-SourceFilePath = "/gamma_raid/userspace/rshang/SMI_output/%s/Netflix_%s_%s_%s_G0_X0_Y0.root"%(folder_path,source_name,list_epoch[0],isON)
+SourceFilePath = "%s/%s/Netflix_%s_%s_%s_G0_X0_Y0.root"%(input_path,folder_path,source_name,list_epoch[0],isON)
 if os.path.exists(SourceFilePath):
     epoch_idx = 0
 else:
     epoch_idx = 1
-InputFile = ROOT.TFile("/gamma_raid/userspace/rshang/SMI_output/%s/Netflix_%s_%s_%s_G0_X0_Y0.root"%(folder_path,source_name,list_epoch[epoch_idx],isON))
+InputFile = ROOT.TFile("%s/%s/Netflix_%s_%s_%s_G0_X0_Y0.root"%(input_path,folder_path,source_name,list_epoch[epoch_idx],isON))
 HistName = "Hist_OnData_SR_Skymap_Sum_ErecS100to200"
 
 nbins_x = InputFile.Get(HistName).GetNbinsX()
@@ -1248,8 +1249,11 @@ hist_real_diff_skymap_le = ROOT.TH2D("hist_real_diff_skymap_le","",nbins_x,MapEd
 hist_real_diff_skymap_he = ROOT.TH2D("hist_real_diff_skymap_he","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
 hist_real_data_msclw_sum = ROOT.TH2D("hist_real_data_msclw_sum","",mtx_dim_l_fine+n_extra_lower_bins+n_extra_upper_bins,MSCL_plot_lower_fine,MSCL_plot_upper_fine,mtx_dim_w_fine+n_extra_lower_bins+n_extra_upper_bins,MSCW_plot_lower_fine,MSCW_plot_upper_fine)
 hist_real_bkgd_msclw_sum = ROOT.TH2D("hist_real_bkgd_msclw_sum","",mtx_dim_l_fine+n_extra_lower_bins+n_extra_upper_bins,MSCL_plot_lower_fine,MSCL_plot_upper_fine,mtx_dim_w_fine+n_extra_lower_bins+n_extra_upper_bins,MSCW_plot_lower_fine,MSCW_plot_upper_fine)
+hist_real_init_msclw_sum = ROOT.TH2D("hist_real_init_msclw_sum","",mtx_dim_l_fine+n_extra_lower_bins+n_extra_upper_bins,MSCL_plot_lower_fine,MSCL_plot_upper_fine,mtx_dim_w_fine+n_extra_lower_bins+n_extra_upper_bins,MSCW_plot_lower_fine,MSCW_plot_upper_fine)
 hist_real_diff_msclw_sum = ROOT.TH2D("hist_real_diff_msclw_sum","",mtx_dim_l_fine+n_extra_lower_bins+n_extra_upper_bins,MSCL_plot_lower_fine,MSCL_plot_upper_fine,mtx_dim_w_fine+n_extra_lower_bins+n_extra_upper_bins,MSCW_plot_lower_fine,MSCW_plot_upper_fine)
+hist_init_diff_msclw_sum = ROOT.TH2D("hist_init_diff_msclw_sum","",mtx_dim_l_fine+n_extra_lower_bins+n_extra_upper_bins,MSCL_plot_lower_fine,MSCL_plot_upper_fine,mtx_dim_w_fine+n_extra_lower_bins+n_extra_upper_bins,MSCW_plot_lower_fine,MSCW_plot_upper_fine)
 hist_real_sign_msclw_sum = ROOT.TH2D("hist_real_sign_msclw_sum","",mtx_dim_l_fine+n_extra_lower_bins+n_extra_upper_bins,MSCL_plot_lower_fine,MSCL_plot_upper_fine,mtx_dim_w_fine+n_extra_lower_bins+n_extra_upper_bins,MSCW_plot_lower_fine,MSCW_plot_upper_fine)
+hist_init_sign_msclw_sum = ROOT.TH2D("hist_init_sign_msclw_sum","",mtx_dim_l_fine+n_extra_lower_bins+n_extra_upper_bins,MSCL_plot_lower_fine,MSCL_plot_upper_fine,mtx_dim_w_fine+n_extra_lower_bins+n_extra_upper_bins,MSCW_plot_lower_fine,MSCW_plot_upper_fine)
 hist_real_significance_skymap_sum = ROOT.TH2D("hist_real_significance_skymap_sum","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
 hist_real_significance_skymap_le = ROOT.TH2D("hist_real_significance_skymap_le","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
 hist_real_significance_skymap_he = ROOT.TH2D("hist_real_significance_skymap_he","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
@@ -1260,6 +1264,7 @@ hist_real_bkgd_skymap = []
 hist_real_diff_skymap = []
 hist_real_data_msclw = []
 hist_real_bkgd_msclw = []
+hist_real_init_msclw = []
 for ebin in range(0,len(energy_bin)-1):
     hist_real_expo_skymap += [ROOT.TH2D("hist_real_expo_skymap_E%s"%(ebin),"",20,MapEdge_left,MapEdge_right,20,MapEdge_lower,MapEdge_upper)]
     hist_real_flux_skymap += [ROOT.TH2D("hist_real_flux_skymap_E%s"%(ebin),"",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)]
@@ -1268,6 +1273,7 @@ for ebin in range(0,len(energy_bin)-1):
     hist_real_diff_skymap += [ROOT.TH2D("hist_real_diff_skymap_E%s"%(ebin),"",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)]
     hist_real_data_msclw += [ROOT.TH2D("hist_real_data_msclw_E%s"%(ebin),"",mtx_dim_l_fine+n_extra_lower_bins+n_extra_upper_bins,MSCL_plot_lower_fine,MSCL_plot_upper_fine,mtx_dim_w_fine+n_extra_lower_bins+n_extra_upper_bins,MSCW_plot_lower_fine,MSCW_plot_upper_fine)]
     hist_real_bkgd_msclw += [ROOT.TH2D("hist_real_bkgd_msclw_E%s"%(ebin),"",mtx_dim_l_fine+n_extra_lower_bins+n_extra_upper_bins,MSCL_plot_lower_fine,MSCL_plot_upper_fine,mtx_dim_w_fine+n_extra_lower_bins+n_extra_upper_bins,MSCW_plot_lower_fine,MSCW_plot_upper_fine)]
+    hist_real_init_msclw += [ROOT.TH2D("hist_real_init_msclw_E%s"%(ebin),"",mtx_dim_l_fine+n_extra_lower_bins+n_extra_upper_bins,MSCL_plot_lower_fine,MSCL_plot_upper_fine,mtx_dim_w_fine+n_extra_lower_bins+n_extra_upper_bins,MSCW_plot_lower_fine,MSCW_plot_upper_fine)]
 
 hist_imposter_data_skymap_sum = []
 hist_imposter_bkgd_skymap_sum = []
@@ -1312,7 +1318,7 @@ for xoff_idx in range(0,n_xoff_bins):
             n_groups = 0
             file_exists = True
             while file_exists:
-                SourceFilePath = "/gamma_raid/userspace/rshang/SMI_output/%s/Netflix_%s_%s_%s_G%d_X%d_Y%d.root"%(folder_path,source_name,epoch,isON,n_groups,xoff_idx,yoff_idx)
+                SourceFilePath = "%s/%s/Netflix_%s_%s_%s_G%d_X%d_Y%d.root"%(input_path,folder_path,source_name,epoch,isON,n_groups,xoff_idx,yoff_idx)
                 print ('Read file: %s'%(SourceFilePath))
                 if os.path.exists(SourceFilePath):
                     n_groups += 1
@@ -1323,7 +1329,7 @@ for xoff_idx in range(0,n_xoff_bins):
             
             for group in range(0,n_groups):
                 n_samples += 1.
-                InputFile = ROOT.TFile("/gamma_raid/userspace/rshang/SMI_output/%s/Netflix_%s_%s_%s_G%d_X%d_Y%d.root"%(folder_path,source_name,epoch,isON,group,xoff_idx,yoff_idx))
+                InputFile = ROOT.TFile("%s/%s/Netflix_%s_%s_%s_G%d_X%d_Y%d.root"%(input_path,folder_path,source_name,epoch,isON,group,xoff_idx,yoff_idx))
                 InfoTree = InputFile.Get("InfoTree")
                 InfoTree.SetBranchAddress('effective_area',ROOT.AddressOf(effective_area))
                 InfoTree.GetEntry(0)
@@ -1351,6 +1357,8 @@ for xoff_idx in range(0,n_xoff_bins):
                     hist_real_data_msclw[ebin].Add(InputFile.Get(HistName))
                     HistName = "Hist_OnBkgd_MSCLW_Fine_Sum_ErecS%sto%s"%(int(energy_bin[ebin]),int(energy_bin[ebin+1]))
                     hist_real_bkgd_msclw[ebin].Add(InputFile.Get(HistName))
+                    HistName = "Hist_OnInit_MSCLW_Fine_Sum_ErecS%sto%s"%(int(energy_bin[ebin]),int(energy_bin[ebin+1]))
+                    hist_real_init_msclw[ebin].Add(InputFile.Get(HistName))
                 InputFile.Close()
 
 hist_elev_skymap.Scale(1./n_samples)
@@ -1366,7 +1374,7 @@ if doImposter:
                     n_groups = 0
                     file_exists = True
                     while file_exists:
-                        SourceFilePath = "/gamma_raid/userspace/rshang/SMI_output/%s/Netflix_%s_%s_Imposter%s_G%d_X%d_Y%d.root"%(folder_path,source_name,epoch,imposter+1,n_groups,xoff_idx,yoff_idx)
+                        SourceFilePath = "%s/%s/Netflix_%s_%s_Imposter%s_G%d_X%d_Y%d.root"%(input_path,folder_path,source_name,epoch,imposter+1,n_groups,xoff_idx,yoff_idx)
                         print ('Read file: %s'%(SourceFilePath))
                         if os.path.exists(SourceFilePath):
                             n_groups += 1
@@ -1377,7 +1385,7 @@ if doImposter:
                     
                     for group in range(0,n_groups):
                         n_imposter_samples += 1.
-                        InputFile = ROOT.TFile("/gamma_raid/userspace/rshang/SMI_output/%s/Netflix_%s_%s_Imposter%s_G%d_X%d_Y%d.root"%(folder_path,source_name,epoch,imposter+1,group,xoff_idx,yoff_idx))
+                        InputFile = ROOT.TFile("%s/%s/Netflix_%s_%s_Imposter%s_G%d_X%d_Y%d.root"%(input_path,folder_path,source_name,epoch,imposter+1,group,xoff_idx,yoff_idx))
                         InfoTree = InputFile.Get("InfoTree")
                         InfoTree.SetBranchAddress('effective_area',ROOT.AddressOf(effective_area))
                         InfoTree.GetEntry(0)
@@ -1433,10 +1441,13 @@ for ebin in range(energy_bin_cut_low,energy_bin_cut_up):
     hist_real_diff_skymap_sum.Add(hist_real_diff_skymap[ebin])
     hist_real_data_msclw_sum.Add(hist_real_data_msclw[ebin])
     hist_real_bkgd_msclw_sum.Add(hist_real_bkgd_msclw[ebin])
+    hist_real_init_msclw_sum.Add(hist_real_init_msclw[ebin])
     print('hist_real_data_msclw[ebin].Integral() = %s'%(hist_real_data_msclw[ebin].Integral()))
     print('hist_real_bkgd_msclw[ebin].Integral() = %s'%(hist_real_bkgd_msclw[ebin].Integral()))
     hist_real_diff_msclw_sum.Add(hist_real_data_msclw[ebin])
     hist_real_diff_msclw_sum.Add(hist_real_bkgd_msclw[ebin],-1.)
+    hist_init_diff_msclw_sum.Add(hist_real_data_msclw[ebin])
+    hist_init_diff_msclw_sum.Add(hist_real_init_msclw[ebin],-1.)
     if ebin<energy_bin_break:
         hist_real_diff_skymap_le.Add(hist_real_diff_skymap[ebin])
         hist_real_data_skymap_le.Add(hist_real_data_skymap[ebin])
@@ -1530,6 +1541,13 @@ for lbin in range(0,hist_real_diff_msclw_sum.GetNbinsX()):
         hist_real_sign_msclw_sum.SetBinContent(lbin+1,wbin+1,significance)
 CommonPlotFunctions.MatplotlibHist2D(hist_real_sign_msclw_sum,fig,'scaled length','scaled width','Significance','MatrixSign_Sum_%s'%(plot_tag),zmax=5,zmin=-5)
 CommonPlotFunctions.MatplotlibHist2D(hist_real_diff_msclw_sum,fig,'scaled length','scaled width','Residual','MatrixDiff_Sum_%s'%(plot_tag))
+for lbin in range(0,hist_init_diff_msclw_sum.GetNbinsX()):
+    for wbin in range(0,hist_init_diff_msclw_sum.GetNbinsY()):
+        bkg_error = pow(abs(hist_real_init_msclw_sum.GetBinContent(lbin+1,wbin+1)),0.5)
+        significance = hist_init_diff_msclw_sum.GetBinContent(lbin+1,wbin+1)/max(1.,bkg_error)
+        hist_init_sign_msclw_sum.SetBinContent(lbin+1,wbin+1,significance)
+CommonPlotFunctions.MatplotlibHist2D(hist_init_sign_msclw_sum,fig,'scaled length','scaled width','Significance','MatrixInitSign_Sum_%s'%(plot_tag),zmax=5,zmin=-5)
+CommonPlotFunctions.MatplotlibHist2D(hist_init_diff_msclw_sum,fig,'scaled length','scaled width','Residual','MatrixInitDiff_Sum_%s'%(plot_tag))
 
 MakeExtensionProfile(region_x[0],region_y[0],region_r[0],do_fit,region_name,hist_real_flux_skymap_le,hist_imposter_flux_skymap_le,'le')
 MakeExtensionProfile(region_x[0],region_y[0],region_r[0],do_fit,region_name,hist_real_flux_skymap_he,hist_imposter_flux_skymap_he,'he')

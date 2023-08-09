@@ -35,6 +35,8 @@ from spectral_cube import SpectralCube
 
 # Great examples of matplotlib plots: https://atmamani.github.io/cheatsheets/matplotlib/matplotlib_2/
 
+input_path = '/gamma_raid/userspace/rshang/SMI_output'
+
 #folder_path = 'output_j1908_paper'
 #folder_path = 'output_nuclear_v487'
 #folder_tag = ''
@@ -63,6 +65,15 @@ calibration_radius = 0.15 # need to be larger than the PSF and smaller than the 
 #calibration_radius = 0.2 # need to be larger than the PSF and smaller than the integration radius
 n_xoff_bins = 2
 n_yoff_bins = 2
+
+MSCW_lower_blind = -0.7
+MSCL_lower_blind = -0.7
+MSCW_upper_blind = 0.6
+MSCL_upper_blind = 0.6
+n_extra_lower_bins = 1
+n_extra_upper_bins = 6
+mtx_dim_w_fine = 6
+mtx_dim_l_fine = 6
 
 def reflectXaxis(hist):
 
