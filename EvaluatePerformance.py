@@ -46,7 +46,7 @@ ROOT.TH1.AddDirectory(False) # without this, the histograms returned from a func
 ROOT.gStyle.SetPaintTextFormat("0.3f")
 np.set_printoptions(precision=4)
 
-measurement_rebin = 2
+measurement_rebin = 10
 
 #elev_range = [30.,90.]
 elev_range = [55.,90.]

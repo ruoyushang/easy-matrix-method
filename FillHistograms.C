@@ -1265,7 +1265,7 @@ MatrixXcd MatrixPerturbationMethod(MatrixXcd mtx_t_input, MatrixXcd mtx_base_inp
             double sigma_data = max(1.,pow(mtx_init_input(idx_i,idx_j).real(),0.5));
             double stat_weight = 1./pow(sigma_data*sigma_data,0.5);
             double weight = 1.;
-            if (use_stat_err_weight) 
+            if (use_stat_err_weight && max_rank>=3) 
             {
                 weight = stat_weight;
             }
@@ -1772,7 +1772,8 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                 }
                 OffData_runlist_init = RemoveNonExistingRuns(OffData_runlist_init);
 
-                if (OffData_runlist_init.size()<nbins_unblind)
+                //if (OffData_runlist_init.size()<nbins_unblind)
+                if (OffData_runlist_init.size()<1)
                 {
                     std::cout << "Insufficient training data..." << std::endl;
                     analyze_this_run = false;
@@ -1916,6 +1917,7 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                     vector<VectorXcd> convert_unblind_to_blind_regression;
                     for (int e=0;e<N_energy_bins;e++) 
                     {
+                        if (nbins_unblind>n_training_samples) continue;
                         VectorXcd vtr_B = VectorXcd::Zero(n_training_samples);
                         MatrixXcd mtx_W = MatrixXcd::Zero(n_training_samples,n_training_samples);
                         MatrixXcd mtx_A = MatrixXcd::Zero(n_training_samples,nbins_unblind);
@@ -1995,11 +1997,11 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         double total_off_sr_count = GetSRcounts(&Hist_OffData_MSCLW_Fine_Sum.at(e));
                         double least_square_scale = GetLeastSquareScale(&Hist_OnData_MSCLW_Fine.at(e), &Hist_OffData_MSCLW_Fine_Sum.at(e));
                         TH2D Hist_OffData_MSCLW_CR_scaled = TH2D("Hist_OffData_MSCLW_CR_scaled","",mtx_dim_l_fine+n_extra_lower_bins+n_extra_upper_bins,MSCL_plot_lower,MSCL_plot_upper,mtx_dim_w_fine+n_extra_lower_bins+n_extra_upper_bins,MSCW_plot_lower,MSCW_plot_upper);
-                        //if (total_off_cr_count>0.)
-                        //{
-                        //    Hist_OffData_MSCLW_CR_scaled.Add(&Hist_OffData_MSCLW_Fine_Sum.at(e),total_on_cr_count/total_off_cr_count);
-                        //}
-                        Hist_OffData_MSCLW_CR_scaled.Add(&Hist_OffData_MSCLW_Fine_Sum.at(e),least_square_scale);
+                        if (total_off_cr_count>0.)
+                        {
+                            Hist_OffData_MSCLW_CR_scaled.Add(&Hist_OffData_MSCLW_Fine_Sum.at(e),total_on_cr_count/total_off_cr_count);
+                        }
+                        //Hist_OffData_MSCLW_CR_scaled.Add(&Hist_OffData_MSCLW_Fine_Sum.at(e),least_square_scale);
 
                         //CR_count_map = Hist_OnData_CR_Skymap_Ratio.at(e).Integral();
                         double SR_predict_ratio = Hist_OffData_MSCLW_CR_scaled.Integral(binx_blind_lower_global+1,binx_blind_upper_global,biny_blind_lower_global+1,biny_blind_upper_global);

@@ -905,8 +905,8 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
 
     require_nmatch = 5
     if not is_imposter:
-        require_nmatch = 3
-        #require_nmatch = 16
+        require_nmatch = 1
+        #require_nmatch = 3
 
     # setup database connection
     dbcnx=pymysql.connect(host='romulus.ucsc.edu', db='VERITAS', user='readonly', cursorclass=pymysql.cursors.DictCursor)
@@ -968,10 +968,9 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
 
             #if abs(all_runs_info[run][0]-list_on_run_ids[on_run])>40000: continue
             already_used = False
-            if is_imposter:
-                for off_run in range(0,len(list_off_run_ids)):
-                    if all_runs_info[run][0]==list_off_run_ids[off_run][1]: already_used = True
-                if already_used: continue
+            for off_run in range(0,len(list_off_run_ids)):
+                if all_runs_info[run][0]==list_off_run_ids[off_run][1]: already_used = True
+            if already_used: continue
 
             if all_runs_info[run][0]<46642: continue
             if all_runs_info[run][0]<46642:
@@ -1016,6 +1015,18 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
                 if abs(delta_elev)>5.: continue
                 if abs(delta_azim)>10.: continue
                 if abs(all_runs_info[run][0]-list_on_run_ids[on_run])>20000: continue
+
+            nsb_file = open('/gamma_raid/userspace/rshang/SMI_AUX/NSB_allruns.txt')
+            on_run_nsb = 0.
+            off_run_nsb = 0.
+            for line in nsb_file:
+                this_run = line.strip('\n').split(' ')[0]
+                this_nsb = line.strip('\n').split(' ')[1]
+                if all_runs_info[run][0]==int(this_run):
+                    off_run_nsb = float(this_nsb)
+                if list_on_run_ids[on_run]==int(this_run):
+                    on_run_nsb = float(this_nsb)
+            if abs(on_run_nsb-off_run_nsb)>2.: continue
 
             list_off_run_ids += [[int(list_on_run_ids[on_run]),int(all_runs_info[run][0]),on_run_el,off_run_el]]
             number_off_runs += 1
