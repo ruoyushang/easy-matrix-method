@@ -39,7 +39,7 @@ input_path = '/gamma_raid/userspace/rshang/SMI_output'
 
 #folder_path = 'output_j1908_paper'
 #folder_path = 'output_nuclear_v487'
-#folder_tag = ''
+#folder_tag = 'paper'
 folder_path = 'output_nuclear_test'
 folder_tag = '_test'
 #folder_path = 'output_nuclear_3tel'
@@ -55,8 +55,8 @@ folder_tag = '_test'
 #analysis_method = 'Ratio'
 #analysis_method = 'Regression'
 #analysis_method = 'Init_Perturbation'
-analysis_method = 'Perturbation'
-#analysis_method = 'Combined'
+#analysis_method = 'Perturbation'
+analysis_method = 'Combined'
 
 energy_bin = [100.,200.,251.,316.,398.,501.,794.,1259.,1995.,3162.,5011.,7943.]
 
@@ -64,7 +64,7 @@ smooth_size_spectroscopy = 0.07
 calibration_radius = 0.15 # need to be larger than the PSF and smaller than the integration radius
 #calibration_radius = 0.2 # need to be larger than the PSF and smaller than the integration radius
 n_xoff_bins = 2
-n_yoff_bins = 2
+n_yoff_bins = 1
 
 MSCW_lower_blind = -0.7
 MSCL_lower_blind = -0.7
@@ -652,11 +652,11 @@ def MatplotlibMap2D(hist_map,hist_tone,hist_contour,fig,label_x,label_y,label_z,
     fig.savefig("output_plots/%s.png"%(plotname),bbox_inches='tight')
 
     #if len(roi_r)>0:
-    for roi in range(0,len(roi_r)):
-        mycircle = plt.Circle((-roi_x[roi], roi_y[roi]), roi_r[roi], color='w', linestyle='dashed', fill=False)
-        axbig.add_patch(mycircle)
+    #for roi in range(0,len(roi_r)):
+    #    mycircle = plt.Circle((-roi_x[roi], roi_y[roi]), roi_r[roi], color='w', linestyle='dashed', fill=False)
+    #    axbig.add_patch(mycircle)
     #axbig.legend(bbox_to_anchor=(0.7, 1), borderaxespad=0, fontsize=7)
-    fig.savefig("output_plots/%s_legend.png"%(plotname),bbox_inches='tight')
+    #fig.savefig("output_plots/%s_legend.png"%(plotname),bbox_inches='tight')
 
     axbig.remove()
 

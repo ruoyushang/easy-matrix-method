@@ -362,13 +362,10 @@ for energy_idx in range(0,len(energy_bin)-1):
     baseline_xaxis = np.linspace(x_start,x_end,100)
     baseline_yaxis = [0. for i in range(0,len(baseline_xaxis))]
     axbig.scatter(array_elev_mean[energy_idx],array_syst_err_ratio[energy_idx],color='k',alpha=0.1)
-    #axbig.scatter(array_elev_mean[energy_idx],array_syst_err_regression[energy_idx],color='b',alpha=0.1)
     axbig.scatter(array_elev_mean[energy_idx],array_syst_err_perturbation[energy_idx],color='r',alpha=0.1)
     axbig.plot(baseline_xaxis, baseline_yaxis, color='gray', ls='dashed')
     xaxis_elev, yaxis_ratio_mean, yaxis_ratio_rms = GetMeanRMSProfile(array_elev_mean[energy_idx], array_syst_err_ratio[energy_idx], x_start, x_end, x_delta)
     axbig.errorbar(xaxis_elev-0.2*x_delta,yaxis_ratio_mean,yaxis_ratio_rms,color='k',marker='_',ls='none',linewidth=2)
-    #xaxis_elev, yaxis_regression_mean, yaxis_regression_rms = GetMeanRMSProfile(array_elev_mean[energy_idx], array_syst_err_regression[energy_idx], x_start, x_end, x_delta)
-    #axbig.errorbar(xaxis_elev,yaxis_regression_mean,yaxis_regression_rms,color='b',marker='_',ls='none',linewidth=2)
     xaxis_elev, yaxis_perturbation_mean, yaxis_perturbation_rms = GetMeanRMSProfile(array_elev_mean[energy_idx], array_syst_err_perturbation[energy_idx], x_start, x_end, x_delta)
     axbig.errorbar(xaxis_elev+0.2*x_delta,yaxis_perturbation_mean,yaxis_perturbation_rms,color='r',marker='_',ls='none',linewidth=2)
     axbig.set_xlabel('Elevation [deg]')
@@ -386,13 +383,10 @@ for energy_idx in range(0,len(energy_bin)-1):
     baseline_xaxis = np.linspace(x_start,x_end,100)
     baseline_yaxis = [0. for i in range(0,len(baseline_xaxis))]
     axbig.scatter(array_azim_mean[energy_idx],array_syst_err_ratio[energy_idx],color='k',alpha=0.1)
-    #axbig.scatter(array_azim_mean[energy_idx],array_syst_err_regression[energy_idx],color='b',alpha=0.1)
     axbig.scatter(array_azim_mean[energy_idx],array_syst_err_perturbation[energy_idx],color='r',alpha=0.1)
     axbig.plot(baseline_xaxis, baseline_yaxis, color='gray', ls='dashed')
     xaxis_azim, yaxis_ratio_mean, yaxis_ratio_rms = GetMeanRMSProfile(array_azim_mean[energy_idx], array_syst_err_ratio[energy_idx], x_start, x_end, x_delta)
     axbig.errorbar(xaxis_azim-0.2*x_delta,yaxis_ratio_mean,yaxis_ratio_rms,color='k',marker='_',ls='none',linewidth=2)
-    #xaxis_azim, yaxis_regression_mean, yaxis_regression_rms = GetMeanRMSProfile(array_azim_mean[energy_idx], array_syst_err_regression[energy_idx], x_start, x_end, x_delta)
-    #axbig.errorbar(xaxis_azim,yaxis_regression_mean,yaxis_regression_rms,color='b',marker='_',ls='none',linewidth=2)
     xaxis_azim, yaxis_perturbation_mean, yaxis_perturbation_rms = GetMeanRMSProfile(array_azim_mean[energy_idx], array_syst_err_perturbation[energy_idx], x_start, x_end, x_delta)
     axbig.errorbar(xaxis_azim+0.2*x_delta,yaxis_perturbation_mean,yaxis_perturbation_rms,color='r',marker='_',ls='none',linewidth=2)
     axbig.set_xlabel('Azimuth [deg]')
@@ -410,19 +404,59 @@ for energy_idx in range(0,len(energy_bin)-1):
     baseline_xaxis = np.linspace(x_start,x_end,100)
     baseline_yaxis = [0. for i in range(0,len(baseline_xaxis))]
     axbig.scatter(array_nsb_mean[energy_idx],array_syst_err_ratio[energy_idx],color='k',alpha=0.1)
-    #axbig.scatter(array_nsb_mean[energy_idx],array_syst_err_regression[energy_idx],color='b',alpha=0.1)
     axbig.scatter(array_nsb_mean[energy_idx],array_syst_err_perturbation[energy_idx],color='r',alpha=0.1)
     axbig.plot(baseline_xaxis, baseline_yaxis, color='gray', ls='dashed')
     xaxis_nsb, yaxis_ratio_mean, yaxis_ratio_rms = GetMeanRMSProfile(array_nsb_mean[energy_idx], array_syst_err_ratio[energy_idx], x_start, x_end, x_delta)
     axbig.errorbar(xaxis_nsb-0.2*x_delta,yaxis_ratio_mean,yaxis_ratio_rms,color='k',marker='_',ls='none',linewidth=2)
-    #xaxis_nsb, yaxis_regression_mean, yaxis_regression_rms = GetMeanRMSProfile(array_nsb_mean[energy_idx], array_syst_err_regression[energy_idx], x_start, x_end, x_delta)
-    #axbig.errorbar(xaxis_nsb,yaxis_regression_mean,yaxis_regression_rms,color='b',marker='_',ls='none',linewidth=2)
     xaxis_nsb, yaxis_perturbation_mean, yaxis_perturbation_rms = GetMeanRMSProfile(array_nsb_mean[energy_idx], array_syst_err_perturbation[energy_idx], x_start, x_end, x_delta)
     axbig.errorbar(xaxis_nsb+0.2*x_delta,yaxis_perturbation_mean,yaxis_perturbation_rms,color='r',marker='_',ls='none',linewidth=2)
     axbig.set_xlabel('NSB')
     axbig.set_ylabel('Error $\epsilon$')
-    fig.savefig("output_plots/NSB_vs_Error_E%s_%s.png"%(energy_idx,folder_tag))
+    fig.savefig("output_plots/NSB_vs_Error_Perturbation_E%s_%s.png"%(energy_idx,folder_tag))
     axbig.remove()
+
+    fig.clf()
+    fig.set_figheight(8)
+    fig.set_figwidth(8)
+    axbig = fig.add_subplot()
+    x_start = 2.5
+    x_end = 9.5
+    x_delta = 1.
+    baseline_xaxis = np.linspace(x_start,x_end,100)
+    baseline_yaxis = [0. for i in range(0,len(baseline_xaxis))]
+    axbig.scatter(array_nsb_mean[energy_idx],array_syst_err_ratio[energy_idx],color='k',alpha=0.1)
+    axbig.scatter(array_nsb_mean[energy_idx],array_syst_err_regression[energy_idx],color='r',alpha=0.1)
+    axbig.plot(baseline_xaxis, baseline_yaxis, color='gray', ls='dashed')
+    xaxis_nsb, yaxis_ratio_mean, yaxis_ratio_rms = GetMeanRMSProfile(array_nsb_mean[energy_idx], array_syst_err_ratio[energy_idx], x_start, x_end, x_delta)
+    axbig.errorbar(xaxis_nsb-0.2*x_delta,yaxis_ratio_mean,yaxis_ratio_rms,color='k',marker='_',ls='none',linewidth=2)
+    xaxis_nsb, yaxis_regression_mean, yaxis_regression_rms = GetMeanRMSProfile(array_nsb_mean[energy_idx], array_syst_err_regression[energy_idx], x_start, x_end, x_delta)
+    axbig.errorbar(xaxis_nsb+0.2*x_delta,yaxis_regression_mean,yaxis_regression_rms,color='r',marker='_',ls='none',linewidth=2)
+    axbig.set_xlabel('NSB')
+    axbig.set_ylabel('Error $\epsilon$')
+    fig.savefig("output_plots/NSB_vs_Error_Regression_E%s_%s.png"%(energy_idx,folder_tag))
+    axbig.remove()
+
+    fig.clf()
+    fig.set_figheight(8)
+    fig.set_figwidth(8)
+    axbig = fig.add_subplot()
+    x_start = 2.5
+    x_end = 9.5
+    x_delta = 1.
+    baseline_xaxis = np.linspace(x_start,x_end,100)
+    baseline_yaxis = [0. for i in range(0,len(baseline_xaxis))]
+    axbig.scatter(array_nsb_mean[energy_idx],array_syst_err_ratio[energy_idx],color='k',alpha=0.1)
+    axbig.scatter(array_nsb_mean[energy_idx],array_syst_err_combined[energy_idx],color='r',alpha=0.1)
+    axbig.plot(baseline_xaxis, baseline_yaxis, color='gray', ls='dashed')
+    xaxis_nsb, yaxis_ratio_mean, yaxis_ratio_rms = GetMeanRMSProfile(array_nsb_mean[energy_idx], array_syst_err_ratio[energy_idx], x_start, x_end, x_delta)
+    axbig.errorbar(xaxis_nsb-0.2*x_delta,yaxis_ratio_mean,yaxis_ratio_rms,color='k',marker='_',ls='none',linewidth=2)
+    xaxis_nsb, yaxis_combined_mean, yaxis_combined_rms = GetMeanRMSProfile(array_nsb_mean[energy_idx], array_syst_err_combined[energy_idx], x_start, x_end, x_delta)
+    axbig.errorbar(xaxis_nsb+0.2*x_delta,yaxis_combined_mean,yaxis_combined_rms,color='r',marker='_',ls='none',linewidth=2)
+    axbig.set_xlabel('NSB')
+    axbig.set_ylabel('Error $\epsilon$')
+    fig.savefig("output_plots/NSB_vs_Error_Combined_E%s_%s.png"%(energy_idx,folder_tag))
+    axbig.remove()
+
 
 for energy_idx in range(0,len(energy_bin)-1):
     fig.clf()
@@ -450,6 +484,39 @@ for energy_idx in range(0,len(energy_bin)-1):
     MakeMultipleFitPlot(axbig,Hists,legends,'relative error $\epsilon$','number of entries')
     fig.savefig("output_plots/SystErrDist_E%s_Perturbation_%s.png"%(energy_idx,folder_tag))
     axbig.remove()
+
+for energy_idx in range(0,len(energy_bin)-1):
+    Hists = []
+    legends = []
+    Hists += [Hist_SystErrDist_Ratio[energy_idx]]
+    legends += ['Simple Scaling']
+    Hists += [Hist_SystErrDist_Regression[energy_idx]]
+    legends += ['Regression']
+
+    fig.clf()
+    fig.set_figheight(figsize_y)
+    fig.set_figwidth(figsize_x)
+    axbig = fig.add_subplot()
+    MakeMultipleFitPlot(axbig,Hists,legends,'relative error $\epsilon$','number of entries')
+    fig.savefig("output_plots/SystErrDist_E%s_Regression_%s.png"%(energy_idx,folder_tag))
+    axbig.remove()
+
+for energy_idx in range(0,len(energy_bin)-1):
+    Hists = []
+    legends = []
+    Hists += [Hist_SystErrDist_Ratio[energy_idx]]
+    legends += ['Simple Scaling']
+    Hists += [Hist_SystErrDist_Combined[energy_idx]]
+    legends += ['Combined']
+
+    fig.clf()
+    fig.set_figheight(figsize_y)
+    fig.set_figwidth(figsize_x)
+    axbig = fig.add_subplot()
+    MakeMultipleFitPlot(axbig,Hists,legends,'relative error $\epsilon$','number of entries')
+    fig.savefig("output_plots/SystErrDist_E%s_Combined_%s.png"%(energy_idx,folder_tag))
+    axbig.remove()
+
 
 energy_dep_stat_err = []
 energy_dep_syst_err_ratio_mean = []

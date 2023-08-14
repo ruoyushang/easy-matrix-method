@@ -905,7 +905,8 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
 
     require_nmatch = 5
     if not is_imposter:
-        require_nmatch = 1
+        #require_nmatch = 1 # bad idea!
+        require_nmatch = 2
         #require_nmatch = 3
 
     # setup database connection
@@ -1007,13 +1008,13 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
             if is_imposter:
                 if abs(delta_elev)>5.: continue
             else:
-                if (sum_off_run_elev-sum_on_run_elev)>0.:
-                    if (off_run_el-on_run_el)>0.: continue
-                else:
-                    if (off_run_el-on_run_el)<0.: continue
+                #if (sum_off_run_elev-sum_on_run_elev)>0.:
+                #    if (off_run_el-on_run_el)>0.: continue
+                #else:
+                #    if (off_run_el-on_run_el)<0.: continue
                 #if abs(delta_airmass)>0.1: continue
                 if abs(delta_elev)>5.: continue
-                if abs(delta_azim)>10.: continue
+                if abs(delta_azim)>20.: continue
                 if abs(all_runs_info[run][0]-list_on_run_ids[on_run])>20000: continue
 
             nsb_file = open('/gamma_raid/userspace/rshang/SMI_AUX/NSB_allruns.txt')
