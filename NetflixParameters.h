@@ -1,10 +1,13 @@
 
-const int N_energy_bins = 11;
-double energy_bins[N_energy_bins+1] = {100.,200.,251.,316.,398.,501.,794.,1259.,1995.,3162.,5011.,7943.};
-//int matrix_rank[N_energy_bins] = {1,2,2,2,2,2,2,2,1,1,1};
-int matrix_rank[N_energy_bins] = {1,3,3,3,3,3,2,2,1,1,1};
-//int cr_correction_xyoff_bins[N_energy_bins] = {20,20,20,10,10,3,3,1,1,1,1};
-int cr_correction_xyoff_bins[N_energy_bins] = {1,12,12,6,6,3,3,1,1,1,1};
+const int N_energy_bins = 12;
+double energy_bins[N_energy_bins+1] = {100.,159.,200.,251.,316.,398.,501.,794.,1259.,1995.,3162.,5011.,7943.};
+int matrix_rank[N_energy_bins] = {1,3,3,3,3,3,3,2,2,1,1,1};
+int cr_correction_xyoff_bins[N_energy_bins] = {1,12,12,12,6,6,3,3,1,1,1,1};
+
+//const int N_energy_bins = 8;
+//double energy_bins[N_energy_bins+1] = {100.,167.,300.,538.,965.,1732.,3107.,5574.,10000.};
+//int matrix_rank[N_energy_bins] = {1,3,3,3,2,2,1,1};
+//int cr_correction_xyoff_bins[N_energy_bins] = {1,12,12,6,3,3,1,1};
 
 double log_coeff_weight = -1.0;
 

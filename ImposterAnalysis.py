@@ -199,7 +199,8 @@ def GetFluxCalibration(energy,elev):
     # 3-tel cut
     #str_flux_calibration = ['1.55e+02', '3.94e+00', '1.66e+00', '1.22e+00', '1.03e+00', '1.26e+00', '1.20e+00', '1.13e+00', '1.30e+00', '1.36e+00', '1.37e+00']
     # v490
-    str_flux_calibration = ['7.95e+00', '1.59e+00', '1.50e+00', '1.17e+00', '7.85e-01', '1.25e+00', '6.47e-01', '3.57e-01', '1.84e-01', '9.10e-02', '4.80e-02']
+    #str_flux_calibration = ['3.44e+00', '4.66e+00', '3.02e+00', '1.32e+00', '5.97e-01', '2.74e-01', '1.15e-01', '5.28e-02']
+    str_flux_calibration = ['3.54e+00', '1.37e+00', '1.58e+00', '1.47e+00', '1.17e+00', '7.87e-01', '1.24e+00', '6.41e-01', '3.59e-01', '1.84e-01', '9.11e-02', '4.75e-02']
     # v487
     if folder_path=='output_nuclear_v487':
         str_flux_calibration = ['1.39e+01', '2.79e+00', '2.36e+00', '1.93e+00', '1.28e+00', '1.82e+00', '8.77e-01', '4.33e-01', '2.29e-01', '1.16e-01', '6.02e-02']
@@ -665,6 +666,7 @@ def MakeSpectrum(roi_x,roi_y,roi_r,roi_name,excl_roi_x,excl_roi_y,excl_roi_r):
         ydata_wcda = pow(xdata/1e3,2)*vectorize_f_wcda(xdata)
 
         axbig = fig.add_subplot()
+
         axbig.errorbar(Jordan_energies,Jordan_fluxes,Jordan_flux_errs,color='g',marker='s',ls='none',label='Fermi-LAT',zorder=1)
 
         axbig.bar(energy_axis, 2.*real_flux_syst_err, bottom=real_flux-real_flux_syst_err, width=2.*energy_error, color='r', align='center', alpha=0.2,zorder=2)
@@ -1127,7 +1129,7 @@ if os.path.exists(SourceFilePath):
 else:
     epoch_idx = 1
 InputFile = ROOT.TFile("%s/%s/Netflix_%s_%s_%s_G0_X0_Y0.root"%(input_path,folder_path,source_name,list_epoch[epoch_idx],isON))
-HistName = "Hist_OnData_SR_Skymap_Sum_ErecS100to200"
+HistName = "Hist_OnData_SR_Skymap_Sum_ErecS%sto%s"%(int(energy_bin[0]),int(energy_bin[1]))
 
 nbins_x = InputFile.Get(HistName).GetNbinsX()
 nbins_y = InputFile.Get(HistName).GetNbinsY()
@@ -1152,8 +1154,8 @@ excl_region_y = [MapCenter_y]
 excl_region_r = [0.0]
 region_x = [MapCenter_x]
 region_y = [MapCenter_y]
-#region_r = [0.2]
-region_r = [1.5]
+#region_r = [0.1]
+region_r = [2.0]
 region_name = 'Center'
 do_fit = 0
 if 'Crab' in source_name:

@@ -41,18 +41,20 @@ input_params = []
 #input_params += [ ['PSR_J2021_p3651'       ,305.27  ,36.85  ,30 ,90] ] # Dragonfly
 #input_params += [ ['PSR_J2032_p4127', 308.05  , 41.46  ,30 ,90] ]
 #input_params += [ ['PSR_J1856_p0245', 284.21  , 2.76  ,30 ,90] ]
+#input_params += [ ['SS433'       ,288.404, 4.930  ,30 ,90] ]
 #
 #input_params += [ ['LHAASO_J0622_p3754', 95.50  , 37.90  ,30 ,90] ]
-#input_params += [ ['SS433'       ,288.404, 4.930  ,30 ,90] ]
-#input_params += [ ['LHAASO_J1956_p2845', 299.05  , 28.75  ,30 ,90] ]
+input_params += [ ['LHAASO_J1956_p2845', 299.05  , 28.75  ,30 ,90] ]
 #input_params += [ ['PSR_J0248_p6021', 42.077  , 60.359  ,30 ,90] ]
 #input_params += [ ['PSR_J0359_p5414', 59.858  , 54.248  ,30 ,90] ]
 
+#input_params += [ ['PSR_J1737_m0314A', 264.4, -3.2,30 ,90] ]
 
 #input_params += [ ['Sky_RA55Dec53'         ,55.34   ,52.97  ,30 ,90] ]
 #input_params += [ ['SgrA'                  ,266.41  ,-29.00 ,20 ,90] ] # Galactic center
 
 # galactic observations with > 50 runs
+#input_params += [ ['CTA1', 1.608, 72.983  ,30 ,90] ]
 #input_params += [ ['SNR_G067p6_p0p9', 299.44, 30.88  ,30 ,90] ]
 #input_params += [ ['2HWC_J1953_p294', 298.26  , 29.48  ,30 ,90] ]
 #input_params += [ ['Cisne_HS_2013', 304.08  , 36.13  ,30 ,90] ]
@@ -67,13 +69,14 @@ input_params = []
 #input_params += [ ['PSR_J2238_p5903', 339.50  , 59.05  ,30 ,90] ]
 #input_params += [ ['TeV2032_Cyg_X3', 308.  , 41.23  ,30 ,90] ] # high-mass X-ray binary
 #input_params += [ ['Tycho', 6.28  , 64.17  ,30 ,90] ]
-#
 #input_params += [ ['Cas_A', 350.8075  , 58.8072  ,30 ,90] ]
+#
+#input_params += [ ['InputList_Mrk421', 166.0791667  , 38.1947222  ,30 ,90] ]
 
 #input_params += [ ['Galactic_Plane', 0., 0.  ,30 ,90] ]
 #input_params += [ ['LHAASO_Catalog', 0., 0.  ,30 ,90] ]
 
-input_params += [ ['AUX_files', 0., 0.  ,30 ,90] ]
+#input_params += [ ['AUX_files', 0., 0.  ,30 ,90] ]
 
 job_counts = 0
 for s in range(0,len(input_params)):
@@ -96,7 +99,7 @@ for s in range(0,len(input_params)):
     file.write('#$ -m e\n')
     file.write('. /u/local/Modules/default/init/modules.sh\n')
     file.write('cd %s\n'%(SMI_DIR))
-    #file.write('python3 veritas_db_query.py "%s" %s %s %s %s "V4"\n'%(input_params[s][0],input_params[s][1],input_params[s][2],input_params[s][3],input_params[s][4]))
+    file.write('python3 veritas_db_query.py "%s" %s %s %s %s "V4"\n'%(input_params[s][0],input_params[s][1],input_params[s][2],input_params[s][3],input_params[s][4]))
     file.write('python3 veritas_db_query.py "%s" %s %s %s %s "V5"\n'%(input_params[s][0],input_params[s][1],input_params[s][2],input_params[s][3],input_params[s][4]))
     file.write('python3 veritas_db_query.py "%s" %s %s %s %s "V6"\n'%(input_params[s][0],input_params[s][1],input_params[s][2],input_params[s][3],input_params[s][4]))
     file.close() 

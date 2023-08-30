@@ -6,7 +6,7 @@ source /home/rshang/EventDisplay/root_ubuntu20/root/bin/thisroot.sh
 #export SMI_OUTPUT=/gamma_raid/userspace/rshang/SMI_output/output_nuclear_v487
 
 export SMI_INPUT=/gamma_raid/userspace/rshang/analysis/Results/v490
-export SMI_RUNLIST=/home/rshang/NuclearNormMinimizationMethod/runlist
+export SMI_RUNLIST=/home/rshang/NuclearNormMinimizationMethod/runlist_loose
 export SMI_OUTPUT=/gamma_raid/userspace/rshang/SMI_output/output_nuclear_test
 
 export SMI_AUX=/gamma_raid/userspace/rshang/SMI_AUX

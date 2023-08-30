@@ -137,6 +137,7 @@ def print_all_runs_nsb():
             print ('%s %0.2f'%(x['run_id'],current_avg_run))
             file.write('%s %0.2f\n'%(x['run_id'],current_avg_run))
 
+    dbcnx.close()
 
 def get_run_nsb(run_id):
 
@@ -166,6 +167,7 @@ def get_run_nsb(run_id):
         total_channels += 1.
     current_avg_run = current_avg_run/total_channels
     print ('run_id = %s, current_avg_run = %s'%(run_id,current_avg_run))
+    dbcnx.close()
 
 def get_all_runs_info(epoch,obs_type):
 
@@ -183,6 +185,8 @@ def get_all_runs_info(epoch,obs_type):
     res_comment = crs.fetchall()
     for x in res_comment:
         all_runs_comments[x['run_id']] = get_sec(str(x['usable_duration']))
+
+    dbcnx.close()
 
     # setup database connection
     dbcnx=pymysql.connect(host='romulus.ucsc.edu', db='VERITAS', user='readonly', cursorclass=pymysql.cursors.DictCursor)
@@ -224,32 +228,35 @@ def get_all_runs_info(epoch,obs_type):
         else:
             continue
 
-        el_avg_run = 0.
-        az_avg_run = 0.
-        total_entries = 0.
+        #el_avg_run = 0.
+        #az_avg_run = 0.
+        #total_entries = 0.
 
-        timestamp_start = '%s'%(x['data_start_time'])
-        timestamp_end = '%s'%(x['data_end_time'])
-        if timestamp_start=='None': continue
-        if timestamp_end=='None': continue
-        timestamp_start = timestamp_start.replace(' ','').replace('-','').replace(':','')
-        timestamp_end = timestamp_end.replace(' ','').replace('-','').replace(':','')
-        timestamp_start += '000'
-        timestamp_end += '000'
-        query = "SELECT elevation_target,azimuth_target FROM tblPositioner_Telescope1_Status WHERE timestamp>%s AND timestamp<%s"%(timestamp_start,timestamp_end)
-        crs.execute(query)
-        res2 = crs.fetchall()
-        if len(res2)==0: continue
-        el_avg_run += res2[0]['elevation_target']
-        el_avg_run += res2[len(res2)-1]['elevation_target']
-        az_avg_run += res2[0]['azimuth_target']
-        az_avg_run += res2[len(res2)-1]['azimuth_target']
-        total_entries = 2.
-        el_avg_run = el_avg_run/total_entries*180./math.pi
-        az_avg_run = az_avg_run/total_entries*180./math.pi
+        #timestamp_start = '%s'%(x['data_start_time'])
+        #timestamp_end = '%s'%(x['data_end_time'])
+        #if timestamp_start=='None': continue
+        #if timestamp_end=='None': continue
+        #timestamp_start = timestamp_start.replace(' ','').replace('-','').replace(':','')
+        #timestamp_end = timestamp_end.replace(' ','').replace('-','').replace(':','')
+        #timestamp_start += '000'
+        #timestamp_end += '000'
+        #query = "SELECT elevation_target,azimuth_target FROM tblPositioner_Telescope1_Status WHERE timestamp>%s AND timestamp<%s"%(timestamp_start,timestamp_end)
+        #crs.execute(query)
+        #res2 = crs.fetchall()
+        #if len(res2)==0: continue
+        #el_avg_run += res2[0]['elevation_target']
+        #el_avg_run += res2[len(res2)-1]['elevation_target']
+        #az_avg_run += res2[0]['azimuth_target']
+        #az_avg_run += res2[len(res2)-1]['azimuth_target']
+        #total_entries = 2.
+        #el_avg_run = el_avg_run/total_entries*180./math.pi
+        #az_avg_run = az_avg_run/total_entries*180./math.pi
+
+        el_avg_run,az_avg_run = get_run_elaz_from_aux_file(x['run_id'])
 
         all_runs_info += [[x['run_id'],x['source_id'],el_avg_run,az_avg_run,run_usable_time]]
 
+    dbcnx.close()
 
 def print_all_runs_l3rate():
 
@@ -314,6 +321,19 @@ def print_all_runs_l3rate():
             l3_avg_run = l3_avg_run/total_entries
             print ('%s %0.1f'%(x['run_id'],l3_avg_run))
             file.write('%s %0.1f\n'%(x['run_id'],l3_avg_run))
+
+    dbcnx.close()
+
+def get_run_elaz_from_aux_file(run_id):
+
+    inputFile = open('/gamma_raid/userspace/rshang/SMI_AUX/elaz_allruns.txt')
+    for line in inputFile:
+        line = line.strip('\n')
+        if run_id==line[0]:
+            el = float(line[1])
+            az = float(line[2])
+            return el, az
+    return 0, 0
 
 def print_all_runs_el_az():
 
@@ -382,6 +402,8 @@ def print_all_runs_el_az():
             print ('%s %0.2f %0.2f'%(x['run_id'],el_avg_run,az_avg_run))
             file.write('%s %0.2f %0.2f\n'%(x['run_id'],el_avg_run,az_avg_run))
 
+    dbcnx.close()
+
 def get_run_el_az(run_id):
 
     # setup database connection
@@ -416,6 +438,9 @@ def get_run_el_az(run_id):
     el_avg_run = el_avg_run/total_entries*180./math.pi
     az_avg_run = az_avg_run/total_entries*180./math.pi
     #print ('run_id = %s, el_avg_run = %s, az_avg_run = %s'%(run_id,el_avg_run,az_avg_run))
+
+    dbcnx.close()
+
     return el_avg_run, az_avg_run
 
 def get_run_category(run_id):
@@ -430,6 +455,8 @@ def get_run_category(run_id):
     # fetch from cursor
     res = crs.fetchall()
     print(res[0]['run_id'],res[0]['data_category'])
+
+    dbcnx.close()
 
 def print_all_runs_timecut():
 
@@ -451,6 +478,8 @@ def print_all_runs_timecut():
             print('%s %s'%(x['run_id'],x['time_cut_mask']))
             file.write('%s %s\n'%(x['run_id'],x['time_cut_mask']))
 
+    dbcnx.close()
+
 def get_run_timecut(run_id):
 
     # setup database connection
@@ -463,6 +492,8 @@ def get_run_timecut(run_id):
     # fetch from cursor
     res = crs.fetchall()
     print('run_id = %s, time_cut_mask = %s'%(res[0]['run_id'],res[0]['time_cut_mask']))
+
+    dbcnx.close()
 
 def print_all_runs_usable_duration():
 
@@ -482,6 +513,8 @@ def print_all_runs_usable_duration():
             print ('%s %s'%(x['run_id'],duration))
             file.write('%s %s\n'%(x['run_id'],duration))
 
+    dbcnx.close()
+
 def get_run_usable_duration(run_id):
 
     # setup database connection
@@ -494,6 +527,9 @@ def get_run_usable_duration(run_id):
     # fetch from cursor
     res = crs.fetchall()
     #print('run_id = %s, usable_duration = %s'%(res[0]['run_id'],get_sec(str(res[0]['usable_duration']))))
+
+    dbcnx.close()
+
     if len(res)==0:
         return 0.
     return get_sec(str(res[0]['usable_duration']))
@@ -519,6 +555,9 @@ def get_run_ra_dec(run_id):
     run_dec = (source_dec + res[0]['offsetDEC'])*180./math.pi
     #print ('source_name = %s, source_ra = %s, source_dec = %s'%(source_name,source_ra*180./math.pi,source_dec*180./math.pi))
     #print ('run_id = %s, run_ra = %s, run_dec = %s'%(run_id,run_ra,run_dec))
+
+    dbcnx.close()
+
     return run_ra, run_dec
 
 def get_run_weather(run_id):
@@ -533,6 +572,9 @@ def get_run_weather(run_id):
     # fetch from cursor
     res = crs.fetchall()
     #print ('run_id = %s, weather = %s'%(run_id,res[0]['weather']))
+
+    dbcnx.close()
+
     return res[0]['weather']
 
 def print_all_runs_type():
@@ -552,6 +594,8 @@ def print_all_runs_type():
             print ('%s %s'%(x['run_id'],x['run_type']))
             file.write('%s %s\n'%(x['run_id'],x['run_type']))
 
+    dbcnx.close()
+
 def get_run_type(run_id):
 
     # setup database connection
@@ -564,6 +608,9 @@ def get_run_type(run_id):
     # fetch from cursor
     res = crs.fetchall()
     #print ('run_id = %s, run_type = %s'%(run_id,res[0]['run_type']))
+
+    dbcnx.close()
+
     return res[0]['run_type']
 
 def find_runs_near_galactic_plane(obs_name,epoch,obs_type,gal_b_low,gal_b_up):
@@ -600,6 +647,8 @@ def find_runs_near_galactic_plane(obs_name,epoch,obs_type,gal_b_low,gal_b_up):
     for src in range(0,len(list_on_sources)):
         print (list_on_sources[src])
 
+    dbcnx.close()
+
     # setup database connection
     dbcnx=pymysql.connect(host='romulus.ucsc.edu', db='VOFFLINE', user='readonly', cursorclass=pymysql.cursors.DictCursor)
     # connect to database
@@ -612,6 +661,8 @@ def find_runs_near_galactic_plane(obs_name,epoch,obs_type,gal_b_low,gal_b_up):
     res_comment = crs.fetchall()
     for x in res_comment:
         all_runs_duration[x['run_id']] = get_sec(str(x['usable_duration']))
+
+    dbcnx.close()
 
     # setup database connection
     dbcnx=pymysql.connect(host='romulus.ucsc.edu', db='VERITAS', user='readonly', cursorclass=pymysql.cursors.DictCursor)
@@ -679,7 +730,8 @@ def find_runs_near_galactic_plane(obs_name,epoch,obs_type,gal_b_low,gal_b_up):
         else:
             continue
 
-        on_run_el, on_run_az = get_run_el_az(x['run_id'])
+        #on_run_el, on_run_az = get_run_el_az(x['run_id'])
+        on_run_el, on_run_az = get_run_elaz_from_aux_file(x['run_id'])
         if on_run_el<45.: continue
 
         print ('run_id = %s, source_name = %s, RA = %0.2f, Dec = %0.2f'%(x['run_id'],x['source_id'],all_src_ra[x['source_id']],all_src_dec[x['source_id']]))
@@ -697,6 +749,16 @@ def find_runs_near_galactic_plane(obs_name,epoch,obs_type,gal_b_low,gal_b_up):
         out_file.write('%s, runs = %s, RA = %0.2f, Dec = %0.2f \n'%(src_name,runs_per_src[src_name],all_src_ra[src_name],all_src_dec[src_name]))
 
     out_file.close()
+    dbcnx.close()
+
+def find_on_runs_from_a_list(input_file_name):
+
+    input_file = open('output_vts_hours/'+input_file_name+'.txt')
+    on_run_list = []
+    for line in input_file:
+        on_run_list += [int(line.strip('\n'))]
+
+    return on_run_list
 
 def find_on_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_range,search_radius):
 
@@ -740,6 +802,8 @@ def find_on_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_range
     for src in range(0,len(list_on_sources)):
         print (list_on_sources[src])
 
+    dbcnx.close()
+
     # setup database connection
     dbcnx=pymysql.connect(host='romulus.ucsc.edu', db='VOFFLINE', user='readonly', cursorclass=pymysql.cursors.DictCursor)
     # connect to database
@@ -752,6 +816,8 @@ def find_on_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_range
     res_comment = crs.fetchall()
     for x in res_comment:
         all_runs_duration[x['run_id']] = get_sec(str(x['usable_duration']))
+
+    dbcnx.close()
 
     # setup database connection
     dbcnx=pymysql.connect(host='romulus.ucsc.edu', db='VERITAS', user='readonly', cursorclass=pymysql.cursors.DictCursor)
@@ -820,7 +886,8 @@ def find_on_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_range
             continue
 
 
-        on_run_el, on_run_az = get_run_el_az(x['run_id'])
+        #on_run_el, on_run_az = get_run_el_az(x['run_id'])
+        on_run_el, on_run_az = get_run_elaz_from_aux_file(x['run_id'])
         if on_run_el<elev_range[0]: continue
         if on_run_el>elev_range[1]: continue
 
@@ -871,6 +938,7 @@ def find_on_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_range
         print (list_on_run_ids[run])
 
     out_file.close()
+    dbcnx.close()
 
     return list_on_run_ids
 
@@ -940,7 +1008,8 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
 
     for on_run in range(0,len(list_on_run_ids)):
 
-        on_run_el, on_run_az = get_run_el_az(list_on_run_ids[on_run])
+        #on_run_el, on_run_az = get_run_el_az(list_on_run_ids[on_run])
+        on_run_el, on_run_az = get_run_elaz_from_aux_file(list_on_run_ids[on_run])
         number_off_runs = 0
 
         sum_on_run_elev = 0.
@@ -1065,6 +1134,8 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
     for run in range(0,len(list_no_repeat_off_run_ids)):
         out_off_file.write('%s\n'%(list_no_repeat_off_run_ids[run]))
     out_off_file.close()
+
+    dbcnx.close()
     
     list_off_run_ids = np.array(list_off_run_ids)
     return list_off_run_ids[:,1]
@@ -1142,7 +1213,11 @@ else:
     run_elev_range = [input_elev_low,input_elev_up]
     
     use_local_data = False
-    my_list_on_run_ids = find_on_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,search_radius)
+    my_list_on_run_ids = []
+    if 'InputList' in obs_name:
+        my_list_on_run_ids = find_on_runs_from_a_list(obs_name)
+    else:
+        my_list_on_run_ids = find_on_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,search_radius)
     use_local_data = False
     my_list_off_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_on_run_ids,False,'PairList')
     use_local_data = False

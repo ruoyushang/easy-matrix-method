@@ -14,6 +14,21 @@ pair<double,double> GetSourceRaDec(TString source_name)
 {
     double Source_RA = 0.;
     double Source_Dec = 0.;
+    if (source_name.Contains("Mrk421"))
+    {
+            Source_RA = 166.0791667;
+            Source_Dec = 38.1947222;
+    }
+    if (source_name.Contains("Tycho"))
+    {
+            Source_RA = 6.28;
+            Source_Dec = 64.17;
+    }
+    if (source_name.Contains("CTA1"))
+    {
+            Source_RA = 1.608;
+            Source_Dec = 72.983;
+    }
     if (source_name.Contains("Cas_A"))
     {
             Source_RA = 350.8075;

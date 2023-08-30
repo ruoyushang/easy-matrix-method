@@ -40,6 +40,8 @@ input_path = '/gamma_raid/userspace/rshang/SMI_output'
 #folder_path = 'output_j1908_paper'
 #folder_path = 'output_nuclear_v487'
 #folder_tag = 'paper'
+#energy_bin = [100.,200.,251.,316.,398.,501.,794.,1259.,1995.,3162.,5011.,7943.]
+
 folder_path = 'output_nuclear_test'
 folder_tag = '_test'
 #folder_path = 'output_nuclear_3tel'
@@ -58,11 +60,13 @@ folder_tag = '_test'
 #analysis_method = 'Perturbation'
 analysis_method = 'Combined'
 
-energy_bin = [100.,200.,251.,316.,398.,501.,794.,1259.,1995.,3162.,5011.,7943.]
+energy_bin = [100.,159.,200.,251.,316.,398.,501.,794.,1259.,1995.,3162.,5011.,7943.]
+#energy_bin = [100.,167.,300.,538.,965.,1732.,3107.,5574.,10000.]
 
 smooth_size_spectroscopy = 0.07
 calibration_radius = 0.15 # need to be larger than the PSF and smaller than the integration radius
 #calibration_radius = 0.2 # need to be larger than the PSF and smaller than the integration radius
+#calibration_radius = 0.3 # need to be larger than the PSF and smaller than the integration radius
 n_xoff_bins = 2
 n_yoff_bins = 1
 
@@ -649,6 +653,11 @@ def MatplotlibMap2D(hist_map,hist_tone,hist_contour,fig,label_x,label_y,label_z,
     cbar.set_label(label_z)
     axbig.set_xticks(x_axis_sparse)
     axbig.set_xticklabels(x_axis_reflect)
+
+    for roi in range(0,len(roi_r)):
+        mycircle = plt.Circle((-roi_x[roi], roi_y[roi]), roi_r[roi], color='w', linestyle='dashed', fill=False)
+        axbig.add_patch(mycircle)
+
     fig.savefig("output_plots/%s.png"%(plotname),bbox_inches='tight')
 
     #if len(roi_r)>0:
