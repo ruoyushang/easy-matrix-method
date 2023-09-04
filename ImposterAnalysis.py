@@ -80,6 +80,8 @@ plot_tag += '_'+analysis_method+folder_tag
 plot_tag += '_E'+sys.argv[4]+'_'+sys.argv[6]
 
 list_epoch = []
+if 'V4' in input_epoch:
+    list_epoch += ['V4']
 if 'V5' in input_epoch:
     list_epoch += ['V5']
 if 'V6' in input_epoch:
@@ -352,6 +354,180 @@ def GetVeritasFluxJ1908():
         energies[entry] = energies[entry]*1e3
         fluxes[entry] = fluxes[entry]*scale_factor/(energies[entry]*energies[entry]/1e6)*pow(energies[entry]/1e3,2)
         flux_errs[entry] = 0.5*(flux_errs_up[entry]-flux_errs_low[entry])*scale_factor/(energies[entry]*energies[entry]/1e6)*pow(energies[entry]/1e3,2)
+
+    return energies, fluxes, flux_errs
+
+def GetHawcFluxDragonfly():
+
+    # https://arxiv.org/pdf/1909.08609.pdf
+    energies = [0.230,0.413,0.614,0.807,1.034,1.287,1.538,1.770,2.010]
+    fluxes = [-11.66,-11.38,-11.42,-11.34,-11.32,-11.35,-11.64,-11.75,-11.82]
+    flux_errs_up = [-11.53,-11.33,-11.36,-11.30,-11.29,-11.32,-11.58,-11.68,-11.73]
+    flux_errs_lo = [-11.82,-11.45,-11.49,-11.39,-11.36,-11.40,-11.70,-11.84,-11.95]
+    flux_errs = []
+
+    for entry in range(0,len(energies)):
+        energies[entry] = pow(10.,energies[entry])*1000.
+        fluxes[entry] = pow(10.,fluxes[entry])
+        flux_errs += [0.5*(pow(10.,flux_errs_up[entry])-pow(10.,flux_errs_lo[entry]))]
+
+    return energies, fluxes, flux_errs
+
+def GetVeritasFluxGammaCygni():
+
+    # https://arxiv.org/pdf/1305.6508.pdf
+    energies = [-0.55,-0.35,-0.15,0.048,0.248,0.447,0.647,0.847]
+    fluxes = [-10.42,-11.33,-11.35,-11.72,-12.54,-13.00,-13.44,-13.84]
+    flux_errs_up = [-10.31,-11.12,-11.27,-11.64,-12.36,-12.79,-13.21,-13.61]
+    flux_errs_lo = [-10.60,-11.79,-11.48,-11.83,-12.84,-13.43,-13.98,-14.39]
+    flux_errs = []
+
+    for entry in range(0,len(energies)):
+        energies[entry] = pow(10.,energies[entry])*1000.
+        fluxes[entry] = pow(10.,fluxes[entry])*pow(energies[entry]/1000.,2)
+        flux_errs += [0.5*(pow(10.,flux_errs_up[entry])-pow(10.,flux_errs_lo[entry]))*pow(energies[entry]/1000.,2)]
+
+    return energies, fluxes, flux_errs
+
+def GetFermiFluxJ1857p026():
+
+    energies = [529.,1649.,5136.,15997.,49825.,155190.,483359.]
+    fluxes = [8.72e-06,9.07e-06,6.47e-06,6.16e-06,8.14e-06,8.94e-06,4.27e-06]
+    flux_errs = [9.62e-07,8.97e-07,1.01e-06,1.36e-06,2.08e-06,3.47e-06,4.39e-06]
+
+    for entry in range(0,len(energies)):
+        energies[entry] = energies[entry]/1000.
+        fluxes[entry] = fluxes[entry]/(1000.*1000.)
+        flux_errs[entry] = flux_errs[entry]/(1000.*1000.)
+
+    return energies, fluxes, flux_errs
+
+def GetMagicFluxJ1857p026():
+
+    energies = [100.597,172.933,297.285,511.054,878.539,1510.27,2596.27,4463.17,7672.51,13189.6]
+    fluxes = [1.25e-11,8.17e-12,1.09e-11,9.22e-12,9.46e-12,9.12e-12,7.57e-12,4.21e-12,3.79e-12,7.77e-12]
+    flux_errs = [7.96e-12,2.51e-12,2.58e-12,2.14e-12,2.08e-12,2.12e-12,2.63e-12,2.14e-12,1.78e-12,4.63e-12]
+
+    erg_to_TeV = 0.62
+    for entry in range(0,len(energies)):
+        energies[entry] = energies[entry]
+        fluxes[entry] = fluxes[entry]*erg_to_TeV
+        flux_errs[entry] = flux_errs[entry]*erg_to_TeV
+
+    return energies, fluxes, flux_errs
+
+def GetHessFluxJ1857p026():
+    energies = [400.0,950.0,2260.0,5360.0,12710.0,30140.0]
+    fluxes = [1.53e-11,1.13e-11,6.46e-12,3.87e-12,8.58e-13,4.86e-13]
+    flux_errs = [1.67e-12,9.37e-13,9.07e-13,9.46e-13,8.52e-13,9.15e-13]
+
+    erg_to_TeV = 0.62
+    for entry in range(0,len(energies)):
+        energies[entry] = energies[entry]
+        fluxes[entry] = fluxes[entry]*erg_to_TeV
+        flux_errs[entry] = flux_errs[entry]*erg_to_TeV
+
+    return energies, fluxes, flux_errs
+
+def GetFermiUpperLimitFluxGeminga():
+    energies = [pow(10.,2.09),pow(10.,2.35),pow(10.,2.61),pow(10.,2.87)]
+    fluxes = [pow(10.,-7.35),pow(10.,-7.23),pow(10.,-7.34),pow(10.,-7.18)]
+    fluxes_err = [pow(10.,-7.35),pow(10.,-7.23),pow(10.,-7.34),pow(10.,-7.18)]
+
+    GeV_to_TeV = 1e-3
+    for entry in range(0,len(energies)):
+        energies[entry] = energies[entry]
+        fluxes[entry] = fluxes[entry]*GeV_to_TeV/(energies[entry]*energies[entry]/1e6)*pow(energies[entry]/1e3,2)
+        fluxes_err[entry] = fluxes[entry]*0.3
+
+    return energies, fluxes, fluxes_err
+
+def GetHAWCDiffusionFluxGeminga():
+    energies = [pow(10.,0.90),pow(10.,1.60)]
+    fluxes = [pow(10.,-11.12),pow(10.,-11.36)]
+    flux_errs = [0.,0.]
+    flux_errs_up = [pow(10.,-11.04),pow(10.,-11.28)]
+    flux_errs_low = [pow(10.,-11.21),pow(10.,-11.44)]
+
+    for entry in range(0,len(energies)):
+        fluxes[entry] = fluxes[entry]/(energies[entry]*energies[entry])*pow(energies[entry],2)
+        flux_errs[entry] = 0.5*(flux_errs_up[entry]-flux_errs_low[entry])/(energies[entry]*energies[entry])*pow(energies[entry],2)
+        energies[entry] = energies[entry]*1e3
+
+    return energies, fluxes, flux_errs
+
+def GetHAWCGaussianFluxGeminga():
+    energies = [pow(10.,0.90),pow(10.,1.60)]
+    fluxes = [pow(10.,-11.36),pow(10.,-11.52)]
+    flux_errs = [0.,0.]
+    flux_errs_up = [pow(10.,-11.28),pow(10.,-11.45)]
+    flux_errs_low = [pow(10.,-11.44),pow(10.,-11.59)]
+
+    for entry in range(0,len(energies)):
+        fluxes[entry] = fluxes[entry]/(energies[entry]*energies[entry])*pow(energies[entry],2)
+        flux_errs[entry] = 0.5*(flux_errs_up[entry]-flux_errs_low[entry])/(energies[entry]*energies[entry])*pow(energies[entry],2)
+        energies[entry] = energies[entry]*1e3
+
+    return energies, fluxes, flux_errs
+
+def GetHAWCDiskFluxGeminga():
+    energies = [pow(10.,0.00),pow(10.,1.70)]
+    fluxes = [pow(10.,-11.42),pow(10.,-11.81)]
+    flux_errs = [0.,0.]
+    flux_errs_up = [pow(10.,-11.30),pow(10.,-11.68)]
+    flux_errs_low = [pow(10.,-11.56),pow(10.,-11.94)]
+
+    for entry in range(0,len(energies)):
+        fluxes[entry] = fluxes[entry]/(energies[entry]*energies[entry])*pow(energies[entry],2)
+        flux_errs[entry] = 0.5*(flux_errs_up[entry]-flux_errs_low[entry])/(energies[entry]*energies[entry])*pow(energies[entry],2)
+        energies[entry] = energies[entry]*1e3
+
+    return energies, fluxes, flux_errs
+
+def GetFermiHAWCFluxGeminga():
+    energies = [pow(10.,3.90),pow(10.,4.60)]
+    fluxes = [pow(10.,-8.13),pow(10.,-8.36)]
+    flux_errs = [0.,0.]
+    flux_errs_up = [pow(10.,-8.06),pow(10.,-8.30)]
+    flux_errs_low = [pow(10.,-8.24),pow(10.,-8.47)]
+
+    GeV_to_TeV = 1e-3
+    for entry in range(0,len(energies)):
+        energies[entry] = energies[entry]
+        fluxes[entry] = fluxes[entry]*GeV_to_TeV/(energies[entry]*energies[entry]/1e6)*pow(energies[entry]/1e3,2)
+        flux_errs[entry] = 0.5*(flux_errs_up[entry]-flux_errs_low[entry])*GeV_to_TeV/(energies[entry]*energies[entry]/1e6)*pow(energies[entry]/1e3,2)
+
+    return energies, fluxes, flux_errs
+
+def GetFermiFluxGeminga():
+    energies = [pow(10.,1.03),pow(10.,1.30),pow(10.,1.56),pow(10.,1.82)]
+    fluxes = [pow(10.,-7.27),pow(10.,-7.29),pow(10.,-7.41),pow(10.,-7.35)]
+    flux_errs = [pow(10.,-7.27),pow(10.,-7.29),pow(10.,-7.41),pow(10.,-7.35)]
+    flux_errs_up = [pow(10.,-7.14),pow(10.,-7.16),pow(10.,-7.29),pow(10.,-7.23)]
+    flux_errs_low = [pow(10.,-7.46),pow(10.,-7.49),pow(10.,-7.58),pow(10.,-7.50)]
+
+    GeV_to_TeV = 1e-3
+    for entry in range(0,len(energies)):
+        energies[entry] = energies[entry]
+        fluxes[entry] = fluxes[entry]*GeV_to_TeV/(energies[entry]*energies[entry]/1e6)*pow(energies[entry]/1e3,2)
+        flux_errs[entry] = 0.5*(flux_errs_up[entry]-flux_errs_low[entry])*GeV_to_TeV/(energies[entry]*energies[entry]/1e6)*pow(energies[entry]/1e3,2)
+
+    return energies, fluxes, flux_errs
+
+def GetFermiFluxSNRG150():
+
+    # https://iopscience.iop.org/article/10.3847/1538-4357/aa775a/pdf
+    energies = [1.28,1.86,2.43,3.01]
+    fluxes = [-10.97,-10.94,-10.97,-10.64]
+    flux_errs_up = [-10.93,-10.87,-10.84,-10.49]
+    flux_errs_lo = [-11.01,-11.02,-11.15,-10.88]
+    flux_errs = []
+
+    erg_to_TeV = 0.62
+    for entry in range(0,len(energies)):
+        energies[entry] = pow(10.,energies[entry])
+        fluxes[entry] = pow(10.,fluxes[entry])*erg_to_TeV
+        flux_errs += [0.5*(pow(10.,flux_errs_up[entry])-pow(10.,flux_errs_lo[entry]))*erg_to_TeV]
 
     return energies, fluxes, flux_errs
 
@@ -632,13 +808,65 @@ def MakeSpectrum(roi_x,roi_y,roi_r,roi_name,excl_roi_x,excl_roi_y,excl_roi_r):
     axbig.remove()
 
     fig.clf()
-    fig.set_figheight(figsize_y)
+    fig.set_figheight(figsize_y*0.8)
     fig.set_figwidth(figsize_x)
     if 'Crab' in source_name:
         axbig = fig.add_subplot()
         axbig.plot(xdata, ydata_crab,'r-',label='1508.06442', zorder=1)
         axbig.bar(energy_axis, 2.*real_flux_syst_err, bottom=real_flux-real_flux_syst_err, width=2.*energy_error, color='b', align='center', alpha=0.2,zorder=2)
         axbig.errorbar(energy_axis,real_flux,real_flux_total_err,xerr=energy_error,color='k',marker='_',ls='none',label='VERITAS (this work)',zorder=3)
+
+        axbig.set_xlabel('Energy [GeV]')
+        axbig.set_ylabel('$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}$]')
+        axbig.set_xscale('log')
+        axbig.set_yscale('log')
+        axbig.legend(loc='best')
+        plotname = 'RealSpectrum_%s_r%s'%(roi_name,roi_r)
+        fig.savefig("output_plots/%s_%s.png"%(plotname,plot_tag),bbox_inches='tight')
+        axbig.remove()
+
+    elif 'Geminga' in source_name:
+
+        HAWC_diff_energies, HAWC_diff_fluxes, HAWC_diff_flux_errs = GetHAWCDiffusionFluxGeminga()
+        HAWC_disk_energies, HAWC_disk_fluxes, HAWC_disk_flux_errs = GetHAWCDiskFluxGeminga()
+        HAWC_gaus_energies, HAWC_gaus_fluxes, HAWC_gaus_flux_errs = GetHAWCGaussianFluxGeminga()
+        Fermi_energies, Fermi_fluxes, Fermi_flux_errs = GetFermiFluxGeminga()
+        Fermi_UL_energies, Fermi_UL_fluxes, Fermi_UL_err = GetFermiUpperLimitFluxGeminga()
+
+        axbig = fig.add_subplot()
+
+        axbig.plot(HAWC_diff_energies, HAWC_diff_fluxes,'g-',label='HAWC diffusion')
+        axbig.fill_between(HAWC_diff_energies, np.array(HAWC_diff_fluxes)-np.array(HAWC_diff_flux_errs), np.array(HAWC_diff_fluxes)+np.array(HAWC_diff_flux_errs), alpha=0.2, color='g')
+        axbig.plot(HAWC_disk_energies, HAWC_disk_fluxes,'m-',label='HAWC disk')
+        axbig.fill_between(HAWC_disk_energies, np.array(HAWC_disk_fluxes)-np.array(HAWC_disk_flux_errs), np.array(HAWC_disk_fluxes)+np.array(HAWC_disk_flux_errs), alpha=0.2, color='m')
+        axbig.plot(HAWC_gaus_energies, HAWC_gaus_fluxes,'y-',label='HAWC gaussian')
+        axbig.fill_between(HAWC_gaus_energies, np.array(HAWC_gaus_fluxes)-np.array(HAWC_gaus_flux_errs), np.array(HAWC_gaus_fluxes)+np.array(HAWC_gaus_flux_errs), alpha=0.2, color='y')
+        axbig.errorbar(Fermi_energies,Fermi_fluxes,Fermi_flux_errs,color='r',marker='_',ls='none',label='Fermi')
+        fermi_uplims = np.array([1,1,1,1], dtype=bool)
+        axbig.errorbar(Fermi_UL_energies,Fermi_UL_fluxes,Fermi_UL_err,color='r',marker='_',ls='none',uplims=fermi_uplims)
+
+        axbig.bar(energy_axis, 2.*real_flux_syst_err, bottom=real_flux-real_flux_syst_err, width=2.*energy_error, color='b', align='center', alpha=0.2,zorder=2)
+        axbig.errorbar(energy_axis,real_flux,real_flux_total_err,xerr=energy_error,color='k',marker='_',ls='none',label='VERITAS',zorder=3)
+
+        axbig.set_xlabel('Energy [GeV]')
+        axbig.set_ylabel('$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}$]')
+        axbig.set_xscale('log')
+        axbig.set_yscale('log')
+        axbig.legend(loc='best')
+        plotname = 'RealSpectrum_%s_r%s'%(roi_name,roi_r)
+        fig.savefig("output_plots/%s_%s.png"%(plotname,plot_tag),bbox_inches='tight')
+        axbig.remove()
+
+    elif 'SNR_G150_p4' in source_name:
+
+        Fermi_energies, Fermi_fluxes, Fermi_flux_errs = GetFermiFluxSNRG150()
+
+        axbig = fig.add_subplot()
+
+        axbig.errorbar(Fermi_energies,Fermi_fluxes,Fermi_flux_errs,color='g',marker='s',ls='none',label='FGES J0427.2+5533',zorder=1)
+
+        axbig.bar(energy_axis, 2.*real_flux_syst_err, bottom=real_flux-real_flux_syst_err, width=2.*energy_error, color='b', align='center', alpha=0.2,zorder=2)
+        axbig.errorbar(energy_axis,real_flux,real_flux_total_err,xerr=energy_error,color='k',marker='_',ls='none',label='VERITAS',zorder=3)
 
         axbig.set_xlabel('Energy [GeV]')
         axbig.set_ylabel('$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}$]')
@@ -746,6 +974,63 @@ def MakeSpectrum(roi_x,roi_y,roi_r,roi_name,excl_roi_x,excl_roi_y,excl_roi_r):
         fig.savefig("output_plots/%s_%s.png"%(plotname,plot_tag),bbox_inches='tight')
         axbig.remove()
 
+    elif 'PSR_J1856_p0245' in source_name:
+
+        log_energy = np.linspace(log10(1e2),log10(1e4),50)
+        xdata = pow(10.,log_energy)
+
+        vts_energies, vts_ul = GetVeritasSensitivity()
+
+        Fermi_energies, Fermi_fluxes, Fermi_flux_errs = GetFermiFluxJ1857p026()
+        Magic_energies, Magic_fluxes, Magic_flux_errs = GetMagicFluxJ1857p026()
+        Hess_energies, Hess_fluxes, Hess_flux_errs = GetHessFluxJ1857p026()
+
+        axbig = fig.add_subplot()
+        axbig.plot(vts_energies,vts_ul,color='orange',label='VERITAS sensitivity')
+        axbig.errorbar(Fermi_energies,Fermi_fluxes,Fermi_flux_errs,color='g',marker='s',ls='none',label='Fermi-LAT')
+        axbig.errorbar(Magic_energies,Magic_fluxes,Magic_flux_errs,color='r',marker='s',ls='none',label='MAGIC')
+        axbig.errorbar(Hess_energies,Hess_fluxes,Hess_flux_errs,color='b',marker='s',ls='none',label='HESS')
+        axbig.bar(energy_axis, 2.*real_flux_syst_err, bottom=real_flux-real_flux_syst_err, width=2.*energy_error, color='b', align='center', alpha=0.2)
+        axbig.errorbar(energy_axis,real_flux,real_flux_total_err,xerr=energy_error,color='k',marker='_',ls='none',label='Data')
+
+        axbig.set_xlabel('Energy [GeV]')
+        axbig.set_ylabel('$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}$]')
+        axbig.set_xscale('log')
+        axbig.set_yscale('log')
+        axbig.legend(loc='best')
+        plotname = 'RealSpectrum_%s_r%s'%(roi_name,roi_r)
+        fig.savefig("output_plots/%s_%s.png"%(plotname,plot_tag),bbox_inches='tight')
+        axbig.remove()
+
+        PrintSpectralDataForNaima(Magic_energies,Magic_fluxes,Magic_flux_errs,'MAGIC')
+        PrintSpectralDataForNaima(Hess_energies,Hess_fluxes,Hess_flux_errs,'HESS')
+        PrintSpectralDataForNaima(Fermi_energies,Fermi_fluxes,Fermi_flux_errs,'Fermi')
+        PrintSpectralDataForNaima(energy_axis,real_flux,real_flux_total_err,'VERITAS')
+
+    elif 'PSR_J2021_p3651' in source_name:
+
+        log_energy = np.linspace(log10(1e2),log10(1e4),50)
+        xdata = pow(10.,log_energy)
+
+        vts_energies, vts_ul = GetVeritasSensitivity()
+
+        Hawc_energies, Hawc_fluxes, Hawc_flux_errs = GetHawcFluxDragonfly()
+
+        axbig = fig.add_subplot()
+        axbig.plot(vts_energies,vts_ul,color='orange',label='VERITAS sensitivity')
+        axbig.errorbar(Hawc_energies,Hawc_fluxes,Hawc_flux_errs,color='g',marker='s',ls='none',label='eHWC J2019+368',zorder=1)
+        axbig.bar(energy_axis, 2.*real_flux_syst_err, bottom=real_flux-real_flux_syst_err, width=2.*energy_error, color='b', align='center', alpha=0.2)
+        axbig.errorbar(energy_axis,real_flux,real_flux_total_err,xerr=energy_error,color='k',marker='_',ls='none',label='Data')
+
+        axbig.set_xlabel('Energy [GeV]')
+        axbig.set_ylabel('$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}$]')
+        axbig.set_xscale('log')
+        axbig.set_yscale('log')
+        axbig.legend(loc='best')
+        plotname = 'RealSpectrum_%s_r%s'%(roi_name,roi_r)
+        fig.savefig("output_plots/%s_%s.png"%(plotname,plot_tag),bbox_inches='tight')
+        axbig.remove()
+
     elif 'PSR_J2021_p4026' in source_name:
 
         log_energy = np.linspace(log10(1e2),log10(1e4),50)
@@ -755,9 +1040,12 @@ def MakeSpectrum(roi_x,roi_y,roi_r,roi_name,excl_roi_x,excl_roi_y,excl_roi_r):
 
         vts_energies, vts_ul = GetVeritasSensitivity()
 
+        Veritas_energies, Veritas_fluxes, Veritas_flux_errs = GetVeritasFluxGammaCygni()
+
         axbig = fig.add_subplot()
         axbig.plot(vts_energies,vts_ul,color='orange',label='VERITAS sensitivity')
-        axbig.plot(xdata, ydata_veritas_paper,'r-',label='VERITAS (1305.6508)',zorder=1)
+        axbig.errorbar(Veritas_energies,Veritas_fluxes,Veritas_flux_errs,color='g',marker='s',ls='none',label='VERITAS (1305.6508)',zorder=1)
+        axbig.plot(xdata, ydata_veritas_paper,'r-',zorder=1)
         axbig.bar(energy_axis, 2.*real_flux_syst_err, bottom=real_flux-real_flux_syst_err, width=2.*energy_error, color='b', align='center', alpha=0.2)
         axbig.errorbar(energy_axis,real_flux,real_flux_total_err,xerr=energy_error,color='k',marker='_',ls='none',label='Data')
 
@@ -1164,6 +1452,16 @@ if 'Crab' in source_name:
     region_r = [CommonPlotFunctions.calibration_radius]
     #region_r = [1.5]
     region_name = 'Center'
+elif 'PSR_J2021_p3651' in source_name:
+    region_x = [304.95]
+    region_y = [36.78]
+    region_r = [0.6]
+    region_name = 'Center'
+elif 'SNR_G150_p4' in source_name:
+    region_x = [MapCenter_x]
+    region_y = [MapCenter_y]
+    region_r = [1.52]
+    region_name = 'Center'
 elif 'Geminga' in source_name:
     region_x = [MapCenter_x]
     region_y = [MapCenter_y]
@@ -1181,6 +1479,11 @@ elif 'PSR_J1907_p0602' in source_name:
     #region_y = [7.20]
     #region_r = [0.3]
     #region_name = 'LHAASO'
+
+    #region_x = [286.975]
+    #region_y = [6.03777777778]
+    #region_r = [1.2]
+    #region_name = 'PSR'
 
 elif 'SS433' in source_name:
 
@@ -1212,10 +1515,14 @@ elif 'PSR_J1856_p0245' in source_name:
     region_r = [1.0]
     region_name = 'HESS'
 elif 'PSR_J2021_p4026' in source_name:
-    region_x = [305.0200000]
-    region_y = [40.7572222]
-    region_r = [0.3]
-    region_name = 'Center'
+    #region_x = [305.0200000]
+    #region_y = [40.7572222]
+    #region_r = [0.3]
+    #region_name = 'Paper'
+    region_x = [305.37]
+    region_y = [40.45]
+    region_r = [0.5]
+    region_name = 'PSR'
 elif '2HWC_J1953_p294' in source_name:
     # G067.6+00.9
     region_x = [299.44]
@@ -1226,6 +1533,11 @@ elif 'SNR_G189_p03' in source_name:
     region_x = [94.213]
     region_y = [22.503]
     region_r = [0.5]
+    region_name = 'Center'
+elif 'PSR_J2032_p4127' in source_name:
+    region_x = [MapCenter_x]
+    region_y = [MapCenter_y]
+    region_r = [1.5]
     region_name = 'Center'
 
 
@@ -1567,10 +1879,10 @@ hist_real_diff_skymap_reflect = CommonPlotFunctions.reflectXaxis(hist_real_diff_
 CommonPlotFunctions.MatplotlibMap2D(hist_real_diff_skymap_reflect,None,[],fig,'RA','Dec','Excess count','SkymapExcess_Sum_%s'%(plot_tag),roi_x=region_x,roi_y=region_y,roi_r=region_r,psf=0.08)
 hist_real_diff_skymap_le = CommonPlotFunctions.Smooth2DMap(hist_real_diff_skymap_le,smooth_size_spectroscopy,False)
 hist_real_diff_skymap_reflect = CommonPlotFunctions.reflectXaxis(hist_real_diff_skymap_le)
-CommonPlotFunctions.MatplotlibMap2D(hist_real_diff_skymap_reflect,None,[],fig,'RA','Dec','Excess count','SkymapExcess_LE_%s'%(plot_tag),psf=0.08)
+CommonPlotFunctions.MatplotlibMap2D(hist_real_diff_skymap_reflect,None,[],fig,'RA','Dec','Excess count','SkymapExcess_LE_%s'%(plot_tag),roi_x=region_x,roi_y=region_y,roi_r=region_r,psf=0.08)
 hist_real_diff_skymap_he = CommonPlotFunctions.Smooth2DMap(hist_real_diff_skymap_he,smooth_size_spectroscopy,False)
 hist_real_diff_skymap_reflect = CommonPlotFunctions.reflectXaxis(hist_real_diff_skymap_he)
-CommonPlotFunctions.MatplotlibMap2D(hist_real_diff_skymap_reflect,None,[],fig,'RA','Dec','Excess count','SkymapExcess_HE_%s'%(plot_tag),psf=0.08)
+CommonPlotFunctions.MatplotlibMap2D(hist_real_diff_skymap_reflect,None,[],fig,'RA','Dec','Excess count','SkymapExcess_HE_%s'%(plot_tag),roi_x=region_x,roi_y=region_y,roi_r=region_r,psf=0.08)
 SaveFITS(hist_real_diff_skymap_le)
 SaveFITS(hist_real_diff_skymap_he)
 
@@ -1810,7 +2122,7 @@ elif 'PSR_J2032_p4127' in source_name:
     Hist_mc_column.Add(Hist_mc_intensity)
     Hist_mc_column.Scale(CO_intensity_to_H_column_density) # H2 column density in unit of 1/cm2
     Hist_mc_column_reflect = CommonPlotFunctions.reflectXaxis(Hist_mc_column)
-    CommonPlotFunctions.MatplotlibMap2D(Hist_mc_column_reflect,None,[],fig,'RA','Dec','column density [$1/cm^{2}$]','SkymapRadioCOMap_%s'%(plot_tag),colormap='gray')
+    CommonPlotFunctions.MatplotlibMap2D(Hist_mc_column_reflect,None,[hist_real_diff_skymap_he_reflect,hist_real_diff_skymap_le_reflect],fig,'RA','Dec','column density [$1/cm^{2}$]','SkymapRadioCOMap_%s'%(plot_tag),colormap='gray')
 
     MWL_map_file = '/gamma_raid/userspace/rshang/MW_FITS/DHT10_Cygnus_interp.fits' 
     vel_axis_inner, column_density_axis_inner = CommonPlotFunctions.GetVelocitySpectrum(MWL_map_file, 80.22, 1.04, 0.0, 0.4)

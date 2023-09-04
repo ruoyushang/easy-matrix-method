@@ -6,45 +6,46 @@ SMI_DIR = os.environ['SMI_DIR']
 
 input_params = []
 
-#input_params += [ ['1ES0647'               ,102.694 ,25.050 ,30 ,90] ]
-#input_params += [ ['1ES1011'               ,153.767 ,49.434 ,30 ,90] ]
-#input_params += [ ['1ES0414'               ,64.220  ,1.089  ,30 ,90] ]
-#input_params += [ ['M82'                   ,148.970 ,69.679 ,30 ,90] ]
-#input_params += [ ['1ES0502'               ,76.983  ,67.623 ,30 ,90] ]
-#input_params += [ ['3C264'                 ,176.271 ,19.606 ,30 ,90] ]
-#input_params += [ ['BLLac'                 ,330.680 ,42.277 ,30 ,90] ]
-#input_params += [ ['Draco'                 ,260.059 ,57.921 ,30 ,90] ]
-#input_params += [ ['OJ287'                 ,133.705 ,20.100 ,30 ,90] ]
-#input_params += [ ['H1426'                 ,217.136  ,42.673 ,30 ,90] ]
-#input_params += [ ['NGC1275'               ,49.950  ,41.512 ,30 ,90] ]
-#input_params += [ ['Segue1'                ,151.767 ,16.082 ,30 ,90] ]
-#input_params += [ ['3C273'                 ,187.277 ,2.05   ,30 ,90] ]
-#input_params += [ ['PG1553'                ,238.936 ,11.195 ,30 ,90] ]
-#input_params += [ ['PKS1424'               ,216.750 ,23.783 ,30 ,90] ]
-#input_params += [ ['1ES0229'               ,38.222  ,20.273 ,30 ,90] ]
-#input_params += [ ['RGB_J0710_p591'        ,107.61  ,59.15  ,30 ,90] ]
-#input_params += [ ['UrsaMinor'             ,227.285 ,67.222 ,30 ,90] ]
-#input_params += [ ['UrsaMajorII'           ,132.875 ,63.13  ,30 ,90] ]
-#input_params += [ ['CrabNebula_elev_80_90' ,83.633  ,22.014 ,80 ,90] ]
-#input_params += [ ['CrabNebula_elev_70_80' ,83.633  ,22.014 ,70 ,80] ]
-#input_params += [ ['CrabNebula_elev_60_70' ,83.633  ,22.014 ,60 ,70] ]
-#input_params += [ ['CrabNebula_elev_50_60' ,83.633  ,22.014 ,50 ,60] ]
-#input_params += [ ['CrabNebula_elev_40_50' ,83.633  ,22.014 ,40 ,50] ]
-#input_params += [ ['CrabNebula_elev_30_40' ,83.633  ,22.014 ,30 ,40] ]
-#input_params += [ ['CrabNebula_1p0wobble' ,83.633  ,22.014 ,30 ,90] ]
-#input_params += [ ['CrabNebula_1p5wobble' ,83.633  ,22.014 ,30 ,90] ]
-##
-#input_params += [ ['PSR_J1907_p0602'       ,286.975 ,6.337  ,30 ,90] ]
-#input_params += [ ['PSR_J2021_p4026'       ,305.37  ,40.45  ,30 ,90] ] # gamma cygni
-#input_params += [ ['SNR_G189_p03'          ,94.213  ,22.503 ,30 ,90] ] # ic 443
-#input_params += [ ['Geminga'               ,98.476  ,17.770 ,30 ,90] ]
-#input_params += [ ['PSR_J2021_p3651'       ,305.27  ,36.85  ,30 ,90] ] # Dragonfly
-#input_params += [ ['PSR_J2032_p4127', 308.05  , 41.46  ,30 ,90] ]
-#input_params += [ ['PSR_J1856_p0245', 284.21  , 2.76  ,30 ,90] ]
-#input_params += [ ['SS433'       ,288.404, 4.930  ,30 ,90] ]
+input_params += [ ['1ES0647'               ,102.694 ,25.050 ,30 ,90] ]
+input_params += [ ['1ES1011'               ,153.767 ,49.434 ,30 ,90] ]
+input_params += [ ['1ES0414'               ,64.220  ,1.089  ,30 ,90] ]
+input_params += [ ['M82'                   ,148.970 ,69.679 ,30 ,90] ]
+input_params += [ ['1ES0502'               ,76.983  ,67.623 ,30 ,90] ]
+input_params += [ ['3C264'                 ,176.271 ,19.606 ,30 ,90] ]
+input_params += [ ['BLLac'                 ,330.680 ,42.277 ,30 ,90] ]
+input_params += [ ['Draco'                 ,260.059 ,57.921 ,30 ,90] ]
+input_params += [ ['OJ287'                 ,133.705 ,20.100 ,30 ,90] ]
+input_params += [ ['H1426'                 ,217.136  ,42.673 ,30 ,90] ]
+input_params += [ ['NGC1275'               ,49.950  ,41.512 ,30 ,90] ]
+input_params += [ ['Segue1'                ,151.767 ,16.082 ,30 ,90] ]
+input_params += [ ['3C273'                 ,187.277 ,2.05   ,30 ,90] ]
+input_params += [ ['PG1553'                ,238.936 ,11.195 ,30 ,90] ]
+input_params += [ ['PKS1424'               ,216.750 ,23.783 ,30 ,90] ]
+input_params += [ ['1ES0229'               ,38.222  ,20.273 ,30 ,90] ]
+input_params += [ ['RGB_J0710_p591'        ,107.61  ,59.15  ,30 ,90] ]
+input_params += [ ['UrsaMinor'             ,227.285 ,67.222 ,30 ,90] ]
+input_params += [ ['UrsaMajorII'           ,132.875 ,63.13  ,30 ,90] ]
+input_params += [ ['CrabNebula_elev_80_90' ,83.633  ,22.014 ,80 ,90] ]
+input_params += [ ['CrabNebula_elev_70_80' ,83.633  ,22.014 ,70 ,80] ]
+input_params += [ ['CrabNebula_elev_60_70' ,83.633  ,22.014 ,60 ,70] ]
+input_params += [ ['CrabNebula_elev_50_60' ,83.633  ,22.014 ,50 ,60] ]
+input_params += [ ['CrabNebula_elev_40_50' ,83.633  ,22.014 ,40 ,50] ]
+input_params += [ ['CrabNebula_elev_30_40' ,83.633  ,22.014 ,30 ,40] ]
+input_params += [ ['CrabNebula_1p0wobble' ,83.633  ,22.014 ,30 ,90] ]
+input_params += [ ['CrabNebula_1p5wobble' ,83.633  ,22.014 ,30 ,90] ]
+#
+input_params += [ ['PSR_J1907_p0602'       ,286.975 ,6.337  ,30 ,90] ]
+input_params += [ ['PSR_J2021_p4026'       ,305.37  ,40.45  ,30 ,90] ] # gamma cygni
+input_params += [ ['SNR_G189_p03'          ,94.213  ,22.503 ,30 ,90] ] # ic 443
+input_params += [ ['Geminga'               ,98.476  ,17.770 ,30 ,90] ]
+input_params += [ ['PSR_J2021_p3651'       ,305.27  ,36.85  ,30 ,90] ] # Dragonfly
+input_params += [ ['PSR_J2032_p4127', 308.05  , 41.46  ,30 ,90] ]
+input_params += [ ['PSR_J1856_p0245', 284.21  , 2.76  ,30 ,90] ]
+input_params += [ ['SS433'       ,288.404, 4.930  ,30 ,90] ]
+input_params += [ ['SNR_G150_p4', 66.785, 55.458,30 ,90] ] # Jamie's SNR
 #
 #input_params += [ ['LHAASO_J0622_p3754', 95.50  , 37.90  ,30 ,90] ]
-input_params += [ ['LHAASO_J1956_p2845', 299.05  , 28.75  ,30 ,90] ]
+#input_params += [ ['LHAASO_J1956_p2845', 299.05  , 28.75  ,30 ,90] ]
 #input_params += [ ['PSR_J0248_p6021', 42.077  , 60.359  ,30 ,90] ]
 #input_params += [ ['PSR_J0359_p5414', 59.858  , 54.248  ,30 ,90] ]
 
@@ -55,6 +56,8 @@ input_params += [ ['LHAASO_J1956_p2845', 299.05  , 28.75  ,30 ,90] ]
 
 # galactic observations with > 50 runs
 #input_params += [ ['CTA1', 1.608, 72.983  ,30 ,90] ]
+#input_params += [ ['Tycho', 6.28  , 64.17  ,30 ,90] ]
+#input_params += [ ['Cas_A', 350.8075  , 58.8072  ,30 ,90] ]
 #input_params += [ ['SNR_G067p6_p0p9', 299.44, 30.88  ,30 ,90] ]
 #input_params += [ ['2HWC_J1953_p294', 298.26  , 29.48  ,30 ,90] ]
 #input_params += [ ['Cisne_HS_2013', 304.08  , 36.13  ,30 ,90] ]
@@ -68,10 +71,17 @@ input_params += [ ['LHAASO_J1956_p2845', 299.05  , 28.75  ,30 ,90] ]
 #input_params += [ ['PSR_B1937_HESS_J1943', 295.45  , 21.44  ,30 ,90] ]
 #input_params += [ ['PSR_J2238_p5903', 339.50  , 59.05  ,30 ,90] ]
 #input_params += [ ['TeV2032_Cyg_X3', 308.  , 41.23  ,30 ,90] ] # high-mass X-ray binary
-#input_params += [ ['Tycho', 6.28  , 64.17  ,30 ,90] ]
-#input_params += [ ['Cas_A', 350.8075  , 58.8072  ,30 ,90] ]
 #
 #input_params += [ ['InputList_Mrk421', 166.0791667  , 38.1947222  ,30 ,90] ]
+#input_params += [ ['InputList_PSR_J2032_p4127_baseline', 308.05, 41.46,30 ,90] ]
+#input_params += [ ['InputList_PSR_J2032_p4127_binary', 308.05, 41.46,30 ,90] ]
+
+# TAC 2023-2024
+#input_params += [ ['PSR_J1740_p1000', 265.1, 10.0, 30 ,90] ]
+#input_params += [ ['PSR_B0656_p14', 105.0, 14.2, 30 ,90] ]
+input_params += [ ['PSR_J0631_p1036', 97.9, 10.6, 30 ,90] ]
+#input_params += [ ['PSR_J0633_p0632', 98.4, 6.5, 30 ,90] ]
+
 
 #input_params += [ ['Galactic_Plane', 0., 0.  ,30 ,90] ]
 #input_params += [ ['LHAASO_Catalog', 0., 0.  ,30 ,90] ]
@@ -99,9 +109,12 @@ for s in range(0,len(input_params)):
     file.write('#$ -m e\n')
     file.write('. /u/local/Modules/default/init/modules.sh\n')
     file.write('cd %s\n'%(SMI_DIR))
-    file.write('python3 veritas_db_query.py "%s" %s %s %s %s "V4"\n'%(input_params[s][0],input_params[s][1],input_params[s][2],input_params[s][3],input_params[s][4]))
-    file.write('python3 veritas_db_query.py "%s" %s %s %s %s "V5"\n'%(input_params[s][0],input_params[s][1],input_params[s][2],input_params[s][3],input_params[s][4]))
-    file.write('python3 veritas_db_query.py "%s" %s %s %s %s "V6"\n'%(input_params[s][0],input_params[s][1],input_params[s][2],input_params[s][3],input_params[s][4]))
+    if input_params[s][0]=='AUX_files':
+        file.write('python3 veritas_db_query.py "%s" %s %s %s %s "V4V5V6"\n'%(input_params[s][0],input_params[s][1],input_params[s][2],input_params[s][3],input_params[s][4]))
+    else:
+        file.write('python3 veritas_db_query.py "%s" %s %s %s %s "V6"\n'%(input_params[s][0],input_params[s][1],input_params[s][2],input_params[s][3],input_params[s][4]))
+        file.write('python3 veritas_db_query.py "%s" %s %s %s %s "V5"\n'%(input_params[s][0],input_params[s][1],input_params[s][2],input_params[s][3],input_params[s][4]))
+        file.write('python3 veritas_db_query.py "%s" %s %s %s %s "V4"\n'%(input_params[s][0],input_params[s][1],input_params[s][2],input_params[s][3],input_params[s][4]))
     file.close() 
 
 job_counts = 0

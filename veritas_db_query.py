@@ -99,7 +99,7 @@ def print_all_runs_nsb():
             if x['run_id']==previous_run_id: continue
             previous_run_id = x['run_id']
 
-            if x['run_id']<46642: continue
+            #if x['run_id']<46642: continue
             if all_runs_weather[x['run_id']]==None: continue
             if 'C' in all_runs_weather[x['run_id']]: continue
             if 'D' in all_runs_weather[x['run_id']]: continue
@@ -174,17 +174,20 @@ def get_all_runs_info(epoch,obs_type):
     global all_runs_info
 
     # setup database connection
-    dbcnx=pymysql.connect(host='romulus.ucsc.edu', db='VOFFLINE', user='readonly', cursorclass=pymysql.cursors.DictCursor)
+    #dbcnx=pymysql.connect(host='romulus.ucsc.edu', db='VOFFLINE', user='readonly', cursorclass=pymysql.cursors.DictCursor)
+    dbcnx=pymysql.connect(host='romulus.ucsc.edu', db='VERITAS', user='readonly', cursorclass=pymysql.cursors.DictCursor)
     # connect to database
     crs=dbcnx.cursor()
 
     all_runs_comments = {}
-    query = 'SELECT run_id,usable_duration FROM tblRun_Analysis_Comments'
+    #query = 'SELECT run_id,usable_duration FROM tblRun_Analysis_Comments'
+    query = 'SELECT run_id,duration FROM tblRun_Info'
     crs.execute(query)
     # fetch from cursor
     res_comment = crs.fetchall()
     for x in res_comment:
-        all_runs_comments[x['run_id']] = get_sec(str(x['usable_duration']))
+        #all_runs_comments[x['run_id']] = get_sec(str(x['usable_duration']))
+        all_runs_comments[x['run_id']] = get_sec(str(x['duration']))
 
     dbcnx.close()
 
@@ -207,7 +210,7 @@ def get_all_runs_info(epoch,obs_type):
         if 'D' in x['weather']: continue
         if 'F' in x['weather']: continue
 
-        if x['run_id']<46642: continue
+        #if x['run_id']<46642: continue
         if x['run_id']<46642:
             if not epoch=='V4': continue
         if x['run_id']>=46642 and x['run_id']<63373:
@@ -253,8 +256,10 @@ def get_all_runs_info(epoch,obs_type):
         #az_avg_run = az_avg_run/total_entries*180./math.pi
 
         el_avg_run,az_avg_run = get_run_elaz_from_aux_file(x['run_id'])
+        nsb_run = get_run_nsb_from_aux_file(x['run_id'])
+        #print ('Run %s, el %s, az %s'%(x['run_id'],el_avg_run,az_avg_run))
 
-        all_runs_info += [[x['run_id'],x['source_id'],el_avg_run,az_avg_run,run_usable_time]]
+        all_runs_info += [[x['run_id'],x['source_id'],el_avg_run,az_avg_run,run_usable_time,nsb_run]]
 
     dbcnx.close()
 
@@ -286,7 +291,7 @@ def print_all_runs_l3rate():
             if x['run_id']==previous_run_id: continue
             previous_run_id = x['run_id']
 
-            if x['run_id']<46642: continue
+            #if x['run_id']<46642: continue
             if all_runs_weather[x['run_id']]==None: continue
             if 'C' in all_runs_weather[x['run_id']]: continue
             if 'D' in all_runs_weather[x['run_id']]: continue
@@ -324,14 +329,26 @@ def print_all_runs_l3rate():
 
     dbcnx.close()
 
+def get_run_nsb_from_aux_file(run_id):
+
+    inputFile = open('/gamma_raid/userspace/rshang/SMI_AUX/NSB_allruns.txt')
+    for line in inputFile:
+        line = line.strip('\n')
+        line_split = line.split(' ')
+        if int(run_id)==int(line_split[0]):
+            nsb = float(line_split[1])
+            return nsb
+    return 0
+
 def get_run_elaz_from_aux_file(run_id):
 
     inputFile = open('/gamma_raid/userspace/rshang/SMI_AUX/elaz_allruns.txt')
     for line in inputFile:
         line = line.strip('\n')
-        if run_id==line[0]:
-            el = float(line[1])
-            az = float(line[2])
+        line_split = line.split(' ')
+        if int(run_id)==int(line_split[0]):
+            el = float(line_split[1])
+            az = float(line_split[2])
             return el, az
     return 0, 0
 
@@ -363,7 +380,7 @@ def print_all_runs_el_az():
             if x['run_id']==previous_run_id: continue
             previous_run_id = x['run_id']
 
-            if x['run_id']<46642: continue
+            #if x['run_id']<46642: continue
             if all_runs_weather[x['run_id']]==None: continue
             if 'C' in all_runs_weather[x['run_id']]: continue
             if 'D' in all_runs_weather[x['run_id']]: continue
@@ -498,18 +515,21 @@ def get_run_timecut(run_id):
 def print_all_runs_usable_duration():
 
     # setup database connection
-    dbcnx=pymysql.connect(host='romulus.ucsc.edu', db='VOFFLINE', user='readonly', cursorclass=pymysql.cursors.DictCursor)
+    #dbcnx=pymysql.connect(host='romulus.ucsc.edu', db='VOFFLINE', user='readonly', cursorclass=pymysql.cursors.DictCursor)
+    dbcnx=pymysql.connect(host='romulus.ucsc.edu', db='VERITAS', user='readonly', cursorclass=pymysql.cursors.DictCursor)
     # connect to database
     crs=dbcnx.cursor()
 
-    query = 'SELECT run_id,usable_duration FROM tblRun_Analysis_Comments'
+    #query = 'SELECT run_id,usable_duration FROM tblRun_Analysis_Comments'
+    query = 'SELECT run_id,duration FROM tblRun_Info'
     crs.execute(query)
     # fetch from cursor
     res = crs.fetchall()
 
     with open('/gamma_raid/userspace/rshang/SMI_AUX/usable_time_allruns.txt', 'w') as file:
         for x in res:
-            duration = get_sec(str(x['usable_duration']))
+            #duration = get_sec(str(x['usable_duration']))
+            duration = get_sec(str(x['duration']))
             print ('%s %s'%(x['run_id'],duration))
             file.write('%s %s\n'%(x['run_id'],duration))
 
@@ -518,11 +538,13 @@ def print_all_runs_usable_duration():
 def get_run_usable_duration(run_id):
 
     # setup database connection
-    dbcnx=pymysql.connect(host='romulus.ucsc.edu', db='VOFFLINE', user='readonly', cursorclass=pymysql.cursors.DictCursor)
+    #dbcnx=pymysql.connect(host='romulus.ucsc.edu', db='VOFFLINE', user='readonly', cursorclass=pymysql.cursors.DictCursor)
+    dbcnx=pymysql.connect(host='romulus.ucsc.edu', db='VERITAS', user='readonly', cursorclass=pymysql.cursors.DictCursor)
     # connect to database
     crs=dbcnx.cursor()
 
-    query = 'SELECT run_id,usable_duration FROM tblRun_Analysis_Comments WHERE run_id=%s'%(run_id)
+    #query = 'SELECT run_id,usable_duration FROM tblRun_Analysis_Comments WHERE run_id=%s'%(run_id)
+    query = 'SELECT run_id,duration FROM tblRun_Info WHERE run_id=%s'%(run_id)
     crs.execute(query)
     # fetch from cursor
     res = crs.fetchall()
@@ -532,7 +554,8 @@ def get_run_usable_duration(run_id):
 
     if len(res)==0:
         return 0.
-    return get_sec(str(res[0]['usable_duration']))
+    #return get_sec(str(res[0]['usable_duration']))
+    return get_sec(str(res[0]['duration']))
 
 def get_run_ra_dec(run_id):
 
@@ -650,17 +673,20 @@ def find_runs_near_galactic_plane(obs_name,epoch,obs_type,gal_b_low,gal_b_up):
     dbcnx.close()
 
     # setup database connection
-    dbcnx=pymysql.connect(host='romulus.ucsc.edu', db='VOFFLINE', user='readonly', cursorclass=pymysql.cursors.DictCursor)
+    #dbcnx=pymysql.connect(host='romulus.ucsc.edu', db='VOFFLINE', user='readonly', cursorclass=pymysql.cursors.DictCursor)
+    dbcnx=pymysql.connect(host='romulus.ucsc.edu', db='VERITAS', user='readonly', cursorclass=pymysql.cursors.DictCursor)
     # connect to database
     crs=dbcnx.cursor()
 
     all_runs_duration = {}
-    query = 'SELECT run_id,usable_duration FROM tblRun_Analysis_Comments'
+    #query = 'SELECT run_id,usable_duration FROM tblRun_Analysis_Comments'
+    query = 'SELECT run_id,duration FROM tblRun_Info'
     crs.execute(query)
     # fetch from cursor
     res_comment = crs.fetchall()
     for x in res_comment:
-        all_runs_duration[x['run_id']] = get_sec(str(x['usable_duration']))
+        #all_runs_duration[x['run_id']] = get_sec(str(x['usable_duration']))
+        all_runs_duration[x['run_id']] = get_sec(str(x['duration']))
 
     dbcnx.close()
 
@@ -687,7 +713,7 @@ def find_runs_near_galactic_plane(obs_name,epoch,obs_type,gal_b_low,gal_b_up):
     res = crs.fetchall()
     for x in res:
 
-        if x['run_id']<46642: continue
+        #if x['run_id']<46642: continue
         if x['run_id']<46642:
             if not epoch=='V4': continue
         if x['run_id']>=46642 and x['run_id']<63373:
@@ -753,7 +779,7 @@ def find_runs_near_galactic_plane(obs_name,epoch,obs_type,gal_b_low,gal_b_up):
 
 def find_on_runs_from_a_list(input_file_name):
 
-    input_file = open('output_vts_hours/'+input_file_name+'.txt')
+    input_file = open('output_vts_hours/RunList_'+input_file_name+'.txt')
     on_run_list = []
     for line in input_file:
         on_run_list += [int(line.strip('\n'))]
@@ -783,21 +809,12 @@ def find_on_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_range
     res = crs.fetchall()
     for x in res:
         source_name = x['source_id']
-        #print ('source_name = %s'%(source_name))
         source_ra = x['ra']*180./math.pi
         source_dec = x['decl']*180./math.pi
         source_gal_l, source_gal_b = ConvertRaDecToGalactic(source_ra,source_dec)
         distance = pow(pow(obs_ra-source_ra,2)+pow(obs_dec-source_dec,2),0.5)
         if distance<search_radius:
             list_on_sources += [source_name]
-        #if distance>10.:
-        #    if 'HWC' in source_name: continue
-        #    #if abs(source_ra-83.633)<2. and abs(source_dec-22.014)<2.: continue # Crab
-        #    #if abs(source_ra-166.079)<2. and abs(source_dec-38.195)<2.: continue # Mrk 421
-        #    #if abs(source_ra-253.467)<2. and abs(source_dec-39.76)<2.: continue # Mrk 501
-        #    if abs(source_ra-98.117)<3. and abs(source_dec-17.367)<3.: continue # Geminga
-        #    if abs(source_gal_b)>10.:
-        #        list_off_sources += [source_name]
     print ('++++++++++++++++++++++++++++++++++++++++++++++++++++')
     for src in range(0,len(list_on_sources)):
         print (list_on_sources[src])
@@ -805,17 +822,20 @@ def find_on_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_range
     dbcnx.close()
 
     # setup database connection
-    dbcnx=pymysql.connect(host='romulus.ucsc.edu', db='VOFFLINE', user='readonly', cursorclass=pymysql.cursors.DictCursor)
+    #dbcnx=pymysql.connect(host='romulus.ucsc.edu', db='VOFFLINE', user='readonly', cursorclass=pymysql.cursors.DictCursor)
+    dbcnx=pymysql.connect(host='romulus.ucsc.edu', db='VERITAS', user='readonly', cursorclass=pymysql.cursors.DictCursor)
     # connect to database
     crs=dbcnx.cursor()
 
     all_runs_duration = {}
-    query = 'SELECT run_id,usable_duration FROM tblRun_Analysis_Comments'
+    #query = 'SELECT run_id,usable_duration FROM tblRun_Analysis_Comments'
+    query = 'SELECT run_id,duration FROM tblRun_Info'
     crs.execute(query)
     # fetch from cursor
     res_comment = crs.fetchall()
     for x in res_comment:
-        all_runs_duration[x['run_id']] = get_sec(str(x['usable_duration']))
+        #all_runs_duration[x['run_id']] = get_sec(str(x['usable_duration']))
+        all_runs_duration[x['run_id']] = get_sec(str(x['duration']))
 
     dbcnx.close()
 
@@ -842,7 +862,7 @@ def find_on_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_range
     res = crs.fetchall()
     for x in res:
 
-        if x['run_id']<46642: continue
+        #if x['run_id']<46642: continue
         if x['run_id']<46642:
             if not epoch=='V4': continue
         if x['run_id']>=46642 and x['run_id']<63373:
@@ -866,30 +886,48 @@ def find_on_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_range
 
         if x['run_id'] in all_runs_type:
             run_type = all_runs_type[x['run_id']]
-            if run_type!=obs_type: continue
+            if run_type!=obs_type: 
+                print ('RUN %s rejected because of observation type = %s'%(x['run_id'],run_type))
+                continue
         else:
             continue
 
         if x['run_id'] in all_runs_weather:
             run_weather = all_runs_weather[x['run_id']]
-            if run_weather==None: continue
-            if 'C' in run_weather: continue
-            if 'D' in run_weather: continue
-            if 'F' in run_weather: continue
+            if run_weather==None: 
+                print ('RUN %s rejected because of weather = %s'%(x['run_id'],run_weather))
+                continue
+            if 'C' in run_weather: 
+                print ('RUN %s rejected because of weather = %s'%(x['run_id'],run_weather))
+                continue
+            if 'D' in run_weather: 
+                print ('RUN %s rejected because of weather = %s'%(x['run_id'],run_weather))
+                continue
+            if 'F' in run_weather: 
+                print ('RUN %s rejected because of weather = %s'%(x['run_id'],run_weather))
+                continue
         else:
+            print ('RUN %s rejected because of weather not found'%(x['run_id']))
             continue
 
         if x['run_id'] in all_runs_duration:
             run_duration = all_runs_duration[x['run_id']]
-            if run_duration<5.*60.: continue
+            if run_duration<5.*60.: 
+                print ('RUN %s rejected because of duration = %s'%(x['run_id'],run_duration))
+                continue
         else:
+            print ('RUN %s rejected because of duration not found'%(x['run_id']))
             continue
 
 
         #on_run_el, on_run_az = get_run_el_az(x['run_id'])
         on_run_el, on_run_az = get_run_elaz_from_aux_file(x['run_id'])
-        if on_run_el<elev_range[0]: continue
-        if on_run_el>elev_range[1]: continue
+        if on_run_el<elev_range[0]: 
+            print ('RUN %s rejected because of elevation = %s'%(x['run_id'],on_run_el))
+            continue
+        if on_run_el>elev_range[1]: 
+            print ('RUN %s rejected because of elevation = %s'%(x['run_id'],on_run_el))
+            continue
 
         on_run_ra, on_run_dec = get_run_ra_dec(x['run_id'])
         run_offset = pow(pow(obs_ra-on_run_ra,2)+pow(obs_dec-on_run_dec,2),0.5)
@@ -968,6 +1006,10 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
     list_no_repeat_off_run_ids = []
     list_off_sources = []
 
+    if len(list_on_run_ids)==0:
+        print ('Empty ON run list. Exit.')
+        return list_off_run_ids
+
     out_pair_file = open('output_vts_hours/%s_%s.txt'%(file_name,obs_name),"w")
     out_off_file = open('output_vts_hours/%s_OFFRuns_%s.txt'%(file_name,obs_name),"w")
 
@@ -1010,6 +1052,7 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
 
         #on_run_el, on_run_az = get_run_el_az(list_on_run_ids[on_run])
         on_run_el, on_run_az = get_run_elaz_from_aux_file(list_on_run_ids[on_run])
+        on_run_nsb = get_run_nsb_from_aux_file(list_on_run_ids[on_run])
         number_off_runs = 0
 
         sum_on_run_elev = 0.
@@ -1037,12 +1080,13 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
                     continue
 
             #if abs(all_runs_info[run][0]-list_on_run_ids[on_run])>40000: continue
-            already_used = False
-            for off_run in range(0,len(list_off_run_ids)):
-                if all_runs_info[run][0]==list_off_run_ids[off_run][1]: already_used = True
-            if already_used: continue
+            if not 'ImposterPairList' in file_name:
+                already_used = False
+                for off_run in range(0,len(list_off_run_ids)):
+                    if all_runs_info[run][0]==list_off_run_ids[off_run][1]: already_used = True
+                if already_used: continue
 
-            if all_runs_info[run][0]<46642: continue
+            #if all_runs_info[run][0]<46642: continue
             if all_runs_info[run][0]<46642:
                 if not epoch=='V4': continue
             if all_runs_info[run][0]>=46642 and all_runs_info[run][0]<63373:
@@ -1064,6 +1108,8 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
             off_run_az = all_runs_info[run][3]
             if on_run_el==0.: continue
             if off_run_el==0.: continue
+
+            off_run_nsb = all_runs_info[run][5]
             
             #if off_run_az>180.: off_run_az = 360.-off_run_az 
             #if on_run_az>180.: on_run_az = 360.-on_run_az 
@@ -1076,27 +1122,13 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
 
             if is_imposter:
                 if abs(delta_elev)>5.: continue
+                if abs(delta_azim)>50.: continue
+                if abs(on_run_nsb-off_run_nsb)>1.: continue
             else:
-                #if (sum_off_run_elev-sum_on_run_elev)>0.:
-                #    if (off_run_el-on_run_el)>0.: continue
-                #else:
-                #    if (off_run_el-on_run_el)<0.: continue
-                #if abs(delta_airmass)>0.1: continue
                 if abs(delta_elev)>5.: continue
-                if abs(delta_azim)>20.: continue
-                if abs(all_runs_info[run][0]-list_on_run_ids[on_run])>20000: continue
-
-            nsb_file = open('/gamma_raid/userspace/rshang/SMI_AUX/NSB_allruns.txt')
-            on_run_nsb = 0.
-            off_run_nsb = 0.
-            for line in nsb_file:
-                this_run = line.strip('\n').split(' ')[0]
-                this_nsb = line.strip('\n').split(' ')[1]
-                if all_runs_info[run][0]==int(this_run):
-                    off_run_nsb = float(this_nsb)
-                if list_on_run_ids[on_run]==int(this_run):
-                    on_run_nsb = float(this_nsb)
-            if abs(on_run_nsb-off_run_nsb)>2.: continue
+                if abs(delta_azim)>50.: continue
+                if abs(on_run_nsb-off_run_nsb)>1.: continue
+                #if abs(all_runs_info[run][0]-list_on_run_ids[on_run])>20000: continue
 
             list_off_run_ids += [[int(list_on_run_ids[on_run]),int(all_runs_info[run][0]),on_run_el,off_run_el]]
             number_off_runs += 1

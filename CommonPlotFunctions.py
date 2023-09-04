@@ -57,8 +57,8 @@ folder_tag = '_test'
 #analysis_method = 'Ratio'
 #analysis_method = 'Regression'
 #analysis_method = 'Init_Perturbation'
-#analysis_method = 'Perturbation'
-analysis_method = 'Combined'
+analysis_method = 'Perturbation'
+#analysis_method = 'Combined'
 
 energy_bin = [100.,159.,200.,251.,316.,398.,501.,794.,1259.,1995.,3162.,5011.,7943.]
 #energy_bin = [100.,167.,300.,538.,965.,1732.,3107.,5574.,10000.]
@@ -337,8 +337,8 @@ def GetGammaSourceInfo():
     drawSNR = True
     drawLHAASO = False
     drawFermi = False
-    drawHAWC = False
-    drawTeV = False
+    drawHAWC = True
+    drawTeV = True
 
     if drawBrightStar:
         star_name, star_ra, star_dec = ReadBrightStarListFromFile()

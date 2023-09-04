@@ -14,6 +14,21 @@ pair<double,double> GetSourceRaDec(TString source_name)
 {
     double Source_RA = 0.;
     double Source_Dec = 0.;
+    if (source_name.Contains("PSR_J0631_p1036"))
+    {
+            Source_RA = 97.9;
+            Source_Dec = 10.6;
+    }
+    if (source_name.Contains("Cisne_HS_2013"))
+    {
+            Source_RA = 304.08;
+            Source_Dec = 36.13;
+    }
+    if (source_name.Contains("SNR_G150_p4"))
+    {
+            Source_RA = 67.809;
+            Source_Dec = 55.889;
+    }
     if (source_name.Contains("Mrk421"))
     {
             Source_RA = 166.0791667;
@@ -421,6 +436,7 @@ vector<int> GetRunListFromFile(string source)
     string SMI_DIR;
     SMI_DIR = string(std::getenv("SMI_DIR"));
     ifstream myfile (RUNLIST_DIR+"/RunList_"+source+".txt");
+    std::cout << "Read file " << RUNLIST_DIR+"/RunList_"+source+".txt" << std::endl;
     if (myfile.is_open())
     {
         while ( getline(myfile,line) )

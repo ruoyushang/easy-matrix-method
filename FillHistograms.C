@@ -88,6 +88,10 @@ double complementary_dec_sky = 0;
 double exposure_hours = 0.;
 double exposure_hours_usable = 0.;
 double total_cr_count = 0.;
+double off_cr_count = 0.;
+double avg_diff_nsb = 0.;
+double avg_diff_el = 0.;
+double avg_diff_az = 0.;
 double NSB_mean = 0.;
 double Elev_mean = 0.;
 double Azim_mean = 0.;
@@ -118,6 +122,8 @@ vector<TH2D> Hist_OffData_MSCLW_Fine;
 vector<TH2D> Hist_OnBkgd_MSCLW_Fine;
 vector<TH2D> Hist_OffData_MSCLW_Sum;
 vector<TH2D> Hist_OffData_MSCLW_Fine_Sum;
+vector<TH2D> Hist_OnData_SR_XYoff;
+vector<TH2D> Hist_OnData_CR_XYoff;
 vector<TH2D> Hist_OffData_SR_XYoff;
 vector<TH2D> Hist_OffData_CR_XYoff;
 vector<TH2D> Hist_OffData_Ratio_XYoff;
@@ -787,7 +793,7 @@ pair<double,double> GetRunRaDec(string file_name, int run)
     return std::make_pair(TelRAJ2000_tmp,TelDecJ2000_tmp);
 }
 
-void TrainingRunAnalysis(int int_run_number, int input_xoff_idx, int input_yoff_idx)
+void TrainingRunAnalysis(int int_run_number, int int_run_number_on, int input_xoff_idx, int input_yoff_idx)
 {
 
     char run_number[50];
@@ -813,10 +819,23 @@ void TrainingRunAnalysis(int int_run_number, int input_xoff_idx, int input_yoff_
     //std::cout << "Get time cuts for run " << run_number << std::endl;
     vector<pair<double,double>> timecut_thisrun = GetRunTimecuts(int_run_number);
     //std::cout << "Get elev. and azim. for run " << run_number << std::endl;
-    double tele_elev = GetRunElevAzim(int_run_number).first;
+    double off_tele_elev = GetRunElevAzim(int_run_number).first;
+    double off_tele_azim = GetRunElevAzim(int_run_number).second;
+    if (off_tele_azim>180.) off_tele_azim = 360.-off_tele_azim;
+    double off_NSB = GetRunPedestalVar(int_run_number);
+    double on_tele_elev = GetRunElevAzim(int_run_number_on).first;
+    double on_tele_azim = GetRunElevAzim(int_run_number_on).second;
+    if (on_tele_azim>180.) on_tele_azim = 360.-on_tele_azim;
+    double on_NSB = GetRunPedestalVar(int_run_number_on);
 
     //std::cout << "Get telescope pointing RA and Dec for run " << run_number << std::endl;
     std::pair<double,double> tele_point_ra_dec = GetRunRaDec(filename,int_run_number);
+
+    char run_number_on[50];
+    sprintf(run_number_on, "%i", int_run_number_on);
+    string filename_on;
+    filename_on = TString(SMI_INPUT+"/"+string(run_number_on)+".anasum.root");
+    std::pair<double,double> on_tele_point_ra_dec = GetRunRaDec(filename_on,int_run_number_on);
 
     Data_tree->GetEntry(0);
     double time_0 = Time;
@@ -853,6 +872,8 @@ void TrainingRunAnalysis(int int_run_number, int input_xoff_idx, int input_yoff_
         Phioff = atan2(Yoff,Xoff)+M_PI;
         ra_sky = tele_point_ra_dec.first+Xoff_derot;
         dec_sky = tele_point_ra_dec.second+Yoff_derot;
+        double on_ra_sky = on_tele_point_ra_dec.first+Xoff_derot;
+        double on_dec_sky = on_tele_point_ra_dec.second+Yoff_derot;
         theta2 = pow(ra_sky-mean_tele_point_ra,2)+pow(dec_sky-mean_tele_point_dec,2);
         int energy_idx = Hist_ErecS.FindBin(ErecS*1000.)-1;
         if (!SelectNImages()) continue;
@@ -884,10 +905,16 @@ void TrainingRunAnalysis(int int_run_number, int input_xoff_idx, int input_yoff_
         if (MSCL<MSCL_upper_blind && MSCW<MSCW_upper_blind && MSCL>MSCL_lower_blind && MSCW>MSCW_lower_blind)
         {
             Hist_OffData_SR_XYoff.at(energy_idx).Fill(Xoff,Yoff);
+            //Hist_OffData_SR_XYoff.at(energy_idx).Fill(on_ra_sky,on_dec_sky);
         }
         else
         {
             Hist_OffData_CR_XYoff.at(energy_idx).Fill(Xoff,Yoff);
+            //Hist_OffData_CR_XYoff.at(energy_idx).Fill(on_ra_sky,on_dec_sky);
+            off_cr_count += 1.;
+            avg_diff_nsb += off_NSB-on_NSB;
+            avg_diff_el += off_tele_elev-on_tele_elev;
+            avg_diff_az += off_tele_azim-on_tele_azim;
         }
 
     }
@@ -1047,6 +1074,7 @@ void SingleRunAnalysis(int int_run_number, int int_run_number_real, int input_xo
 
         if (MSCL<MSCL_upper_blind && MSCW<MSCW_upper_blind && MSCL>MSCL_lower_blind && MSCW>MSCW_lower_blind)
         {
+            Hist_OnData_SR_XYoff.at(energy_idx).Fill(Xoff,Yoff);
             Hist_OnData_SR_Skymap.at(energy_idx).Fill(ra_sky,dec_sky);
             if (!FoV_Mask(ra_sky, dec_sky, TString(target)))
             {
@@ -1055,8 +1083,11 @@ void SingleRunAnalysis(int int_run_number, int int_run_number_real, int input_xo
         }
         else
         {
+            Hist_OnData_CR_XYoff.at(energy_idx).Fill(Xoff,Yoff);
             int local_xoff_idx = Hist_OffData_Ratio_XYoff.at(energy_idx).GetXaxis()->FindBin(Xoff);
             int local_yoff_idx = Hist_OffData_Ratio_XYoff.at(energy_idx).GetYaxis()->FindBin(Yoff);
+            //int local_xoff_idx = Hist_OffData_Ratio_XYoff.at(energy_idx).GetXaxis()->FindBin(ra_sky);
+            //int local_yoff_idx = Hist_OffData_Ratio_XYoff.at(energy_idx).GetYaxis()->FindBin(dec_sky);
             double weight = Hist_OffData_Ratio_XYoff.at(energy_idx).GetBinContent(local_xoff_idx,local_yoff_idx);
 
             if (CoincideWithBrightStars(complementary_ra_sky,complementary_dec_sky,ErecS*1000.))
@@ -1677,9 +1708,19 @@ void FillHistograms(string target_data, bool isON, int doImposter)
         Hist_OnInit_MSCLW_Fine_Sum.push_back(TH2D("Hist_OnInit_MSCLW_Fine_Sum_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",mtx_dim_l_fine+n_extra_lower_bins+n_extra_upper_bins,MSCL_plot_lower,MSCL_plot_upper,mtx_dim_w_fine+n_extra_lower_bins+n_extra_upper_bins,MSCW_plot_lower,MSCW_plot_upper));
 
         int XYoff_bins = cr_correction_xyoff_bins[e];
-        Hist_OffData_SR_XYoff.push_back(TH2D("Hist_OffData_SR_XYoff_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",XYoff_bins,-2.,2.,XYoff_bins,-2.,2.));
-        Hist_OffData_CR_XYoff.push_back(TH2D("Hist_OffData_CR_XYoff_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",XYoff_bins,-2.,2.,XYoff_bins,-2.,2.));
-        Hist_OffData_Ratio_XYoff.push_back(TH2D("Hist_OffData_Ratio_XYoff_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",XYoff_bins,-2.,2.,XYoff_bins,-2.,2.));
+        double map_x_lo = -2.;
+        double map_x_up = 2.;
+        double map_y_lo = -2.;
+        double map_y_up = 2.;
+        //double map_x_lo = map_center_x-Skymap_size_x;
+        //double map_x_up = map_center_x+Skymap_size_x;
+        //double map_y_lo = map_center_y-Skymap_size_y;
+        //double map_y_up = map_center_y+Skymap_size_y;
+        Hist_OnData_SR_XYoff.push_back(TH2D("Hist_OnData_SR_XYoff_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",XYoff_bins,map_x_lo,map_x_up,XYoff_bins,map_y_lo,map_y_up));
+        Hist_OnData_CR_XYoff.push_back(TH2D("Hist_OnData_CR_XYoff_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",XYoff_bins,map_x_lo,map_x_up,XYoff_bins,map_y_lo,map_y_up));
+        Hist_OffData_SR_XYoff.push_back(TH2D("Hist_OffData_SR_XYoff_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",XYoff_bins,map_x_lo,map_x_up,XYoff_bins,map_y_lo,map_y_up));
+        Hist_OffData_CR_XYoff.push_back(TH2D("Hist_OffData_CR_XYoff_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",XYoff_bins,map_x_lo,map_x_up,XYoff_bins,map_y_lo,map_y_up));
+        Hist_OffData_Ratio_XYoff.push_back(TH2D("Hist_OffData_Ratio_XYoff_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",XYoff_bins,map_x_lo,map_x_up,XYoff_bins,map_y_lo,map_y_up));
 
         CR_on_count_unweighted.push_back(0.);
         CR_off_count_unweighted.push_back(0.);
@@ -1723,6 +1764,10 @@ void FillHistograms(string target_data, bool isON, int doImposter)
     int n_samples = 0;
     exposure_hours_usable = 0.;
     total_cr_count = 0.;
+    off_cr_count = 0.;
+    avg_diff_nsb = 0.;
+    avg_diff_el = 0.;
+    avg_diff_az = 0.;
     char group_tag[50] = "";
     int group_idx = 0;
 
@@ -1799,7 +1844,7 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                             }
                         }
 
-                        TrainingRunAnalysis(int(OffData_runlist_init[offrun]), xoff_idx, yoff_idx);
+                        TrainingRunAnalysis(int(OffData_runlist_init[offrun]), ON_RunID, xoff_idx, yoff_idx);
 
                         off_unblinded_elements_per_sample.clear();
                         off_blinded_element_per_sample.clear();
@@ -1841,8 +1886,6 @@ void FillHistograms(string target_data, bool isON, int doImposter)
 
                     for (int e=0;e<N_energy_bins;e++) 
                     {
-                        //Hist_OffData_Ratio_XYoff.at(e).Add(&Hist_OffData_SR_XYoff.at(e));
-                        //Hist_OffData_Ratio_XYoff.at(e).Divide(&Hist_OffData_CR_XYoff.at(e));
                         for (int binx=0;binx<Hist_OffData_SR_XYoff.at(e).GetNbinsX();binx++)
                         {
                             for (int biny=0;biny<Hist_OffData_SR_XYoff.at(e).GetNbinsY();biny++)
@@ -1857,8 +1900,6 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                                 Hist_OffData_Ratio_XYoff.at(e).SetBinContent(binx+1,biny+1,srcr_ratio);
                             }
                         }
-                        Hist_OffData_SR_XYoff.at(e).Reset();
-                        Hist_OffData_CR_XYoff.at(e).Reset();
                     }
 
                     std::cout << "Getting ON data..." << std::endl;
@@ -1869,6 +1910,14 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                     else
                     {
                         SingleRunAnalysis(ON_RunID, int(Data_runlist_init[run]), xoff_idx, yoff_idx, false);
+                    }
+
+                    for (int e=0;e<N_energy_bins;e++) 
+                    {
+                        Hist_OnData_SR_XYoff.at(e).Reset();
+                        Hist_OnData_CR_XYoff.at(e).Reset();
+                        Hist_OffData_SR_XYoff.at(e).Reset();
+                        Hist_OffData_CR_XYoff.at(e).Reset();
                     }
 
                 }
@@ -2200,8 +2249,15 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         Hist_OnData_CR_Skymap_Init_Perturbation_Sum.at(e).Add(&Hist_OnData_CR_Skymap_Init_Perturbation.at(e));
                         Hist_OnData_CR_Skymap_Perturbation_Sum.at(e).Add(&Hist_OnData_CR_Skymap_Perturbation.at(e));
                         //Hist_OnData_CR_Skymap_Combined_Sum.at(e).Add(&Hist_OnData_CR_Skymap_FoV.at(e),0.5);
-                        Hist_OnData_CR_Skymap_Combined_Sum.at(e).Add(&Hist_OnData_CR_Skymap_Regression.at(e),0.5);
-                        Hist_OnData_CR_Skymap_Combined_Sum.at(e).Add(&Hist_OnData_CR_Skymap_Perturbation.at(e),0.5);
+                        if (matrix_rank[e]>2)
+                        {
+                            Hist_OnData_CR_Skymap_Combined_Sum.at(e).Add(&Hist_OnData_CR_Skymap_Regression.at(e),0.5);
+                            Hist_OnData_CR_Skymap_Combined_Sum.at(e).Add(&Hist_OnData_CR_Skymap_Perturbation.at(e),0.5);
+                        }
+                        else
+                        {
+                            Hist_OnData_CR_Skymap_Combined_Sum.at(e).Add(&Hist_OnData_CR_Skymap_Init_Perturbation.at(e));
+                        }
                     }
 
                     off_unblinded_elements.clear();
@@ -2312,8 +2368,15 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         Hist_OnInit_MSCLW_Fine_Sum.at(e).Write();
                     }
 
+                    avg_diff_nsb = avg_diff_nsb/off_cr_count;
+                    avg_diff_el = avg_diff_el/off_cr_count;
+                    avg_diff_az = avg_diff_az/off_cr_count;
+
                     TTree InfoTree("InfoTree","info tree");
                     InfoTree.Branch("total_cr_count",&total_cr_count,"total_cr_count/D");
+                    InfoTree.Branch("avg_diff_nsb",&avg_diff_nsb,"avg_diff_nsb/D");
+                    InfoTree.Branch("avg_diff_el",&avg_diff_el,"avg_diff_el/D");
+                    InfoTree.Branch("avg_diff_az",&avg_diff_az,"avg_diff_az/D");
                     InfoTree.Branch("exposure_hours",&exposure_hours_usable,"exposure_hours/D");
                     InfoTree.Branch("NSB_mean",&NSB_mean,"NSB_mean/D");
                     InfoTree.Branch("Elev_mean",&Elev_mean,"Elev_mean/D");
@@ -2332,6 +2395,10 @@ void FillHistograms(string target_data, bool isON, int doImposter)
 
                     exposure_hours_usable = 0.;
                     total_cr_count = 0.;
+                    off_cr_count = 0.;
+                    avg_diff_nsb = 0.;
+                    avg_diff_el = 0.;
+                    avg_diff_az = 0.;
                     n_samples = 0;
                     effective_area.clear();
                     NSB_mean = 0.;

@@ -46,7 +46,7 @@ ROOT.TH1.AddDirectory(False) # without this, the histograms returned from a func
 ROOT.gStyle.SetPaintTextFormat("0.3f")
 np.set_printoptions(precision=4)
 
-measurement_rebin = 10
+measurement_rebin = 1
 
 #elev_range = [30.,90.]
 elev_range = [55.,90.]
@@ -94,9 +94,12 @@ def GetRunInfo(file_path):
     elev_mean = InfoTree.Elev_mean
     azim_mean = InfoTree.Azim_mean
     nsb_mean = InfoTree.NSB_mean
+    avg_diff_nsb = InfoTree.avg_diff_nsb
+    avg_diff_el = InfoTree.avg_diff_el
+    avg_diff_az = InfoTree.avg_diff_az
     InputFile.Close()
 
-    return data_expo, total_cr_count, elev_mean, azim_mean, nsb_mean
+    return data_expo, total_cr_count, elev_mean, azim_mean, nsb_mean, avg_diff_el, avg_diff_az, avg_diff_nsb
 
 def GetGammaCounts(file_path,ebin):
 
@@ -154,6 +157,7 @@ def MakeMultipleFitPlot(ax_input,Hists,legends,title_x,title_y):
 ONOFF_tag_sample = 'OFF'
 
 sample_list = []
+
 sample_list += ['OJ287_V6_OFF']
 sample_list += ['Segue1_V6_OFF']
 sample_list += ['3C264_V6_OFF']
@@ -215,11 +219,19 @@ array_cr_count = []
 array_elev_mean = []
 array_azim_mean = []
 array_nsb_mean = []
+array_elev_diff = []
+array_azim_diff = []
+array_nsb_diff = []
 array_syst_err_ratio = []
 array_syst_err_regression = []
 array_syst_err_init_perturbation = []
 array_syst_err_perturbation = []
 array_syst_err_combined = []
+array_zscore_err_ratio = []
+array_zscore_err_regression = []
+array_zscore_err_init_perturbation = []
+array_zscore_err_perturbation = []
+array_zscore_err_combined = []
 array_rebin_stat_err = []
 array_rebin_syst_err_ratio = []
 array_rebin_syst_err_regression = []
@@ -238,11 +250,19 @@ for energy_idx in range(0,len(energy_bin)-1):
     array_per_energy_elev_mean = []
     array_per_energy_azim_mean = []
     array_per_energy_nsb_mean = []
+    array_per_energy_elev_diff = []
+    array_per_energy_azim_diff = []
+    array_per_energy_nsb_diff = []
     array_syst_err_per_energy_ratio = []
     array_syst_err_per_energy_regression = []
     array_syst_err_per_energy_init_perturbation = []
     array_syst_err_per_energy_perturbation = []
     array_syst_err_per_energy_combined = []
+    array_zscore_err_per_energy_ratio = []
+    array_zscore_err_per_energy_regression = []
+    array_zscore_err_per_energy_init_perturbation = []
+    array_zscore_err_per_energy_perturbation = []
+    array_zscore_err_per_energy_combined = []
     array_rebin_stat_err_per_energy = []
     array_rebin_syst_err_per_energy_ratio = []
     array_rebin_syst_err_per_energy_regression = []
@@ -277,7 +297,7 @@ for energy_idx in range(0,len(energy_bin)-1):
                     SourceFilePath = "/gamma_raid/userspace/rshang/SMI_output/%s/Netflix_%s_G%d_X%d_Y%d.root"%(folder_path,sample_list[src],group,xoff_idx,yoff_idx)
                     if not os.path.exists(SourceFilePath): continue
                     eff_area, data_truth, ratio_bkgd, regression_bkgd, init_perturbation_bkgd, perturbation_bkgd, combined_bkgd = GetGammaCounts(SourceFilePath,energy_idx)
-                    data_expo, total_cr_count, elev_mean, azim_mean, nsb_mean = GetRunInfo(SourceFilePath)
+                    data_expo, total_cr_count, elev_mean, azim_mean, nsb_mean, avg_diff_el, avg_diff_az, avg_diff_nsb = GetRunInfo(SourceFilePath)
                     print ('elev_mean = %s'%(elev_mean))
                     if elev_mean<elev_range[0] or elev_mean>elev_range[1]: continue
                     if xoff_idx==0 and yoff_idx==0:
@@ -299,11 +319,19 @@ for energy_idx in range(0,len(energy_bin)-1):
                     array_per_energy_elev_mean += [elev_mean]
                     array_per_energy_azim_mean += [azim_mean]
                     array_per_energy_nsb_mean += [nsb_mean]
+                    array_per_energy_elev_diff += [avg_diff_el]
+                    array_per_energy_azim_diff += [avg_diff_az]
+                    array_per_energy_nsb_diff += [avg_diff_nsb]
                     array_syst_err_per_energy_ratio += [-(ratio_bkgd-data_truth)/data_truth]
                     array_syst_err_per_energy_regression += [-(regression_bkgd-data_truth)/data_truth]
                     array_syst_err_per_energy_init_perturbation += [-(init_perturbation_bkgd-data_truth)/data_truth]
                     array_syst_err_per_energy_perturbation += [-(perturbation_bkgd-data_truth)/data_truth]
                     array_syst_err_per_energy_combined += [-(combined_bkgd-data_truth)/data_truth]
+                    array_zscore_err_per_energy_ratio += [-(ratio_bkgd-data_truth)/pow(data_truth,0.5)]
+                    array_zscore_err_per_energy_regression += [-(regression_bkgd-data_truth)/pow(data_truth,0.5)]
+                    array_zscore_err_per_energy_init_perturbation += [-(init_perturbation_bkgd-data_truth)/pow(data_truth,0.5)]
+                    array_zscore_err_per_energy_perturbation += [-(perturbation_bkgd-data_truth)/pow(data_truth,0.5)]
+                    array_zscore_err_per_energy_combined += [-(combined_bkgd-data_truth)/pow(data_truth,0.5)]
                     n_rebin += 1
                     if n_rebin == measurement_rebin:
                         Hist_SystErrDist_Ratio[energy_idx].Fill((total_ratio_bkgd-total_data_truth)/total_data_truth)
@@ -329,11 +357,19 @@ for energy_idx in range(0,len(energy_bin)-1):
     array_elev_mean += [array_per_energy_elev_mean]
     array_azim_mean += [array_per_energy_azim_mean]
     array_nsb_mean += [array_per_energy_nsb_mean]
+    array_elev_diff += [array_per_energy_elev_diff]
+    array_azim_diff += [array_per_energy_azim_diff]
+    array_nsb_diff += [array_per_energy_nsb_diff]
     array_syst_err_ratio += [array_syst_err_per_energy_ratio]
     array_syst_err_regression += [array_syst_err_per_energy_regression]
     array_syst_err_init_perturbation += [array_syst_err_per_energy_init_perturbation]
     array_syst_err_perturbation += [array_syst_err_per_energy_perturbation]
     array_syst_err_combined += [array_syst_err_per_energy_combined]
+    array_zscore_err_ratio += [array_zscore_err_per_energy_ratio]
+    array_zscore_err_regression += [array_zscore_err_per_energy_regression]
+    array_zscore_err_init_perturbation += [array_zscore_err_per_energy_init_perturbation]
+    array_zscore_err_perturbation += [array_zscore_err_per_energy_perturbation]
+    array_zscore_err_combined += [array_zscore_err_per_energy_combined]
     array_rebin_stat_err += [array_rebin_stat_err_per_energy]
     array_rebin_syst_err_ratio += [array_rebin_syst_err_per_energy_ratio]
     array_rebin_syst_err_regression += [array_rebin_syst_err_per_energy_regression]
@@ -342,15 +378,87 @@ for energy_idx in range(0,len(energy_bin)-1):
     array_rebin_syst_err_combined += [array_rebin_syst_err_per_energy_combined]
 
 for energy_idx in range(0,len(energy_bin)-1):
+
     fig.clf()
     fig.set_figheight(8)
     fig.set_figwidth(8)
     axbig = fig.add_subplot()
-    axbig.scatter(array_cr_count[energy_idx],array_syst_err_combined[energy_idx],color='k',alpha=0.5)
+    axbig.scatter(array_cr_count[energy_idx],array_zscore_err_perturbation[energy_idx],color='k',alpha=0.5)
     axbig.set_xlabel('Total CR count')
-    axbig.set_ylabel('Combined method $\epsilon$')
-    fig.savefig("output_plots/CR_count_vs_Combined_Correlation_E%s_%s.png"%(energy_idx,folder_tag))
+    axbig.set_ylabel('perturbation method $\epsilon$')
+    fig.savefig("output_plots/CR_count_vs_Error_Perturbation_E%s_%s.png"%(energy_idx,folder_tag))
     axbig.remove()
+
+    fig.clf()
+    fig.set_figheight(8)
+    fig.set_figwidth(8)
+    axbig = fig.add_subplot()
+    axbig.scatter(array_elev_diff[energy_idx],array_zscore_err_perturbation[energy_idx],color='k',alpha=0.5)
+    axbig.set_xlabel('Elevation difference [deg]')
+    axbig.set_ylabel('perturbation method $\epsilon$')
+    fig.savefig("output_plots/ElevDiff_vs_Error_Perturbation_E%s_%s.png"%(energy_idx,folder_tag))
+    axbig.remove()
+
+    fig.clf()
+    fig.set_figheight(8)
+    fig.set_figwidth(8)
+    axbig = fig.add_subplot()
+    axbig.scatter(array_azim_diff[energy_idx],array_zscore_err_perturbation[energy_idx],color='k',alpha=0.5)
+    axbig.set_xlabel('Azimuth difference [deg]')
+    axbig.set_ylabel('perturbation method $\epsilon$')
+    fig.savefig("output_plots/AzimDiff_vs_Error_Perturbation_E%s_%s.png"%(energy_idx,folder_tag))
+    axbig.remove()
+
+    fig.clf()
+    fig.set_figheight(8)
+    fig.set_figwidth(8)
+    axbig = fig.add_subplot()
+    axbig.scatter(array_nsb_diff[energy_idx],array_zscore_err_perturbation[energy_idx],color='k',alpha=0.5)
+    axbig.set_xlabel('NSB difference')
+    axbig.set_ylabel('perturbation method $\epsilon$')
+    fig.savefig("output_plots/NSBDiff_vs_Error_Perturbation_E%s_%s.png"%(energy_idx,folder_tag))
+    axbig.remove()
+
+    fig.clf()
+    fig.set_figheight(8)
+    fig.set_figwidth(8)
+    axbig = fig.add_subplot()
+    axbig.scatter(array_cr_count[energy_idx],array_zscore_err_regression[energy_idx],color='k',alpha=0.5)
+    axbig.set_xlabel('Total CR count')
+    axbig.set_ylabel('regression method $\epsilon$')
+    fig.savefig("output_plots/CR_count_vs_Error_Regression_E%s_%s.png"%(energy_idx,folder_tag))
+    axbig.remove()
+
+    fig.clf()
+    fig.set_figheight(8)
+    fig.set_figwidth(8)
+    axbig = fig.add_subplot()
+    axbig.scatter(array_elev_diff[energy_idx],array_zscore_err_regression[energy_idx],color='k',alpha=0.5)
+    axbig.set_xlabel('Elevation difference [deg]')
+    axbig.set_ylabel('regression method $\epsilon$')
+    fig.savefig("output_plots/ElevDiff_vs_Error_Regression_E%s_%s.png"%(energy_idx,folder_tag))
+    axbig.remove()
+
+    fig.clf()
+    fig.set_figheight(8)
+    fig.set_figwidth(8)
+    axbig = fig.add_subplot()
+    axbig.scatter(array_azim_diff[energy_idx],array_zscore_err_regression[energy_idx],color='k',alpha=0.5)
+    axbig.set_xlabel('Azimuth difference [deg]')
+    axbig.set_ylabel('regression method $\epsilon$')
+    fig.savefig("output_plots/AzimDiff_vs_Error_Regression_E%s_%s.png"%(energy_idx,folder_tag))
+    axbig.remove()
+
+    fig.clf()
+    fig.set_figheight(8)
+    fig.set_figwidth(8)
+    axbig = fig.add_subplot()
+    axbig.scatter(array_nsb_diff[energy_idx],array_zscore_err_regression[energy_idx],color='k',alpha=0.5)
+    axbig.set_xlabel('NSB difference')
+    axbig.set_ylabel('regression method $\epsilon$')
+    fig.savefig("output_plots/NSBDiff_vs_Error_Regression_E%s_%s.png"%(energy_idx,folder_tag))
+    axbig.remove()
+
 
     fig.clf()
     fig.set_figheight(8)
@@ -361,16 +469,16 @@ for energy_idx in range(0,len(energy_bin)-1):
     x_delta = 5.
     baseline_xaxis = np.linspace(x_start,x_end,100)
     baseline_yaxis = [0. for i in range(0,len(baseline_xaxis))]
-    axbig.scatter(array_elev_mean[energy_idx],array_syst_err_ratio[energy_idx],color='k',alpha=0.1)
-    axbig.scatter(array_elev_mean[energy_idx],array_syst_err_perturbation[energy_idx],color='r',alpha=0.1)
+    axbig.scatter(array_elev_mean[energy_idx],array_zscore_err_ratio[energy_idx],color='k',alpha=0.1)
+    axbig.scatter(array_elev_mean[energy_idx],array_zscore_err_perturbation[energy_idx],color='r',alpha=0.1)
     axbig.plot(baseline_xaxis, baseline_yaxis, color='gray', ls='dashed')
-    xaxis_elev, yaxis_ratio_mean, yaxis_ratio_rms = GetMeanRMSProfile(array_elev_mean[energy_idx], array_syst_err_ratio[energy_idx], x_start, x_end, x_delta)
+    xaxis_elev, yaxis_ratio_mean, yaxis_ratio_rms = GetMeanRMSProfile(array_elev_mean[energy_idx], array_zscore_err_ratio[energy_idx], x_start, x_end, x_delta)
     axbig.errorbar(xaxis_elev-0.2*x_delta,yaxis_ratio_mean,yaxis_ratio_rms,color='k',marker='_',ls='none',linewidth=2)
-    xaxis_elev, yaxis_perturbation_mean, yaxis_perturbation_rms = GetMeanRMSProfile(array_elev_mean[energy_idx], array_syst_err_perturbation[energy_idx], x_start, x_end, x_delta)
+    xaxis_elev, yaxis_perturbation_mean, yaxis_perturbation_rms = GetMeanRMSProfile(array_elev_mean[energy_idx], array_zscore_err_perturbation[energy_idx], x_start, x_end, x_delta)
     axbig.errorbar(xaxis_elev+0.2*x_delta,yaxis_perturbation_mean,yaxis_perturbation_rms,color='r',marker='_',ls='none',linewidth=2)
     axbig.set_xlabel('Elevation [deg]')
     axbig.set_ylabel('Error $\epsilon$')
-    fig.savefig("output_plots/Elev_vs_Error_E%s_%s.png"%(energy_idx,folder_tag))
+    fig.savefig("output_plots/Elev_vs_Error_Perturbation_E%s_%s.png"%(energy_idx,folder_tag))
     axbig.remove()
 
     fig.clf()
@@ -382,16 +490,16 @@ for energy_idx in range(0,len(energy_bin)-1):
     x_delta = 20.
     baseline_xaxis = np.linspace(x_start,x_end,100)
     baseline_yaxis = [0. for i in range(0,len(baseline_xaxis))]
-    axbig.scatter(array_azim_mean[energy_idx],array_syst_err_ratio[energy_idx],color='k',alpha=0.1)
-    axbig.scatter(array_azim_mean[energy_idx],array_syst_err_perturbation[energy_idx],color='r',alpha=0.1)
+    axbig.scatter(array_azim_mean[energy_idx],array_zscore_err_ratio[energy_idx],color='k',alpha=0.1)
+    axbig.scatter(array_azim_mean[energy_idx],array_zscore_err_perturbation[energy_idx],color='r',alpha=0.1)
     axbig.plot(baseline_xaxis, baseline_yaxis, color='gray', ls='dashed')
-    xaxis_azim, yaxis_ratio_mean, yaxis_ratio_rms = GetMeanRMSProfile(array_azim_mean[energy_idx], array_syst_err_ratio[energy_idx], x_start, x_end, x_delta)
+    xaxis_azim, yaxis_ratio_mean, yaxis_ratio_rms = GetMeanRMSProfile(array_azim_mean[energy_idx], array_zscore_err_ratio[energy_idx], x_start, x_end, x_delta)
     axbig.errorbar(xaxis_azim-0.2*x_delta,yaxis_ratio_mean,yaxis_ratio_rms,color='k',marker='_',ls='none',linewidth=2)
-    xaxis_azim, yaxis_perturbation_mean, yaxis_perturbation_rms = GetMeanRMSProfile(array_azim_mean[energy_idx], array_syst_err_perturbation[energy_idx], x_start, x_end, x_delta)
+    xaxis_azim, yaxis_perturbation_mean, yaxis_perturbation_rms = GetMeanRMSProfile(array_azim_mean[energy_idx], array_zscore_err_perturbation[energy_idx], x_start, x_end, x_delta)
     axbig.errorbar(xaxis_azim+0.2*x_delta,yaxis_perturbation_mean,yaxis_perturbation_rms,color='r',marker='_',ls='none',linewidth=2)
     axbig.set_xlabel('Azimuth [deg]')
     axbig.set_ylabel('Error $\epsilon$')
-    fig.savefig("output_plots/Azim_vs_Error_E%s_%s.png"%(energy_idx,folder_tag))
+    fig.savefig("output_plots/Azim_vs_Error_Perturbation_E%s_%s.png"%(energy_idx,folder_tag))
     axbig.remove()
 
     fig.clf()
@@ -403,12 +511,12 @@ for energy_idx in range(0,len(energy_bin)-1):
     x_delta = 1.
     baseline_xaxis = np.linspace(x_start,x_end,100)
     baseline_yaxis = [0. for i in range(0,len(baseline_xaxis))]
-    axbig.scatter(array_nsb_mean[energy_idx],array_syst_err_ratio[energy_idx],color='k',alpha=0.1)
-    axbig.scatter(array_nsb_mean[energy_idx],array_syst_err_perturbation[energy_idx],color='r',alpha=0.1)
+    axbig.scatter(array_nsb_mean[energy_idx],array_zscore_err_ratio[energy_idx],color='k',alpha=0.1)
+    axbig.scatter(array_nsb_mean[energy_idx],array_zscore_err_perturbation[energy_idx],color='r',alpha=0.1)
     axbig.plot(baseline_xaxis, baseline_yaxis, color='gray', ls='dashed')
-    xaxis_nsb, yaxis_ratio_mean, yaxis_ratio_rms = GetMeanRMSProfile(array_nsb_mean[energy_idx], array_syst_err_ratio[energy_idx], x_start, x_end, x_delta)
+    xaxis_nsb, yaxis_ratio_mean, yaxis_ratio_rms = GetMeanRMSProfile(array_nsb_mean[energy_idx], array_zscore_err_ratio[energy_idx], x_start, x_end, x_delta)
     axbig.errorbar(xaxis_nsb-0.2*x_delta,yaxis_ratio_mean,yaxis_ratio_rms,color='k',marker='_',ls='none',linewidth=2)
-    xaxis_nsb, yaxis_perturbation_mean, yaxis_perturbation_rms = GetMeanRMSProfile(array_nsb_mean[energy_idx], array_syst_err_perturbation[energy_idx], x_start, x_end, x_delta)
+    xaxis_nsb, yaxis_perturbation_mean, yaxis_perturbation_rms = GetMeanRMSProfile(array_nsb_mean[energy_idx], array_zscore_err_perturbation[energy_idx], x_start, x_end, x_delta)
     axbig.errorbar(xaxis_nsb+0.2*x_delta,yaxis_perturbation_mean,yaxis_perturbation_rms,color='r',marker='_',ls='none',linewidth=2)
     axbig.set_xlabel('NSB')
     axbig.set_ylabel('Error $\epsilon$')
@@ -424,38 +532,18 @@ for energy_idx in range(0,len(energy_bin)-1):
     x_delta = 1.
     baseline_xaxis = np.linspace(x_start,x_end,100)
     baseline_yaxis = [0. for i in range(0,len(baseline_xaxis))]
-    axbig.scatter(array_nsb_mean[energy_idx],array_syst_err_ratio[energy_idx],color='k',alpha=0.1)
-    axbig.scatter(array_nsb_mean[energy_idx],array_syst_err_regression[energy_idx],color='r',alpha=0.1)
+    axbig.scatter(array_nsb_mean[energy_idx],array_zscore_err_ratio[energy_idx],color='k',alpha=0.1)
+    axbig.scatter(array_nsb_mean[energy_idx],array_zscore_err_regression[energy_idx],color='r',alpha=0.1)
     axbig.plot(baseline_xaxis, baseline_yaxis, color='gray', ls='dashed')
-    xaxis_nsb, yaxis_ratio_mean, yaxis_ratio_rms = GetMeanRMSProfile(array_nsb_mean[energy_idx], array_syst_err_ratio[energy_idx], x_start, x_end, x_delta)
+    xaxis_nsb, yaxis_ratio_mean, yaxis_ratio_rms = GetMeanRMSProfile(array_nsb_mean[energy_idx], array_zscore_err_ratio[energy_idx], x_start, x_end, x_delta)
     axbig.errorbar(xaxis_nsb-0.2*x_delta,yaxis_ratio_mean,yaxis_ratio_rms,color='k',marker='_',ls='none',linewidth=2)
-    xaxis_nsb, yaxis_regression_mean, yaxis_regression_rms = GetMeanRMSProfile(array_nsb_mean[energy_idx], array_syst_err_regression[energy_idx], x_start, x_end, x_delta)
+    xaxis_nsb, yaxis_regression_mean, yaxis_regression_rms = GetMeanRMSProfile(array_nsb_mean[energy_idx], array_zscore_err_regression[energy_idx], x_start, x_end, x_delta)
     axbig.errorbar(xaxis_nsb+0.2*x_delta,yaxis_regression_mean,yaxis_regression_rms,color='r',marker='_',ls='none',linewidth=2)
     axbig.set_xlabel('NSB')
     axbig.set_ylabel('Error $\epsilon$')
     fig.savefig("output_plots/NSB_vs_Error_Regression_E%s_%s.png"%(energy_idx,folder_tag))
     axbig.remove()
 
-    fig.clf()
-    fig.set_figheight(8)
-    fig.set_figwidth(8)
-    axbig = fig.add_subplot()
-    x_start = 2.5
-    x_end = 9.5
-    x_delta = 1.
-    baseline_xaxis = np.linspace(x_start,x_end,100)
-    baseline_yaxis = [0. for i in range(0,len(baseline_xaxis))]
-    axbig.scatter(array_nsb_mean[energy_idx],array_syst_err_ratio[energy_idx],color='k',alpha=0.1)
-    axbig.scatter(array_nsb_mean[energy_idx],array_syst_err_combined[energy_idx],color='r',alpha=0.1)
-    axbig.plot(baseline_xaxis, baseline_yaxis, color='gray', ls='dashed')
-    xaxis_nsb, yaxis_ratio_mean, yaxis_ratio_rms = GetMeanRMSProfile(array_nsb_mean[energy_idx], array_syst_err_ratio[energy_idx], x_start, x_end, x_delta)
-    axbig.errorbar(xaxis_nsb-0.2*x_delta,yaxis_ratio_mean,yaxis_ratio_rms,color='k',marker='_',ls='none',linewidth=2)
-    xaxis_nsb, yaxis_combined_mean, yaxis_combined_rms = GetMeanRMSProfile(array_nsb_mean[energy_idx], array_syst_err_combined[energy_idx], x_start, x_end, x_delta)
-    axbig.errorbar(xaxis_nsb+0.2*x_delta,yaxis_combined_mean,yaxis_combined_rms,color='r',marker='_',ls='none',linewidth=2)
-    axbig.set_xlabel('NSB')
-    axbig.set_ylabel('Error $\epsilon$')
-    fig.savefig("output_plots/NSB_vs_Error_Combined_E%s_%s.png"%(energy_idx,folder_tag))
-    axbig.remove()
 
 
 for energy_idx in range(0,len(energy_bin)-1):
@@ -463,7 +551,7 @@ for energy_idx in range(0,len(energy_bin)-1):
     fig.set_figheight(8)
     fig.set_figwidth(8)
     axbig = fig.add_subplot()
-    axbig.scatter(array_rebin_syst_err_regression[energy_idx],array_rebin_syst_err_perturbation[energy_idx],color='b',alpha=0.5)
+    axbig.scatter(array_zscore_err_regression[energy_idx],array_zscore_err_perturbation[energy_idx],color='b',alpha=0.5)
     axbig.set_xlabel('Regression method $\epsilon$')
     axbig.set_ylabel('Perturbation method $\epsilon$')
     fig.savefig("output_plots/Regression_vs_Perturbation_Correlation_E%s_%s.png"%(energy_idx,folder_tag))
@@ -592,26 +680,26 @@ for energy_idx in range(0,len(energy_bin)-1):
     print ('rms of syst. error of combined method = %0.3f'%(array_syst_err_combined_rms))
 
 print ('================================================================================================')
-txt_string = 'double method_ratio_mean[N_energy_bins] =             {'
-for energy_idx in range(0,len(energy_bin)-1):
-    txt_string += '%0.3f,'%(energy_dep_syst_err_ratio_mean[energy_idx])
-txt_string += '};'
-print (txt_string)
-txt_string = 'double method_init_perturbation_mean[N_energy_bins] = {'
-for energy_idx in range(0,len(energy_bin)-1):
-    txt_string += '%0.3f,'%(energy_dep_syst_err_init_perturbation_mean[energy_idx])
-txt_string += '};'
-print (txt_string)
-txt_string = 'double method_perturbation_mean[N_energy_bins] =      {'
-for energy_idx in range(0,len(energy_bin)-1):
-    txt_string += '%0.3f,'%(energy_dep_syst_err_perturbation_mean[energy_idx])
-txt_string += '};'
-print (txt_string)
-txt_string = 'double method_regression_mean[N_energy_bins] =        {'
-for energy_idx in range(0,len(energy_bin)-1):
-    txt_string += '%0.3f,'%(energy_dep_syst_err_regression_mean[energy_idx])
-txt_string += '};'
-print (txt_string)
+#txt_string = 'double method_ratio_mean[N_energy_bins] =             {'
+#for energy_idx in range(0,len(energy_bin)-1):
+#    txt_string += '%0.3f,'%(energy_dep_syst_err_ratio_mean[energy_idx])
+#txt_string += '};'
+#print (txt_string)
+#txt_string = 'double method_init_perturbation_mean[N_energy_bins] = {'
+#for energy_idx in range(0,len(energy_bin)-1):
+#    txt_string += '%0.3f,'%(energy_dep_syst_err_init_perturbation_mean[energy_idx])
+#txt_string += '};'
+#print (txt_string)
+#txt_string = 'double method_perturbation_mean[N_energy_bins] =      {'
+#for energy_idx in range(0,len(energy_bin)-1):
+#    txt_string += '%0.3f,'%(energy_dep_syst_err_perturbation_mean[energy_idx])
+#txt_string += '};'
+#print (txt_string)
+#txt_string = 'double method_regression_mean[N_energy_bins] =        {'
+#for energy_idx in range(0,len(energy_bin)-1):
+#    txt_string += '%0.3f,'%(energy_dep_syst_err_regression_mean[energy_idx])
+#txt_string += '};'
+#print (txt_string)
 txt_string = 'double method_ratio_rms[N_energy_bins] =              {'
 for energy_idx in range(0,len(energy_bin)-1):
     txt_string += '%0.3f,'%(energy_dep_syst_err_ratio_rms[energy_idx])
