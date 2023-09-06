@@ -67,8 +67,8 @@ smooth_size_spectroscopy = 0.07
 calibration_radius = 0.15 # need to be larger than the PSF and smaller than the integration radius
 #calibration_radius = 0.2 # need to be larger than the PSF and smaller than the integration radius
 #calibration_radius = 0.3 # need to be larger than the PSF and smaller than the integration radius
-n_xoff_bins = 2
-n_yoff_bins = 1
+n_xoff_bins = 3
+n_yoff_bins = 3
 
 MSCW_lower_blind = -0.7
 MSCL_lower_blind = -0.7

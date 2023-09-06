@@ -216,6 +216,9 @@ TObject* getEffAreaHistogram(string file_name, int runnumber, double offset)
       return i_h->Clone();
     }
   }
+
+  //fAnasumDataFile->Close();
+  //delete fAnasumDataFile;
   
   
   return 0;
@@ -428,6 +431,7 @@ pair<double,double> GetRunElevAzim(int int_run_number)
         TelElevation_avg = TelElevation;
         TelAzimuth_avg = TelAzimuth;
         input_file->Close();
+        //delete input_file;
         //std::cout << "root file elev = " << TelElevation_avg << " azim = " << TelAzimuth_avg << std::endl;
     }
 
@@ -730,8 +734,9 @@ double GetRunUsableTime(string file_name,int run_number)
         int time_start = Time;
         pointing_tree->GetEntry(total_entries-1);
         int time_end = Time;
-        input_file->Close();
         usable_time = time_end-time_start;
+        input_file->Close();
+        //delete input_file;
     }
     return usable_time;
 }
@@ -789,6 +794,7 @@ pair<double,double> GetRunRaDec(string file_name, int run)
     TelRAJ2000_tmp = TelRAJ2000*180./M_PI;
     TelDecJ2000_tmp = TelDecJ2000*180./M_PI;
     input_file->Close();
+    //delete input_file;
 
     return std::make_pair(TelRAJ2000_tmp,TelDecJ2000_tmp);
 }
@@ -853,8 +859,8 @@ void TrainingRunAnalysis(int int_run_number, int int_run_number_on, int input_xo
     double MSCL_plot_lower = MSCL_lower_blind-n_extra_lower_bins*MSCL_bin_size;
 
     TH1D Hist_ErecS = TH1D("Hist_ErecS","",N_energy_bins,energy_bins);
-    TH1D Hist_Xoff = TH1D("Hist_Xoff","",N_Xoff_bins,0.,2.);
-    TH1D Hist_Yoff = TH1D("Hist_Yoff","",N_Yoff_bins,-2.,2.);
+    TH1D Hist_Xoff = TH1D("Hist_Xoff","",N_Xoff_bins,-max_Roff,max_Roff);
+    TH1D Hist_Yoff = TH1D("Hist_Yoff","",N_Yoff_bins,-max_Roff,max_Roff);
     for (int entry=0;entry<Data_tree->GetEntries();entry++) 
     {
         ErecS = 0;
@@ -880,7 +886,7 @@ void TrainingRunAnalysis(int int_run_number, int int_run_number_on, int input_xo
         if (!ApplyTimeCuts(Time-time_0, timecut_thisrun)) continue;
         if (energy_idx<0) continue;
         if (energy_idx>=N_energy_bins) continue;
-        int idx_xoff = Hist_Xoff.FindBin(pow(R2off,0.5))-1;
+        int idx_xoff = Hist_Xoff.FindBin(Xoff)-1;
         int idx_yoff = Hist_Yoff.FindBin(Yoff)-1;
         if (input_xoff_idx!=idx_xoff) continue;
         if (input_yoff_idx!=idx_yoff) continue;
@@ -919,6 +925,7 @@ void TrainingRunAnalysis(int int_run_number, int int_run_number_on, int input_xo
 
     }
     input_file->Close();
+    //delete input_file;
 
 }
 
@@ -978,13 +985,13 @@ void SingleRunAnalysis(int int_run_number, int int_run_number_real, int input_xo
     filename_real = TString(SMI_INPUT+"/"+string(run_number_real)+".anasum.root");
     std::pair<double,double> real_tele_point_ra_dec = GetRunRaDec(filename_real,int_run_number_real);
 
-    TH1* i_hEffAreaP = ( TH1* )getEffAreaHistogram(filename, int_run_number, 0.5);
-    for (int e=0;e<N_energy_bins;e++) 
-    {
-        //double eff_area = i_hEffAreaP->GetBinContent( i_hEffAreaP->FindBin( log10(0.5*(energy_bins[e]+energy_bins[e+1])/1000.)));
-        double eff_area = default_effective_area( log10(0.5*(energy_bins[e]+energy_bins[e+1])/1000.) );
-        effective_area.at(e) += eff_area;
-    }
+    //TH1* i_hEffAreaP = ( TH1* )getEffAreaHistogram(filename, int_run_number, 0.5);
+    //for (int e=0;e<N_energy_bins;e++) 
+    //{
+    //    //double eff_area = i_hEffAreaP->GetBinContent( i_hEffAreaP->FindBin( log10(0.5*(energy_bins[e]+energy_bins[e+1])/1000.)));
+    //    double eff_area = default_effective_area( log10(0.5*(energy_bins[e]+energy_bins[e+1])/1000.) );
+    //    effective_area.at(e) += eff_area;
+    //}
 
     Data_tree->GetEntry(0);
     double time_0 = Time;
@@ -1003,8 +1010,8 @@ void SingleRunAnalysis(int int_run_number, int int_run_number_real, int input_xo
     double MSCL_plot_lower = MSCL_lower_blind-n_extra_lower_bins*MSCL_bin_size;
 
     TH1D Hist_ErecS = TH1D("Hist_ErecS","",N_energy_bins,energy_bins);
-    TH1D Hist_Xoff = TH1D("Hist_Xoff","",N_Xoff_bins,0.,2.);
-    TH1D Hist_Yoff = TH1D("Hist_Yoff","",N_Yoff_bins,-2.,2.);
+    TH1D Hist_Xoff = TH1D("Hist_Xoff","",N_Xoff_bins,-max_Roff,max_Roff);
+    TH1D Hist_Yoff = TH1D("Hist_Yoff","",N_Yoff_bins,-max_Roff,max_Roff);
     TH1D Hist_Expo_Roff = TH1D("Hist_Expo_Roff","",4,0.,2.);
     TH2D Hist_SingleRun_AreaTime_Skymap = TH2D("Hist_SingleRun_AreaTime_Skymap","",Skymap_nbins_x,map_center_x-Skymap_size_x,map_center_x+Skymap_size_x,Skymap_nbins_x,map_center_y-Skymap_size_y,map_center_y+Skymap_size_y);
     for (int entry=0;entry<Data_tree->GetEntries();entry++) 
@@ -1032,7 +1039,7 @@ void SingleRunAnalysis(int int_run_number, int int_run_number_real, int input_xo
         if (!ApplyTimeCuts(Time-time_0, timecut_thisrun)) continue;
         if (energy_idx<0) continue;
         if (energy_idx>=N_energy_bins) continue;
-        int idx_xoff = Hist_Xoff.FindBin(pow(R2off,0.5))-1;
+        int idx_xoff = Hist_Xoff.FindBin(Xoff)-1;
         int idx_yoff = Hist_Yoff.FindBin(Yoff)-1;
         if (input_xoff_idx!=idx_xoff) continue;
         if (input_yoff_idx!=idx_yoff) continue;
@@ -1070,7 +1077,8 @@ void SingleRunAnalysis(int int_run_number, int int_run_number_real, int input_xo
         if (MSCW>MSCW_plot_upper) continue;
         if (MSCW<MSCW_plot_lower) continue;
 
-        double evt_eff_area = i_hEffAreaP->GetBinContent( i_hEffAreaP->FindBin( log10(ErecS)));
+        //double evt_eff_area = i_hEffAreaP->GetBinContent( i_hEffAreaP->FindBin( log10(ErecS)));
+        double evt_eff_area = 0.;
 
         if (MSCL<MSCL_upper_blind && MSCW<MSCW_upper_blind && MSCL>MSCL_lower_blind && MSCW>MSCW_lower_blind)
         {
@@ -1146,6 +1154,7 @@ void SingleRunAnalysis(int int_run_number, int int_run_number_real, int input_xo
     }
     Hist_Data_AreaTime_Skymap.Add(&Hist_SingleRun_AreaTime_Skymap,expo_scaling);
     input_file->Close();
+    //delete input_file;
 
 }
 
@@ -2248,15 +2257,14 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         Hist_OnData_CR_Skymap_Regression_Sum.at(e).Add(&Hist_OnData_CR_Skymap_Regression.at(e));
                         Hist_OnData_CR_Skymap_Init_Perturbation_Sum.at(e).Add(&Hist_OnData_CR_Skymap_Init_Perturbation.at(e));
                         Hist_OnData_CR_Skymap_Perturbation_Sum.at(e).Add(&Hist_OnData_CR_Skymap_Perturbation.at(e));
-                        //Hist_OnData_CR_Skymap_Combined_Sum.at(e).Add(&Hist_OnData_CR_Skymap_FoV.at(e),0.5);
-                        if (matrix_rank[e]>2)
+                        if (e>=4)
                         {
-                            Hist_OnData_CR_Skymap_Combined_Sum.at(e).Add(&Hist_OnData_CR_Skymap_Regression.at(e),0.5);
+                            Hist_OnData_CR_Skymap_Combined_Sum.at(e).Add(&Hist_OnData_CR_Skymap_Ratio.at(e),0.5);
                             Hist_OnData_CR_Skymap_Combined_Sum.at(e).Add(&Hist_OnData_CR_Skymap_Perturbation.at(e),0.5);
                         }
                         else
                         {
-                            Hist_OnData_CR_Skymap_Combined_Sum.at(e).Add(&Hist_OnData_CR_Skymap_Init_Perturbation.at(e));
+                            Hist_OnData_CR_Skymap_Combined_Sum.at(e).Add(&Hist_OnData_CR_Skymap_Perturbation.at(e));
                         }
                     }
 
@@ -2390,8 +2398,6 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                     InfoTree.Branch("combined_bkgd_count","std::vector<double>",&combined_bkgd_count);
                     InfoTree.Fill();
                     InfoTree.Write();
-
-                    OutputFile.Close();
 
                     exposure_hours_usable = 0.;
                     total_cr_count = 0.;

@@ -1122,12 +1122,12 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
 
             if is_imposter:
                 if abs(delta_elev)>5.: continue
-                if abs(delta_azim)>50.: continue
-                if abs(on_run_nsb-off_run_nsb)>1.: continue
+                if abs(delta_azim)>10.: continue
+                if abs(on_run_nsb-off_run_nsb)>2.: continue
             else:
                 if abs(delta_elev)>5.: continue
-                if abs(delta_azim)>50.: continue
-                if abs(on_run_nsb-off_run_nsb)>1.: continue
+                if abs(delta_azim)>10.: continue
+                if abs(on_run_nsb-off_run_nsb)>2.: continue
                 #if abs(all_runs_info[run][0]-list_on_run_ids[on_run])>20000: continue
 
             list_off_run_ids += [[int(list_on_run_ids[on_run]),int(all_runs_info[run][0]),on_run_el,off_run_el]]

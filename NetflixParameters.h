@@ -11,8 +11,8 @@ int cr_correction_xyoff_bins[N_energy_bins] = {1,12,12,12,12,6,6,6,6,1,1,1};
 
 double log_coeff_weight = -1.0;
 
-const int N_Xoff_bins = 1;
-const int N_Yoff_bins = 1;
+const int N_Xoff_bins = 3;
+const int N_Yoff_bins = 3;
 
 double source_theta_cut = 0.3;
 double Elev_cut_lower = 30.;
@@ -21,6 +21,7 @@ double Elev_cut_upper = 90.;
 double expo_hour_per_analysis = 5.;
 //double min_CR_count = 100000.;
 double min_CR_count = 200000.;
+//double min_CR_count = 100000000.;
 
 int min_NImages = 3;
 double MSCW_lower_blind = -0.7;

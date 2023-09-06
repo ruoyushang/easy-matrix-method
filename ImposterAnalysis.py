@@ -1410,13 +1410,17 @@ def MakeExtensionProfile(roi_x,roi_y,roi_r,fit_profile,roi_name,real_map,imposte
     axbig.remove()
 
 
-epoch_idx = 0
-SourceFilePath = "%s/%s/Netflix_%s_%s_%s_G0_X0_Y0.root"%(input_path,folder_path,source_name,list_epoch[0],isON)
-if os.path.exists(SourceFilePath):
-    epoch_idx = 0
-else:
-    epoch_idx = 1
-InputFile = ROOT.TFile("%s/%s/Netflix_%s_%s_%s_G0_X0_Y0.root"%(input_path,folder_path,source_name,list_epoch[epoch_idx],isON))
+InputFile = None
+print ('list_epoch = %s'%(list_epoch))
+for epoch_idx in range(0,len(list_epoch)):
+    SourceFilePath = "%s/%s/Netflix_%s_%s_%s_G0_X0_Y0.root"%(input_path,folder_path,source_name,list_epoch[epoch_idx],isON)
+    if os.path.exists(SourceFilePath):
+        print ('Found %s'%(SourceFilePath))
+        InputFile = ROOT.TFile("%s/%s/Netflix_%s_%s_%s_G0_X0_Y0.root"%(input_path,folder_path,source_name,list_epoch[epoch_idx],isON))
+        break
+    else:
+        print ('Not found %s'%(SourceFilePath))
+
 HistName = "Hist_OnData_SR_Skymap_Sum_ErecS%sto%s"%(int(energy_bin[0]),int(energy_bin[1]))
 
 nbins_x = InputFile.Get(HistName).GetNbinsX()
@@ -1466,6 +1470,11 @@ elif 'Geminga' in source_name:
     region_x = [MapCenter_x]
     region_y = [MapCenter_y]
     region_r = [1.5]
+    region_name = 'Center'
+elif 'PSR_J0631_p1036' in source_name:
+    region_x = [MapCenter_x]
+    region_y = [MapCenter_y]
+    region_r = [0.48]
     region_name = 'Center'
 elif 'PSR_J1907_p0602' in source_name:
 
@@ -1659,8 +1668,8 @@ for xoff_idx in range(0,n_xoff_bins):
                 HistName = "Hist_Data_NSB_Skymap"
                 FillSkyMapHistogram(InputFile.Get(HistName),hist_nsb_skymap)
                 for ebin in range(0,len(energy_bin)-1):
-                    if energy_bin_cut_low>0:
-                        if effective_area[ebin] < effective_area_cut: continue
+                    #if energy_bin_cut_low>0:
+                    #    if effective_area[ebin] < effective_area_cut: continue
                     HistName = "Hist_OnData_Expo_Skymap_Sum_ErecS%sto%s"%(int(energy_bin[ebin]),int(energy_bin[ebin+1]))
                     FillSkyMapHistogram(InputFile.Get(HistName),hist_real_expo_skymap[ebin])
                     HistName = "Hist_OnData_SR_Skymap_Sum_ErecS%sto%s"%(int(energy_bin[ebin]),int(energy_bin[ebin+1]))
@@ -1704,8 +1713,8 @@ if doImposter:
                         InfoTree.SetBranchAddress('effective_area',ROOT.AddressOf(effective_area))
                         InfoTree.GetEntry(0)
                         for ebin in range(energy_bin_cut_low,energy_bin_cut_up):
-                            if energy_bin_cut_low>0:
-                                if effective_area[ebin] < effective_area_cut: continue
+                            #if energy_bin_cut_low>0:
+                            #    if effective_area[ebin] < effective_area_cut: continue
                             HistName = "Hist_OnData_SR_Skymap_Sum_ErecS%sto%s"%(int(energy_bin[ebin]),int(energy_bin[ebin+1]))
                             FillSkyMapHistogram(InputFile.Get(HistName),hist_imposter_data_skymap[imposter][ebin])
                             HistName = "Hist_OnData_CR_Skymap_%s_Sum_ErecS%sto%s"%(analysis_method,int(energy_bin[ebin]),int(energy_bin[ebin+1]))
