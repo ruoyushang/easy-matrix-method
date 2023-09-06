@@ -54,7 +54,7 @@ input_epoch = sys.argv[2] # 'V5' or 'V6' or 'V5V6'
 isON = sys.argv[3]  # 'ON' or 'OFF'
 
 doImposter = False
-if isON:
+if isON=='ON':
     doImposter = True
 
 doBiasCorrect = False
@@ -1450,7 +1450,12 @@ region_y = [MapCenter_y]
 region_r = [2.0]
 region_name = 'Center'
 do_fit = 0
-if 'Crab' in source_name:
+if isON=='OFF':
+    region_x = [MapCenter_x]
+    region_y = [MapCenter_y]
+    region_r = [2.0]
+    region_name = 'OFF'
+elif 'Crab' in source_name:
     region_x = [MapCenter_x]
     region_y = [MapCenter_y]
     region_r = [CommonPlotFunctions.calibration_radius]

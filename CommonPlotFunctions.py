@@ -67,17 +67,17 @@ smooth_size_spectroscopy = 0.07
 calibration_radius = 0.15 # need to be larger than the PSF and smaller than the integration radius
 #calibration_radius = 0.2 # need to be larger than the PSF and smaller than the integration radius
 #calibration_radius = 0.3 # need to be larger than the PSF and smaller than the integration radius
-n_xoff_bins = 3
-n_yoff_bins = 3
+n_xoff_bins = 1
+n_yoff_bins = 1
 
 MSCW_lower_blind = -0.7
 MSCL_lower_blind = -0.7
 MSCW_upper_blind = 0.6
 MSCL_upper_blind = 0.6
 n_extra_lower_bins = 0
-n_extra_upper_bins = 6
-mtx_dim_w_fine = 6
-mtx_dim_l_fine = 6
+n_extra_upper_bins = 8
+mtx_dim_w_fine = 8
+mtx_dim_l_fine = 8
 
 def reflectXaxis(hist):
 
