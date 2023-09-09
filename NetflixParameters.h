@@ -15,26 +15,31 @@ const int N_Xoff_bins = 1;
 const int N_Yoff_bins = 1;
 
 double source_theta_cut = 0.3;
-double Elev_cut_lower = 30.;
+//double Elev_cut_lower = 30.;
+double Elev_cut_lower = 40.;
 double Elev_cut_upper = 90.;
 
 double expo_hour_per_analysis = 5.;
-//double min_CR_count = 10000.;
+//double min_CR_count = 5000.;
 //double min_CR_count = 50000.;
-double min_CR_count = 100000.;
-//double min_CR_count = 200000.;
-//double min_CR_count = 100000000.;
+//double min_CR_count = 100000.;
+double min_CR_count = 200000.;
+//double min_CR_count = 1000000000.;
 
 int min_NImages = 3;
-double MSCW_lower_blind = -0.7;
-double MSCL_lower_blind = -0.7;
+//double MSCW_lower_blind = -0.7;
+//double MSCL_lower_blind = -0.7;
+//double MSCW_upper_blind = 0.6;
+//double MSCL_upper_blind = 0.6;
+double MSCW_lower_blind = -0.6;
+double MSCL_lower_blind = -0.6;
 double MSCW_upper_blind = 0.6;
 double MSCL_upper_blind = 0.6;
 
 int n_extra_lower_bins = 0;
-int n_extra_upper_bins = 8;
-int mtx_dim_w_fine = 8;
-int mtx_dim_l_fine = 8;
+int n_extra_upper_bins = 6;
+int mtx_dim_w_fine = 6;
+int mtx_dim_l_fine = 6;
 int mtx_dim_w = 2;
 int mtx_dim_l = 2;
 

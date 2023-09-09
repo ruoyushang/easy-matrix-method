@@ -42,7 +42,7 @@ input_path = '/gamma_raid/userspace/rshang/SMI_output'
 #folder_tag = 'paper'
 #energy_bin = [100.,200.,251.,316.,398.,501.,794.,1259.,1995.,3162.,5011.,7943.]
 
-folder_path = 'output_nuclear_test'
+folder_path = 'output_test_2'
 folder_tag = '_test'
 #folder_path = 'output_nuclear_3tel'
 #folder_tag = '_3tel'
@@ -57,8 +57,8 @@ folder_tag = '_test'
 #analysis_method = 'Ratio'
 #analysis_method = 'Regression'
 #analysis_method = 'Init_Perturbation'
-analysis_method = 'Perturbation'
-#analysis_method = 'Combined'
+#analysis_method = 'Perturbation'
+analysis_method = 'Combined'
 
 energy_bin = [100.,159.,200.,251.,316.,398.,501.,794.,1259.,1995.,3162.,5011.,7943.]
 #energy_bin = [100.,167.,300.,538.,965.,1732.,3107.,5574.,10000.]
@@ -70,14 +70,14 @@ calibration_radius = 0.15 # need to be larger than the PSF and smaller than the 
 n_xoff_bins = 1
 n_yoff_bins = 1
 
-MSCW_lower_blind = -0.7
-MSCL_lower_blind = -0.7
+MSCW_lower_blind = -0.6
+MSCL_lower_blind = -0.6
 MSCW_upper_blind = 0.6
 MSCL_upper_blind = 0.6
 n_extra_lower_bins = 0
-n_extra_upper_bins = 8
-mtx_dim_w_fine = 8
-mtx_dim_l_fine = 8
+n_extra_upper_bins = 6
+mtx_dim_w_fine = 6
+mtx_dim_l_fine = 6
 
 def reflectXaxis(hist):
 

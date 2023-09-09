@@ -49,8 +49,7 @@ np.set_printoptions(precision=4)
 measurement_rebin = 1
 
 #elev_range = [30.,90.]
-elev_range = [55.,90.]
-#elev_range = [45.,65.]
+elev_range = [40.,90.]
 
 total_data_expo = 0.
 expo_sum_all_energies = 0.
@@ -240,6 +239,7 @@ for energy_idx in range(0,len(energy_bin)-1):
     Hist_SystErrDist_Perturbation += [ROOT.TH1D("Hist_SystErrDist_Perturbation_E%s"%(energy_idx),"",nbins,-hist_limit,hist_limit)]
     Hist_SystErrDist_Combined += [ROOT.TH1D("Hist_SystErrDist_Combined_E%s"%(energy_idx),"",nbins,-hist_limit,hist_limit)]
 
+txt_warning = ''
 for energy_idx in range(0,len(energy_bin)-1):
     array_per_energy_cr_count = []
     array_per_energy_elev_mean = []
@@ -289,16 +289,11 @@ for energy_idx in range(0,len(energy_bin)-1):
                     print ('Read file: %s'%(SourceFilePath))
                     eff_area, data_truth, ratio_bkgd, regression_bkgd, init_perturbation_bkgd, perturbation_bkgd, combined_bkgd = GetGammaCounts(SourceFilePath,energy_idx)
                     data_expo, total_cr_count, elev_mean, azim_mean, nsb_mean, avg_diff_el, avg_diff_az, avg_diff_nsb = GetRunInfo(SourceFilePath)
-                    print ('elev_mean = %s'%(elev_mean))
                     if elev_mean<elev_range[0] or elev_mean>elev_range[1]: continue
                     if xoff_idx==0 and yoff_idx==0:
                         expo_sum_all_energies += data_expo
                         if energy_idx==1:
                             total_data_expo += data_expo
-                    print ('eff_area = %s'%(eff_area))
-                    print ('data_truth = %s'%(data_truth))
-                    print ('init_perturbation_bkgd = %s'%(init_perturbation_bkgd))
-                    #if eff_area<10000.: continue
                     if data_truth==0.: continue
                     total_data_truth += data_truth
                     total_ratio_bkgd += ratio_bkgd
@@ -318,6 +313,15 @@ for energy_idx in range(0,len(energy_bin)-1):
                     array_syst_err_per_energy_init_perturbation += [-(init_perturbation_bkgd-data_truth)/pow(data_truth,0.5)]
                     array_syst_err_per_energy_perturbation += [-(perturbation_bkgd-data_truth)/pow(data_truth,0.5)]
                     array_syst_err_per_energy_combined += [-(combined_bkgd-data_truth)/pow(data_truth,0.5)]
+                    perturbation_error = -(perturbation_bkgd-data_truth)/pow(data_truth,0.5)
+                    if abs(perturbation_error)>20.:
+                        txt_warning += '++++++++++++++++++++++++++++++++++++ \n'
+                        txt_warning += '!!! Error > 20 sigma !!!! \n'
+                        txt_warning += 'sample: %s \n '%(sample_list[src])
+                        txt_warning += 'elev_mean = %s \n'%(elev_mean)
+                        txt_warning += 'energy index = %s \n'%(energy_idx)
+                        txt_warning += 'error = %0.1f \n '%(perturbation_error)
+                        txt_warning += 'truth = %0.1f \n '%(data_truth)
             n_rebin += 1
             if n_rebin == measurement_rebin:
                 if total_data_truth>0.:
@@ -544,10 +548,10 @@ for energy_idx in range(0,len(energy_bin)-1):
     fig.set_figheight(8)
     fig.set_figwidth(8)
     axbig = fig.add_subplot()
-    axbig.scatter(array_syst_err_ratio[energy_idx],array_syst_err_perturbation[energy_idx],color='b',alpha=0.5)
-    axbig.set_xlabel('Ratio method $\epsilon$')
+    axbig.scatter(array_syst_err_init_perturbation[energy_idx],array_syst_err_perturbation[energy_idx],color='b',alpha=0.5)
+    axbig.set_xlabel('Off-diagonal method $\epsilon$')
     axbig.set_ylabel('Perturbation method $\epsilon$')
-    fig.savefig("output_plots/Ratio_vs_Perturbation_Correlation_E%s_%s.png"%(energy_idx,folder_tag))
+    fig.savefig("output_plots/Init_vs_Perturbation_Correlation_E%s_%s.png"%(energy_idx,folder_tag))
     axbig.remove()
 
 for energy_idx in range(0,len(energy_bin)-1):
@@ -673,26 +677,6 @@ for energy_idx in range(0,len(energy_bin)-1):
     print ('rms of syst. error of combined method = %0.3f'%(array_syst_err_combined_rms))
 
 print ('================================================================================================')
-#txt_string = 'double method_ratio_mean[N_energy_bins] =             {'
-#for energy_idx in range(0,len(energy_bin)-1):
-#    txt_string += '%0.3f,'%(energy_dep_syst_err_ratio_mean[energy_idx])
-#txt_string += '};'
-#print (txt_string)
-#txt_string = 'double method_init_perturbation_mean[N_energy_bins] = {'
-#for energy_idx in range(0,len(energy_bin)-1):
-#    txt_string += '%0.3f,'%(energy_dep_syst_err_init_perturbation_mean[energy_idx])
-#txt_string += '};'
-#print (txt_string)
-#txt_string = 'double method_perturbation_mean[N_energy_bins] =      {'
-#for energy_idx in range(0,len(energy_bin)-1):
-#    txt_string += '%0.3f,'%(energy_dep_syst_err_perturbation_mean[energy_idx])
-#txt_string += '};'
-#print (txt_string)
-#txt_string = 'double method_regression_mean[N_energy_bins] =        {'
-#for energy_idx in range(0,len(energy_bin)-1):
-#    txt_string += '%0.3f,'%(energy_dep_syst_err_regression_mean[energy_idx])
-#txt_string += '};'
-#print (txt_string)
 txt_string = 'double method_ratio_rms[N_energy_bins] =              {'
 for energy_idx in range(0,len(energy_bin)-1):
     txt_string += '%0.3f,'%(energy_dep_syst_err_ratio_rms[energy_idx])
@@ -718,6 +702,18 @@ for energy_idx in range(0,len(energy_bin)-1):
     txt_string += '%0.3f,'%(energy_dep_syst_err_combined_rms[energy_idx])
 txt_string += '};'
 print (txt_string)
+print ('================================================================================================')
+for energy_idx in range(0,len(energy_bin)-1):
+    txt_string = 'Energy %0.1f GeV\t, '%(energy_bin[energy_idx])
+    txt_string += '%0.3f \t, '%(energy_dep_syst_err_ratio_rms[energy_idx])
+    txt_string += '%0.3f \t, '%(energy_dep_syst_err_init_perturbation_rms[energy_idx])
+    txt_string += '%0.3f \t, '%(energy_dep_syst_err_perturbation_rms[energy_idx])
+    txt_string += '%0.3f \t, '%(energy_dep_syst_err_regression_rms[energy_idx])
+    txt_string += '%0.3f \t, '%(energy_dep_syst_err_combined_rms[energy_idx])
+    print (txt_string)
+
+print ('================================================================================================')
+print (txt_warning)
 
 print ('total_data_expo = %0.1f hrs'%(total_data_expo))
 print ('avg expo per measurement = %0.1f'%(expo_sum_all_energies/total_n_measurements))

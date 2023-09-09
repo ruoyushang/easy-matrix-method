@@ -1047,6 +1047,9 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
     for src in range(0,len(list_off_sources)):
         print (list_off_sources[src])
 
+    total_nsb_diff = 0.
+    total_azim_diff = 0.
+    total_elev_diff = 0.
 
     for on_run in range(0,len(list_on_run_ids)):
 
@@ -1055,8 +1058,6 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
         on_run_nsb = get_run_nsb_from_aux_file(list_on_run_ids[on_run])
         number_off_runs = 0
 
-        sum_on_run_elev = 0.
-        sum_off_run_elev = 0.
         for run in range(0,len(all_runs_info)):
 
             if number_off_runs>=require_nmatch: continue
@@ -1113,27 +1114,49 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
             
             #if off_run_az>180.: off_run_az = 360.-off_run_az 
             #if on_run_az>180.: on_run_az = 360.-on_run_az 
-            #delta_azim = off_run_az-on_run_az
-            delta_azim = abs(off_run_az-on_run_az)
-            if delta_azim>180.: delta_azim = 360.-delta_azim
+            #delta_azim = abs(off_run_az-on_run_az)
+            #if delta_azim>180.: delta_azim = 360.-delta_azim
+
+            delta_azim = off_run_az-on_run_az
+            if delta_azim>180.: 
+                delta_azim = delta_azim-360.
+            elif delta_azim<-180.: 
+                delta_azim = delta_azim+360.
 
             delta_airmass = (1./math.sin(on_run_el*math.pi/180.)-1./math.sin(off_run_el*math.pi/180.));
             delta_elev = off_run_el-on_run_el
 
+            delta_nsb = off_run_nsb-on_run_nsb
+
             if is_imposter:
-                if abs(delta_elev)>5.: continue
-                if abs(delta_azim)>10.: continue
-                if abs(on_run_nsb-off_run_nsb)>2.: continue
+                if abs(delta_elev)>10.: continue
+                if abs(delta_azim)>50.: continue
+                if abs(delta_nsb)>2.: continue
             else:
                 if abs(delta_elev)>5.: continue
-                if abs(delta_azim)>10.: continue
-                if abs(on_run_nsb-off_run_nsb)>2.: continue
+                if abs(delta_azim)>50.: continue
+
+                if total_elev_diff>0.:
+                    if delta_elev>0.: continue
+                else:
+                    if delta_elev<0.: continue
+
+                if total_azim_diff>0.:
+                    if delta_azim>0.: continue
+                else:
+                    if delta_azim<0.: continue
+
+                if total_nsb_diff>0.:
+                    if delta_nsb>0.: continue
+                else:
+                    if delta_nsb<0.: continue
                 #if abs(all_runs_info[run][0]-list_on_run_ids[on_run])>20000: continue
 
             list_off_run_ids += [[int(list_on_run_ids[on_run]),int(all_runs_info[run][0]),on_run_el,off_run_el]]
             number_off_runs += 1
-            sum_on_run_elev += on_run_el
-            sum_off_run_elev += off_run_el
+            total_nsb_diff += delta_nsb
+            total_azim_diff += delta_azim
+            total_elev_diff += delta_elev
 
             already_used = False
             for off_run in range(0,len(list_no_repeat_off_run_ids)):
