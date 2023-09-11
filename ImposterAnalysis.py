@@ -198,11 +198,8 @@ def GetFluxCalibration(energy,elev):
 
     # The energy threshold needs to be as low as 100 GeV for this method to work.
 
-    # 3-tel cut
-    #str_flux_calibration = ['1.55e+02', '3.94e+00', '1.66e+00', '1.22e+00', '1.03e+00', '1.26e+00', '1.20e+00', '1.13e+00', '1.30e+00', '1.36e+00', '1.37e+00']
     # v490
-    #str_flux_calibration = ['3.44e+00', '4.66e+00', '3.02e+00', '1.32e+00', '5.97e-01', '2.74e-01', '1.15e-01', '5.28e-02']
-    str_flux_calibration = ['3.54e+00', '1.37e+00', '1.58e+00', '1.47e+00', '1.17e+00', '7.87e-01', '1.24e+00', '6.41e-01', '3.59e-01', '1.84e-01', '9.11e-02', '4.75e-02']
+    str_flux_calibration = ['3.46e+00', '1.44e+00', '1.70e+00', '1.58e+00', '1.24e+00', '8.49e-01', '1.34e+00', '6.98e-01', '3.78e-01', '1.91e-01', '9.12e-02', '4.66e-02']
     # v487
     if folder_path=='output_nuclear_v487':
         str_flux_calibration = ['1.39e+01', '2.79e+00', '2.36e+00', '1.93e+00', '1.28e+00', '1.82e+00', '8.77e-01', '4.33e-01', '2.29e-01', '1.16e-01', '6.02e-02']
@@ -1297,6 +1294,7 @@ def MakeExtensionProfile(roi_x,roi_y,roi_r,fit_profile,roi_name,real_map,imposte
         return
 
     plot_radius = 0.5*(MapEdge_upper-MapEdge_lower)
+
     real_profile, real_profile_stat_err, theta2, theta2_err = CommonPlotFunctions.FindExtension(real_map,roi_x,roi_y,plot_radius)
     imposter_profile_list = []
     imposter_profile_err_list = []
@@ -1533,10 +1531,14 @@ elif 'PSR_J2021_p4026' in source_name:
     #region_y = [40.7572222]
     #region_r = [0.3]
     #region_name = 'Paper'
-    region_x = [305.37]
-    region_y = [40.45]
+    #region_x = [305.37]
+    #region_y = [40.45]
+    #region_r = [0.5]
+    #region_name = 'PSR'
+    region_x = [305.21]
+    region_y = [40.43]
     region_r = [0.5]
-    region_name = 'PSR'
+    region_name = 'SNR'
 elif '2HWC_J1953_p294' in source_name:
     # G067.6+00.9
     region_x = [299.44]
@@ -1544,10 +1546,30 @@ elif '2HWC_J1953_p294' in source_name:
     region_r = [1.0]
     region_name = 'Center'
 elif 'SNR_G189_p03' in source_name:
-    region_x = [94.213]
-    region_y = [22.503]
-    region_r = [0.5]
+
+    # IC 443
+    #src_x = 94.213
+    #src_y = 22.503
+    # G189.1+03.0
+    src_x = 94.25
+    src_y = 22.57
+    # 3HWC J0617+224
+    #src_x = 94.39
+    #src_y = 22.47
+
+    region_x = [src_x]
+    region_y = [src_y]
+    region_r = [0.4]
     region_name = 'Center'
+
+    #excl_region_x = [src_x]
+    #excl_region_y = [src_y]
+    #excl_region_r = [0.4]
+    #region_x = [94.213]
+    #region_y = [22.503]
+    #region_r = [1.0]
+    #region_name = 'Ring'
+
 elif 'PSR_J2032_p4127' in source_name:
     region_x = [MapCenter_x]
     region_y = [MapCenter_y]

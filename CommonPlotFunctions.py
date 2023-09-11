@@ -57,8 +57,8 @@ folder_tag = '_test'
 #analysis_method = 'Ratio'
 #analysis_method = 'Regression'
 #analysis_method = 'Init_Perturbation'
-#analysis_method = 'Perturbation'
-analysis_method = 'Combined'
+analysis_method = 'Perturbation'
+#analysis_method = 'Combined'
 
 energy_bin = [100.,159.,200.,251.,316.,398.,501.,794.,1259.,1995.,3162.,5011.,7943.]
 #energy_bin = [100.,167.,300.,538.,965.,1732.,3107.,5574.,10000.]
@@ -70,10 +70,10 @@ calibration_radius = 0.15 # need to be larger than the PSF and smaller than the 
 n_xoff_bins = 1
 n_yoff_bins = 1
 
-MSCW_lower_blind = -0.6
-MSCL_lower_blind = -0.6
-MSCW_upper_blind = 0.6
-MSCL_upper_blind = 0.6
+MSCW_lower_blind = -0.5
+MSCL_lower_blind = -0.7
+MSCW_upper_blind = 0.7
+MSCL_upper_blind = 0.5
 n_extra_lower_bins = 0
 n_extra_upper_bins = 6
 mtx_dim_w_fine = 6

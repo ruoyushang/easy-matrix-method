@@ -31,10 +31,10 @@ int min_NImages = 3;
 //double MSCL_lower_blind = -0.7;
 //double MSCW_upper_blind = 0.6;
 //double MSCL_upper_blind = 0.6;
-double MSCW_lower_blind = -0.6;
-double MSCL_lower_blind = -0.6;
-double MSCW_upper_blind = 0.6;
-double MSCL_upper_blind = 0.6;
+double MSCW_lower_blind = -0.5;
+double MSCL_lower_blind = -0.7;
+double MSCW_upper_blind = 0.7;
+double MSCL_upper_blind = 0.5;
 
 int n_extra_lower_bins = 0;
 int n_extra_upper_bins = 6;

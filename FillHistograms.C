@@ -456,6 +456,7 @@ vector<int> RemoveNonExistingRuns(vector<int>& input_list)
         }
         else
         {
+            std::cout << "Run " << run_number << " does exist." << std::endl;
             new_list.push_back(input_list.at(run));
         }
     }
@@ -1417,8 +1418,8 @@ MatrixXcd MatrixPerturbationMethod(MatrixXcd mtx_t_input, MatrixXcd mtx_base_inp
                     int nth_entry = idx_n+1;
                     if (kth_entry==nth_entry && !diagonal_rank) continue;
                     if (kth_entry>max_rank && nth_entry>max_rank) continue;
-                    if (kth_entry>2*max_rank) continue;
-                    if (nth_entry>2*max_rank) continue;
+                    if (kth_entry>max_rank+1) continue;
+                    if (nth_entry>max_rank+1) continue;
                     int idx_v = idx_k*size_n + idx_n;
                     mtx_A(idx_u,idx_v) = mtx_U_base(idx_i,idx_k)*mtx_V_base(idx_j,idx_n);
                 }
@@ -1898,6 +1899,15 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         std::cout << "Cannot find imposter data for run " << int(Data_runlist_init[run]) << std::endl;
                         analyze_this_run = false;
                     }
+                    char imposter_run_number[50];
+                    sprintf(imposter_run_number, "%i", ImposterRunID);
+                    string imposter_file_name;
+                    imposter_file_name = TString(SMI_INPUT+"/"+string(imposter_run_number)+".anasum.root");
+                    if (gSystem->AccessPathName(imposter_file_name.c_str()))
+                    {
+                        std::cout << "Imposter Run " << imposter_run_number << " does not exist!!!" << std::endl;
+                        analyze_this_run = false;
+                    }
                 }
                 vector<int> OffData_runlist_init;
                 if (doImposter>0)
@@ -1908,9 +1918,10 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                 {
                     OffData_runlist_init = GetOffRunList(source_strip,ON_RunID);
                 }
+                std::cout << "Checking any non-existing files..." << std::endl;
                 OffData_runlist_init = RemoveNonExistingRuns(OffData_runlist_init);
 
-                //if (OffData_runlist_init.size()<nbins_unblind)
+                std::cout << "Run " << ON_RunID << " has " << OffData_runlist_init.size() << " OFF runs." << std::endl;
                 if (OffData_runlist_init.size()<1)
                 {
                     std::cout << "Insufficient training data..." << std::endl;
