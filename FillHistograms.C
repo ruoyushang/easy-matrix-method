@@ -1418,8 +1418,8 @@ MatrixXcd MatrixPerturbationMethod(MatrixXcd mtx_t_input, MatrixXcd mtx_base_inp
                     int nth_entry = idx_n+1;
                     if (kth_entry==nth_entry && !diagonal_rank) continue;
                     if (kth_entry>max_rank && nth_entry>max_rank) continue;
-                    if (kth_entry>max_rank+1) continue;
-                    if (nth_entry>max_rank+1) continue;
+                    if (kth_entry>max_rank) continue;
+                    if (nth_entry>max_rank) continue;
                     int idx_v = idx_k*size_n + idx_n;
                     mtx_A(idx_u,idx_v) = mtx_U_base(idx_i,idx_k)*mtx_V_base(idx_j,idx_n);
                 }
@@ -1440,17 +1440,17 @@ MatrixXcd MatrixPerturbationMethod(MatrixXcd mtx_t_input, MatrixXcd mtx_base_inp
     //idx_u1 = idx_v1 + mtx_init_input.rows()*mtx_init_input.cols();
     //mtx_Constraint(idx_u1,idx_v1) = 1.;
     
-    //    idx_k1 = 1-1;
-    //    idx_n1 = 1-1;
-    //    idx_k2 = 2-1;
-    //    idx_n2 = 1-1;
-    //    idx_v1 = idx_k1*size_n + idx_n1;
-    //    idx_v2 = idx_k2*size_n + idx_n2;
-    //    idx_u1 = idx_v1;
-    //    //mtx_Constraint(idx_u1,idx_v1) = 2.;
-    //    //mtx_Constraint(idx_u1,idx_v2) = 1.;
-    //    mtx_A(idx_u1,idx_v1) = 2.*alpha*avg_weight;
-    //    mtx_A(idx_u1,idx_v2) = 1.*alpha*avg_weight;
+    int idx_k1 = 1-1;
+    int idx_n1 = 1-1;
+    int idx_k2 = 2-1;
+    int idx_n2 = 2-1;
+    int idx_v1 = idx_k1*size_n + idx_n1;
+    int idx_v2 = idx_k2*size_n + idx_n2;
+    int idx_u1 = idx_v1;
+    double sigma_k1 = mtx_S_base(idx_k1,idx_k1);
+    double sigma_k2 = mtx_S_base(idx_k2,idx_k2);
+    mtx_Constraint(idx_u1,idx_v1) = 1./sigma_k1;
+    mtx_Constraint(idx_u1,idx_v2) = -1./sigma_k2;
 
     if (use_mtx_t_input)
     {
@@ -1462,11 +1462,11 @@ MatrixXcd MatrixPerturbationMethod(MatrixXcd mtx_t_input, MatrixXcd mtx_base_inp
                 int nth_entry = idx_n+1;
                 int idx_v = idx_k*size_n + idx_n;
                 int idx_u = idx_v + mtx_init_input.rows()*mtx_init_input.cols();
-                if (abs(mtx_t_input(idx_k,idx_n))<1.)
+                if (kth_entry==nth_entry)
                 {
                     mtx_W(idx_u,idx_u) = pow(10.,-3.0)*avg_weight;
                     mtx_A(idx_u,idx_v) = 1.;
-                    vtr_Delta(idx_u) = mtx_t_input(idx_k,idx_n);
+                    vtr_Delta(idx_u) = 0.;
                 }
                 else
                 {
