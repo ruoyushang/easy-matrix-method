@@ -75,9 +75,9 @@ MSCL_lower_blind = -0.7
 MSCW_upper_blind = 0.7
 MSCL_upper_blind = 0.5
 n_extra_lower_bins = 0
-n_extra_upper_bins = 6
-mtx_dim_w_fine = 6
-mtx_dim_l_fine = 6
+n_extra_upper_bins = 4
+mtx_dim_w_fine = 4
+mtx_dim_l_fine = 4
 
 def reflectXaxis(hist):
 
@@ -337,8 +337,8 @@ def GetGammaSourceInfo():
     drawSNR = True
     drawLHAASO = False
     drawFermi = False
-    drawHAWC = True
-    drawTeV = True
+    drawHAWC = False
+    drawTeV = False
 
     if drawBrightStar:
         star_name, star_ra, star_dec = ReadBrightStarListFromFile()

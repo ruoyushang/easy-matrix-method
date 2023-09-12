@@ -1293,7 +1293,7 @@ def MakeExtensionProfile(roi_x,roi_y,roi_r,fit_profile,roi_name,real_map,imposte
     if real_map.Integral()==0.:
         return
 
-    plot_radius = 0.5*(MapEdge_upper-MapEdge_lower)
+    plot_radius = 0.45*(MapEdge_upper-MapEdge_lower)
 
     real_profile, real_profile_stat_err, theta2, theta2_err = CommonPlotFunctions.FindExtension(real_map,roi_x,roi_y,plot_radius)
     imposter_profile_list = []
@@ -1545,6 +1545,7 @@ elif '2HWC_J1953_p294' in source_name:
     region_y = [30.88]
     region_r = [1.0]
     region_name = 'Center'
+
 elif 'SNR_G189_p03' in source_name:
 
     # IC 443
