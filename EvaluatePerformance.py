@@ -103,10 +103,14 @@ def GetRunInfo(file_path):
 def GetGammaCounts(file_path,ebin):
 
     effective_area = ROOT.std.vector("double")(20)
-    t00 = ROOT.std.vector("double")(20)
-    t01 = ROOT.std.vector("double")(20)
-    t10 = ROOT.std.vector("double")(20)
-    t11 = ROOT.std.vector("double")(20)
+    t00_truth = ROOT.std.vector("double")(20)
+    t01_truth = ROOT.std.vector("double")(20)
+    t10_truth = ROOT.std.vector("double")(20)
+    t11_truth = ROOT.std.vector("double")(20)
+    t00_recon = ROOT.std.vector("double")(20)
+    t01_recon = ROOT.std.vector("double")(20)
+    t10_recon = ROOT.std.vector("double")(20)
+    t11_recon = ROOT.std.vector("double")(20)
     data_count = ROOT.std.vector("double")(20)
     ratio_bkgd_count = ROOT.std.vector("double")(20)
     regression_bkgd_count = ROOT.std.vector("double")(20)
@@ -117,10 +121,14 @@ def GetGammaCounts(file_path,ebin):
     InputFile = ROOT.TFile(file_path)
     InfoTree = InputFile.Get("InfoTree")
     InfoTree.SetBranchAddress('effective_area',ROOT.AddressOf(effective_area))
-    InfoTree.SetBranchAddress('t00',ROOT.AddressOf(t00))
-    InfoTree.SetBranchAddress('t01',ROOT.AddressOf(t01))
-    InfoTree.SetBranchAddress('t10',ROOT.AddressOf(t10))
-    InfoTree.SetBranchAddress('t11',ROOT.AddressOf(t11))
+    InfoTree.SetBranchAddress('t00_truth',ROOT.AddressOf(t00_truth))
+    InfoTree.SetBranchAddress('t01_truth',ROOT.AddressOf(t01_truth))
+    InfoTree.SetBranchAddress('t10_truth',ROOT.AddressOf(t10_truth))
+    InfoTree.SetBranchAddress('t11_truth',ROOT.AddressOf(t11_truth))
+    InfoTree.SetBranchAddress('t00_recon',ROOT.AddressOf(t00_recon))
+    InfoTree.SetBranchAddress('t01_recon',ROOT.AddressOf(t01_recon))
+    InfoTree.SetBranchAddress('t10_recon',ROOT.AddressOf(t10_recon))
+    InfoTree.SetBranchAddress('t11_recon',ROOT.AddressOf(t11_recon))
     InfoTree.SetBranchAddress('data_count',ROOT.AddressOf(data_count))
     InfoTree.SetBranchAddress('ratio_bkgd_count',ROOT.AddressOf(ratio_bkgd_count))
     InfoTree.SetBranchAddress('regression_bkgd_count',ROOT.AddressOf(regression_bkgd_count))
@@ -130,7 +138,7 @@ def GetGammaCounts(file_path,ebin):
     InfoTree.GetEntry(0)
     InputFile.Close()
 
-    return effective_area[ebin], data_count[ebin], ratio_bkgd_count[ebin], regression_bkgd_count[ebin], init_perturbation_bkgd_count[ebin], perturbation_bkgd_count[ebin], combined_bkgd_count[ebin], t00[ebin], t01[ebin], t10[ebin], t11[ebin]
+    return effective_area[ebin], data_count[ebin], ratio_bkgd_count[ebin], regression_bkgd_count[ebin], init_perturbation_bkgd_count[ebin], perturbation_bkgd_count[ebin], combined_bkgd_count[ebin], t00_truth[ebin], t01_truth[ebin], t10_truth[ebin], t11_truth[ebin], t00_recon[ebin], t01_recon[ebin], t10_recon[ebin], t11_recon[ebin]
 
 def MakeMultipleFitPlot(ax_input,Hists,legends,title_x,title_y):
 
@@ -162,58 +170,60 @@ def MakeMultipleFitPlot(ax_input,Hists,legends,title_x,title_y):
 
 
 ONOFF_tag_sample = 'OFF'
+source_of_interest = ''
+#source_of_interest = '1ES0229'
 
 sample_list = []
 
-#sample_list += ['OJ287_V6_OFF']
-#sample_list += ['Segue1_V6_OFF']
-#sample_list += ['3C264_V6_OFF']
-#sample_list += ['3C273_V6_OFF']
-#sample_list += ['PG1553_V6_OFF']
+sample_list += ['OJ287_V6_OFF']
+sample_list += ['Segue1_V6_OFF']
+sample_list += ['3C264_V6_OFF']
+sample_list += ['3C273_V6_OFF']
+sample_list += ['PG1553_V6_OFF']
 sample_list += ['1ES0229_V6_OFF']
-#sample_list += ['PKS1424_V6_OFF']
-#sample_list += ['RGB_J0710_p591_V6_OFF'] # north 
-#sample_list += ['UrsaMajorII_V6_OFF'] # north
-#sample_list += ['UrsaMinor_V6_OFF'] # north
-#sample_list += ['H1426_V6_OFF'] # north
-#sample_list += ['NGC1275_V6_OFF'] # north
-#sample_list += ['Draco_V6_OFF'] # north
-#sample_list += ['BLLac_V6_OFF'] # north
-#sample_list += ['1ES0502_V6_OFF'] # north
-#sample_list += ['M82_V6_OFF'] # north
-#sample_list += ['1ES0414_V6_OFF'] # north
-#sample_list += ['1ES1011_V6_OFF'] # north
-#sample_list += ['1ES0647_V6_OFF']
-#sample_list += ['OJ287_V5_OFF']
-#sample_list += ['Segue1_V5_OFF']
-#sample_list += ['3C264_V5_OFF']
-#sample_list += ['3C273_V5_OFF']
-#sample_list += ['PG1553_V5_OFF']
+sample_list += ['PKS1424_V6_OFF']
+sample_list += ['RGB_J0710_p591_V6_OFF'] # north 
+sample_list += ['UrsaMajorII_V6_OFF'] # north
+sample_list += ['UrsaMinor_V6_OFF'] # north
+sample_list += ['H1426_V6_OFF'] # north
+sample_list += ['NGC1275_V6_OFF'] # north
+sample_list += ['Draco_V6_OFF'] # north
+sample_list += ['BLLac_V6_OFF'] # north
+sample_list += ['1ES0502_V6_OFF'] # north
+sample_list += ['M82_V6_OFF'] # north
+sample_list += ['1ES0414_V6_OFF'] # north
+sample_list += ['1ES1011_V6_OFF'] # north
+sample_list += ['1ES0647_V6_OFF']
+sample_list += ['OJ287_V5_OFF']
+sample_list += ['Segue1_V5_OFF']
+sample_list += ['3C264_V5_OFF']
+sample_list += ['3C273_V5_OFF']
+sample_list += ['PG1553_V5_OFF']
 sample_list += ['1ES0229_V5_OFF']
-#sample_list += ['PKS1424_V5_OFF']
-#sample_list += ['RGB_J0710_p591_V5_OFF'] # north 
-#sample_list += ['UrsaMajorII_V5_OFF'] # north
-#sample_list += ['UrsaMinor_V5_OFF'] # north
-#sample_list += ['H1426_V5_OFF'] # north
-#sample_list += ['NGC1275_V5_OFF'] # north
-#sample_list += ['Draco_V5_OFF'] # north
-#sample_list += ['BLLac_V5_OFF'] # north
-#sample_list += ['1ES0502_V5_OFF'] # north
-#sample_list += ['M82_V5_OFF'] # north
-#sample_list += ['1ES0414_V5_OFF'] # north
-#sample_list += ['1ES1011_V5_OFF'] # north
-#sample_list += ['1ES0647_V5_OFF']
-#
-#sample_list += ['CrabNebula_elev_80_90_V6_OFF']
-#sample_list += ['CrabNebula_elev_70_80_V6_OFF']
-#sample_list += ['CrabNebula_elev_60_70_V6_OFF']
-#sample_list += ['CrabNebula_elev_50_60_V6_OFF']
-#sample_list += ['CrabNebula_elev_40_50_V6_OFF']
-#sample_list += ['CrabNebula_elev_80_90_V5_OFF']
-#sample_list += ['CrabNebula_elev_70_80_V5_OFF']
-#sample_list += ['CrabNebula_elev_60_70_V5_OFF']
-#sample_list += ['CrabNebula_elev_50_60_V5_OFF']
-#sample_list += ['CrabNebula_elev_40_50_V5_OFF']
+sample_list += ['PKS1424_V5_OFF']
+sample_list += ['RGB_J0710_p591_V5_OFF'] # north 
+sample_list += ['UrsaMajorII_V5_OFF'] # north
+sample_list += ['UrsaMinor_V5_OFF'] # north
+sample_list += ['H1426_V5_OFF'] # north
+sample_list += ['NGC1275_V5_OFF'] # north
+sample_list += ['Draco_V5_OFF'] # north
+sample_list += ['BLLac_V5_OFF'] # north
+sample_list += ['1ES0502_V5_OFF'] # north
+sample_list += ['M82_V5_OFF'] # north
+sample_list += ['1ES0414_V5_OFF'] # north
+sample_list += ['1ES1011_V5_OFF'] # north
+sample_list += ['1ES0647_V5_OFF']
+
+sample_list += ['CrabNebula_elev_80_90_V6_OFF']
+sample_list += ['CrabNebula_elev_70_80_V6_OFF']
+sample_list += ['CrabNebula_elev_60_70_V6_OFF']
+sample_list += ['CrabNebula_elev_50_60_V6_OFF']
+sample_list += ['CrabNebula_elev_40_50_V6_OFF']
+sample_list += ['CrabNebula_elev_80_90_V5_OFF']
+sample_list += ['CrabNebula_elev_70_80_V5_OFF']
+sample_list += ['CrabNebula_elev_60_70_V5_OFF']
+sample_list += ['CrabNebula_elev_50_60_V5_OFF']
+sample_list += ['CrabNebula_elev_40_50_V5_OFF']
 
 nbins = 21
 hist_limit = 30.0
@@ -229,10 +239,14 @@ array_nsb_mean = []
 array_elev_diff = []
 array_azim_diff = []
 array_nsb_diff = []
-array_t00 = []
-array_t01 = []
-array_t10 = []
-array_t11 = []
+array_t00_truth = []
+array_t01_truth = []
+array_t10_truth = []
+array_t11_truth = []
+array_t00_recon = []
+array_t01_recon = []
+array_t10_recon = []
+array_t11_recon = []
 array_syst_err_ratio = []
 array_syst_err_regression = []
 array_syst_err_init_perturbation = []
@@ -259,10 +273,14 @@ for energy_idx in range(0,len(energy_bin)-1):
     array_per_energy_nsb_mean = []
     array_per_energy_elev_diff = []
     array_per_energy_azim_diff = []
-    array_per_energy_t00 = []
-    array_per_energy_t01 = []
-    array_per_energy_t10 = []
-    array_per_energy_t11 = []
+    array_per_energy_t00_truth = []
+    array_per_energy_t01_truth = []
+    array_per_energy_t10_truth = []
+    array_per_energy_t11_truth = []
+    array_per_energy_t00_recon = []
+    array_per_energy_t01_recon = []
+    array_per_energy_t10_recon = []
+    array_per_energy_t11_recon = []
     array_per_energy_nsb_diff = []
     array_syst_err_per_energy_ratio = []
     array_syst_err_per_energy_regression = []
@@ -276,6 +294,8 @@ for energy_idx in range(0,len(energy_bin)-1):
     array_rebin_syst_err_per_energy_perturbation = []
     array_rebin_syst_err_per_energy_combined = []
     for src in range(0,len(sample_list)):
+        if not source_of_interest=='':
+            if not source_of_interest in sample_list[src]: continue
         xoff_idx = 0
         yoff_idx = 0
         for xoff_idx in range(0,n_xoff_bins):
@@ -303,7 +323,7 @@ for energy_idx in range(0,len(energy_bin)-1):
                     SourceFilePath = "/gamma_raid/userspace/rshang/SMI_output/%s/Netflix_%s_G%d_X%d_Y%d.root"%(folder_path,sample_list[src],group,xoff_idx,yoff_idx)
                     if not os.path.exists(SourceFilePath): continue
                     print ('Read file: %s'%(SourceFilePath))
-                    eff_area, data_truth, ratio_bkgd, regression_bkgd, init_perturbation_bkgd, perturbation_bkgd, combined_bkgd, t00, t01, t10, t11 = GetGammaCounts(SourceFilePath,energy_idx)
+                    eff_area, data_truth, ratio_bkgd, regression_bkgd, init_perturbation_bkgd, perturbation_bkgd, combined_bkgd, t00_truth, t01_truth, t10_truth, t11_truth, t00_recon, t01_recon, t10_recon, t11_recon = GetGammaCounts(SourceFilePath,energy_idx)
                     data_expo, total_cr_count, elev_mean, azim_mean, nsb_mean, avg_diff_el, avg_diff_az, avg_diff_nsb = GetRunInfo(SourceFilePath)
                     if elev_mean<elev_range[0] or elev_mean>elev_range[1]: continue
                     if xoff_idx==0 and yoff_idx==0:
@@ -338,11 +358,15 @@ for energy_idx in range(0,len(energy_bin)-1):
                         txt_warning += 'energy index = %s \n'%(energy_idx)
                         txt_warning += 'error = %0.1f \n '%(perturbation_error)
                         txt_warning += 'truth = %0.1f \n '%(data_truth)
-                    if data_truth/pow(data_truth,0.5)>10.:
-                        array_per_energy_t00 += [t00]
-                        array_per_energy_t01 += [t01]
-                        array_per_energy_t10 += [t10]
-                        array_per_energy_t11 += [t11]
+                    #if abs(perturbation_bkgd-data_truth)/pow(data_truth,0.5)>5.:
+                    array_per_energy_t00_truth += [t00_truth]
+                    array_per_energy_t01_truth += [t01_truth]
+                    array_per_energy_t10_truth += [t10_truth]
+                    array_per_energy_t11_truth += [t11_truth]
+                    array_per_energy_t00_recon += [t00_recon]
+                    array_per_energy_t01_recon += [t01_recon]
+                    array_per_energy_t10_recon += [t10_recon]
+                    array_per_energy_t11_recon += [t11_recon]
             n_rebin += 1
             if n_rebin == measurement_rebin:
                 if total_data_truth>0.:
@@ -372,10 +396,14 @@ for energy_idx in range(0,len(energy_bin)-1):
     array_elev_diff += [array_per_energy_elev_diff]
     array_azim_diff += [array_per_energy_azim_diff]
     array_nsb_diff += [array_per_energy_nsb_diff]
-    array_t00 += [array_per_energy_t00]
-    array_t01 += [array_per_energy_t01]
-    array_t10 += [array_per_energy_t10]
-    array_t11 += [array_per_energy_t11]
+    array_t00_truth += [array_per_energy_t00_truth]
+    array_t01_truth += [array_per_energy_t01_truth]
+    array_t10_truth += [array_per_energy_t10_truth]
+    array_t11_truth += [array_per_energy_t11_truth]
+    array_t00_recon += [array_per_energy_t00_recon]
+    array_t01_recon += [array_per_energy_t01_recon]
+    array_t10_recon += [array_per_energy_t10_recon]
+    array_t11_recon += [array_per_energy_t11_recon]
     array_syst_err_ratio += [array_syst_err_per_energy_ratio]
     array_syst_err_regression += [array_syst_err_per_energy_regression]
     array_syst_err_init_perturbation += [array_syst_err_per_energy_init_perturbation]
@@ -394,7 +422,8 @@ for energy_idx in range(0,len(energy_bin)-1):
     fig.set_figheight(8)
     fig.set_figwidth(8)
     axbig = fig.add_subplot()
-    axbig.scatter(array_t00[energy_idx],array_t11[energy_idx],color='k',alpha=0.5)
+    axbig.scatter(array_t00_truth[energy_idx],array_t11_truth[energy_idx],color='k',alpha=0.5)
+    axbig.scatter(array_t00_recon[energy_idx],array_t11_recon[energy_idx],color='r',alpha=0.5)
     axbig.set_xlabel('$t_{00}$')
     axbig.set_ylabel('$t_{11}$')
     fig.savefig("output_plots/t00_vs_t11_E%s_%s.png"%(energy_idx,folder_tag))
@@ -404,7 +433,8 @@ for energy_idx in range(0,len(energy_bin)-1):
     fig.set_figheight(8)
     fig.set_figwidth(8)
     axbig = fig.add_subplot()
-    axbig.scatter(array_t01[energy_idx],array_t11[energy_idx],color='k',alpha=0.5)
+    axbig.scatter(array_t01_truth[energy_idx],array_t11_truth[energy_idx],color='k',alpha=0.5)
+    axbig.scatter(array_t01_recon[energy_idx],array_t11_recon[energy_idx],color='r',alpha=0.5)
     axbig.set_xlabel('$t_{01}$')
     axbig.set_ylabel('$t_{11}$')
     fig.savefig("output_plots/t01_vs_t11_E%s_%s.png"%(energy_idx,folder_tag))
@@ -414,7 +444,8 @@ for energy_idx in range(0,len(energy_bin)-1):
     fig.set_figheight(8)
     fig.set_figwidth(8)
     axbig = fig.add_subplot()
-    axbig.scatter(array_t10[energy_idx],array_t11[energy_idx],color='k',alpha=0.5)
+    axbig.scatter(array_t10_truth[energy_idx],array_t11_truth[energy_idx],color='k',alpha=0.5)
+    axbig.scatter(array_t10_recon[energy_idx],array_t11_recon[energy_idx],color='r',alpha=0.5)
     axbig.set_xlabel('$t_{10}$')
     axbig.set_ylabel('$t_{11}$')
     fig.savefig("output_plots/t10_vs_t11_E%s_%s.png"%(energy_idx,folder_tag))

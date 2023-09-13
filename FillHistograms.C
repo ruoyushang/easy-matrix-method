@@ -103,10 +103,14 @@ vector<double> regression_bkgd_count;
 vector<double> init_perturbation_bkgd_count;
 vector<double> perturbation_bkgd_count;
 vector<double> combined_bkgd_count;
-vector<double> t00;
-vector<double> t01;
-vector<double> t10;
-vector<double> t11;
+vector<double> t00_truth;
+vector<double> t01_truth;
+vector<double> t10_truth;
+vector<double> t11_truth;
+vector<double> t00_recon;
+vector<double> t01_recon;
+vector<double> t10_recon;
+vector<double> t11_recon;
 
 int binx_blind_upper_global;
 int biny_blind_upper_global;
@@ -1462,9 +1466,18 @@ MatrixXcd MatrixPerturbationMethod(MatrixXcd mtx_t_input, MatrixXcd mtx_base_inp
                 int idx_u = idx_v + mtx_init_input.rows()*mtx_init_input.cols();
                 if (abs(mtx_t_input(idx_k,idx_n))<1.)
                 {
-                    mtx_W(idx_u,idx_u) = pow(10.,log_t_input_weight)*avg_weight;
-                    mtx_A(idx_u,idx_v) = 1.;
-                    vtr_Delta(idx_u) = 0.;
+                    if (kth_entry==1 && nth_entry==1)
+                    {
+                        mtx_W(idx_u,idx_u) = pow(10.,-3.)*avg_weight;
+                        mtx_A(idx_u,idx_v) = 1.;
+                        vtr_Delta(idx_u) = 0.;
+                    }
+                    if (kth_entry==2 && nth_entry==2 && var_rank>1)
+                    {
+                        mtx_W(idx_u,idx_u) = pow(10.,log_t_input_weight)*avg_weight;
+                        mtx_A(idx_u,idx_v) = 1.;
+                        vtr_Delta(idx_u) = 0.5*(-1.0*mtx_t_input(0,1)-0.2*mtx_t_input(1,0));
+                    }
                 }
                 else
                 {
@@ -2248,10 +2261,10 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                             total_bkgd_sr_count = GetSRcounts(&Hist_OnBkgd_MSCLW_Fine.at(e));
                         }
                         std::cout << "total_data_sr_count = " << total_data_sr_count << ", total_bkgd_sr_count = " << total_bkgd_sr_count << std::endl;
-                        t00.push_back(mtx_on_t(0,0).real());
-                        t01.push_back(mtx_on_t(0,1).real());
-                        t10.push_back(mtx_on_t(1,0).real());
-                        t11.push_back(mtx_on_t(1,1).real());
+                        t00_truth.push_back(mtx_on_t(0,0).real());
+                        t01_truth.push_back(mtx_on_t(0,1).real());
+                        t10_truth.push_back(mtx_on_t(1,0).real());
+                        t11_truth.push_back(mtx_on_t(1,1).real());
 
                         is_blind = true;
                         max_rank = 2;
@@ -2295,13 +2308,13 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         {
                             use_t_input = true;
                             use_diagonal = true;
-                            log_t_mtx_weight = -3.0;
-                            if (energy_bins[e]>1000.)
-                            {
-                                use_diagonal = false;
-                            }
+                            log_t_mtx_weight = -1.0;
+                            //if (energy_bins[e]>1000.)
+                            //{
+                            //    use_diagonal = false;
+                            //}
 
-                            for (int rank=1;rank<=1;rank++)
+                            for (int rank=1;rank<=2;rank++)
                             {
                                 mtx_on_t = MatrixPerturbationMethod(mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,max_rank,rank,use_diagonal,use_t_input,log_t_mtx_weight,is_blind,1);
                                 std::cout << "mtx_on_t (blind, diagonal):" << std::endl;
@@ -2322,6 +2335,10 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                             std::cout << "total_data_sr_count = " << total_data_sr_count << ", total_bkgd_sr_count = " << total_bkgd_sr_count << std::endl;
 
                         }
+                        t00_recon.push_back(mtx_on_t(0,0).real());
+                        t01_recon.push_back(mtx_on_t(0,1).real());
+                        t10_recon.push_back(mtx_on_t(1,0).real());
+                        t11_recon.push_back(mtx_on_t(1,1).real());
 
                         if (max_rank==0)
                         {
@@ -2482,10 +2499,14 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                     InfoTree.Branch("init_perturbation_bkgd_count","std::vector<double>",&init_perturbation_bkgd_count);
                     InfoTree.Branch("perturbation_bkgd_count","std::vector<double>",&perturbation_bkgd_count);
                     InfoTree.Branch("combined_bkgd_count","std::vector<double>",&combined_bkgd_count);
-                    InfoTree.Branch("t00","std::vector<double>",&t00);
-                    InfoTree.Branch("t01","std::vector<double>",&t01);
-                    InfoTree.Branch("t10","std::vector<double>",&t10);
-                    InfoTree.Branch("t11","std::vector<double>",&t11);
+                    InfoTree.Branch("t00_truth","std::vector<double>",&t00_truth);
+                    InfoTree.Branch("t01_truth","std::vector<double>",&t01_truth);
+                    InfoTree.Branch("t10_truth","std::vector<double>",&t10_truth);
+                    InfoTree.Branch("t11_truth","std::vector<double>",&t11_truth);
+                    InfoTree.Branch("t00_recon","std::vector<double>",&t00_recon);
+                    InfoTree.Branch("t01_recon","std::vector<double>",&t01_recon);
+                    InfoTree.Branch("t10_recon","std::vector<double>",&t10_recon);
+                    InfoTree.Branch("t11_recon","std::vector<double>",&t11_recon);
                     InfoTree.Fill();
                     InfoTree.Write();
 
@@ -2504,10 +2525,14 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                     {
                         effective_area.push_back(0.);
                     }
-                    t00.clear();
-                    t01.clear();
-                    t10.clear();
-                    t11.clear();
+                    t00_truth.clear();
+                    t01_truth.clear();
+                    t10_truth.clear();
+                    t11_truth.clear();
+                    t00_recon.clear();
+                    t01_recon.clear();
+                    t10_recon.clear();
+                    t11_recon.clear();
                     data_count.clear();
                     ratio_bkgd_count.clear();
                     regression_bkgd_count.clear();
