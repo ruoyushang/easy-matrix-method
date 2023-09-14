@@ -3,6 +3,10 @@ const int N_energy_bins = 12;
 double energy_bins[N_energy_bins+1] = {100.,159.,200.,251.,316.,398.,501.,794.,1259.,1995.,3162.,5011.,7943.};
 int cr_correction_xyoff_bins[N_energy_bins] = {1,12,12,12,12,6,6,1,1,1,1,1};
 
+double coefficient_x00[N_energy_bins] = {0.343,0.185,0.168,0.363,0.216,0.178,0.048,0.071,-0.010,-0.090,-0.557,0.000};
+double coefficient_x01[N_energy_bins] = {0.290,0.106,0.036,0.043,0.016,-0.091,-0.103,-0.237,-0.184,-0.542,0.039,0.000};
+double coefficient_x10[N_energy_bins] = {-0.059,-0.228,-0.151,0.001,-0.096,-0.078,-0.002,0.042,0.134,-0.052,0.071,0.000};
+
 //const int N_energy_bins = 8;
 //double energy_bins[N_energy_bins+1] = {100.,167.,300.,538.,965.,1732.,3107.,5574.,10000.};
 //int cr_correction_xyoff_bins[N_energy_bins] = {1,12,12,6,3,3,1,1};

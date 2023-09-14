@@ -125,8 +125,8 @@ def ReadBrightStarListFromFile():
         target_ra = float(line.split()[0])
         target_dec = float(line.split()[1])
         target_brightness = float(line.split()[3])+float(line.split()[4])
-        #if target_brightness>7.: continue
-        if target_brightness>6.: continue
+        if target_brightness>7.: continue
+        #if target_brightness>6.: continue
         #if target_brightness>5.: continue
         star_ra += [target_ra]
         star_dec += [target_dec]
@@ -334,7 +334,7 @@ def GetGammaSourceInfo():
 
     drawBrightStar = False
     drawPulsar = True
-    drawSNR = True
+    drawSNR = False
     drawLHAASO = False
     drawFermi = False
     drawHAWC = False
@@ -348,23 +348,6 @@ def GetGammaSourceInfo():
             other_stars += [star_name[src]]
             other_stars_type += ['Star']
             other_star_coord += [[src_ra,src_dec,0.]]
-
-    if drawSNR:
-        target_snr_name, target_snr_ra, target_snr_dec, target_snr_size = ReadSNRTargetListFromCSVFile()
-        for src in range(0,len(target_snr_name)):
-            gamma_source_name = target_snr_name[src]
-            gamma_source_ra = target_snr_ra[src]
-            gamma_source_dec = target_snr_dec[src]
-            gamma_source_size = target_snr_size[src]
-            near_a_source = False
-            for entry in range(0,len(other_stars)):
-                distance = pow(gamma_source_ra-other_star_coord[entry][0],2)+pow(gamma_source_dec-other_star_coord[entry][1],2)
-                if distance<near_source_cut*near_source_cut:
-                    near_a_source = True
-            if not near_a_source:
-                other_stars += [gamma_source_name]
-                other_stars_type += ['SNR']
-                other_star_coord += [[gamma_source_ra,gamma_source_dec,gamma_source_size]]
 
     if drawPulsar:
         target_psr_name, target_psr_ra, target_psr_dec, target_psr_dist, target_psr_age = ReadATNFTargetListFromFile('ATNF_pulsar_full_list.txt')
@@ -384,6 +367,23 @@ def GetGammaSourceInfo():
                 else:
                         other_stars_type += ['PSR']
                 other_star_coord += [[gamma_source_ra,gamma_source_dec,0.]]
+
+    if drawSNR:
+        target_snr_name, target_snr_ra, target_snr_dec, target_snr_size = ReadSNRTargetListFromCSVFile()
+        for src in range(0,len(target_snr_name)):
+            gamma_source_name = target_snr_name[src]
+            gamma_source_ra = target_snr_ra[src]
+            gamma_source_dec = target_snr_dec[src]
+            gamma_source_size = target_snr_size[src]
+            near_a_source = False
+            for entry in range(0,len(other_stars)):
+                distance = pow(gamma_source_ra-other_star_coord[entry][0],2)+pow(gamma_source_dec-other_star_coord[entry][1],2)
+                if distance<near_source_cut*near_source_cut:
+                    near_a_source = True
+            if not near_a_source:
+                other_stars += [gamma_source_name]
+                other_stars_type += ['SNR']
+                other_star_coord += [[gamma_source_ra,gamma_source_dec,gamma_source_size]]
 
     if drawHAWC:
         target_hwc_name, target_hwc_ra, target_hwc_dec = ReadHAWCTargetListFromFile('Cat_3HWC.txt')
@@ -551,11 +551,8 @@ def MatplotlibMap2D(hist_map,hist_tone,hist_contour,fig,label_x,label_y,label_z,
             if max_z==0.: continue
             if hist_contour[ctr].GetMaximum()==0.: continue
             grid_contour = np.zeros((hist_contour[ctr].GetNbinsY(),hist_contour[ctr].GetNbinsX()))
-            #max_z_contour = list_levels[ctr][1]
-            #min_z_contour = list_levels[ctr][0]
-            #delta_z = list_levels[ctr][2]
             max_z_contour = 1.0*hist_contour[ctr].GetMaximum()
-            min_z_contour = 0.7*hist_contour[ctr].GetMaximum()
+            min_z_contour = 0.5*hist_contour[ctr].GetMaximum()
             delta_z = 0.3*hist_contour[ctr].GetMaximum()
             list_levels[ctr] = np.arange(min_z_contour*max_z/max_z_contour, max_z_contour*max_z/max_z_contour, delta_z*max_z/max_z_contour)
             contour_x_axis = np.linspace(MapEdge_left,MapEdge_right,hist_contour[ctr].GetNbinsX())
