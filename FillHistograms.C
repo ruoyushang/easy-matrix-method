@@ -1454,9 +1454,9 @@ MatrixXcd MatrixPerturbationMethod(int e_idx, MatrixXcd mtx_t_input, MatrixXcd m
     //    int idx_v3 = idx_k3*size_n + idx_n3;
     //    int idx_v4 = idx_k4*size_n + idx_n4;
     //    int idx_u1 = idx_v1;
-    //    double x00 = coefficient_x00[e_idx]; 
-    //    double x01 = coefficient_x01[e_idx]; 
-    //    double x10 = coefficient_x10[e_idx]; 
+    //    double x00 = coefficient_t11xt00[e_idx]; 
+    //    double x01 = coefficient_t11xt01[e_idx]; 
+    //    double x10 = coefficient_t11xt10[e_idx]; 
     //    mtx_Constraint(idx_u1,idx_v1) = 1.;
     //    mtx_Constraint(idx_u1,idx_v2) = -x00;
     //    mtx_Constraint(idx_u1,idx_v3) = -x01;
@@ -1477,25 +1477,28 @@ MatrixXcd MatrixPerturbationMethod(int e_idx, MatrixXcd mtx_t_input, MatrixXcd m
                 {
                     if (kth_entry==1 && nth_entry==1)
                     {
-                        mtx_W(idx_u,idx_u) = pow(10.,-3.)*avg_weight;
+                        mtx_W(idx_u,idx_u) = pow(10.,log_t_input_weight-1.)*avg_weight;
                         mtx_A(idx_u,idx_v) = 1.;
-                        vtr_Delta(idx_u) = 0.;
+                        double x01 = coefficient_t00xt01[e_idx]; 
+                        double x10 = coefficient_t00xt10[e_idx]; 
+                        vtr_Delta(idx_u)  = x01*mtx_t_input(0,1);
+                        vtr_Delta(idx_u) += x10*mtx_t_input(1,0);
                     }
                     if (kth_entry==2 && nth_entry==2 && var_rank>1)
                     {
                         mtx_W(idx_u,idx_u) = pow(10.,log_t_input_weight)*avg_weight;
                         mtx_A(idx_u,idx_v) = 1.;
-                        double x00 = coefficient_x00[e_idx]; 
+                        double x00 = coefficient_t11xt00[e_idx]; 
+                        double x01 = coefficient_t11xt01[e_idx]; 
+                        double x10 = coefficient_t11xt10[e_idx]; 
                         vtr_Delta(idx_u)  = x00*mtx_t_input(0,0);
-                        double x01 = coefficient_x01[e_idx]; 
                         vtr_Delta(idx_u) += x01*mtx_t_input(0,1);
-                        double x10 = coefficient_x10[e_idx]; 
                         vtr_Delta(idx_u) += x10*mtx_t_input(1,0);
                     }
                 }
                 else
                 {
-                    mtx_W(idx_u,idx_u) = pow(10.,log_t_input_weight)*avg_weight;
+                    mtx_W(idx_u,idx_u) = pow(10.,log_t_input_weight+1.)*avg_weight;
                     mtx_A(idx_u,idx_v) = 1.;
                     vtr_Delta(idx_u) = mtx_t_input(idx_k,idx_n);
                 }
@@ -1952,33 +1955,29 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                     analyze_this_run = false;
                 }
 
+                double off_evt_weight = 0.;
+                double off_run_cr_count = 0.;
+                double on_run_cr_count = CountCosmicRayEvents(ON_RunID, xoff_idx, yoff_idx);
+                for (int offrun=0;offrun<OffData_runlist_init.size();offrun++)
+                {
+                    off_run_cr_count += CountCosmicRayEvents(int(OffData_runlist_init[offrun]), xoff_idx, yoff_idx);
+                }
+                if (off_run_cr_count>0.)
+                {
+                    off_evt_weight = on_run_cr_count/off_run_cr_count;
+                }
+                if (off_evt_weight>1.2)
+                {
+                    std::cout << "Insufficient training sample events... " << std::endl;
+                    analyze_this_run = false;
+                }
+
                 if (analyze_this_run)
                 {
 
                     n_samples += 1;
                     for (int offrun=0;offrun<OffData_runlist_init.size();offrun++)
                     {
-
-                        if (!PointingSelection(int(OffData_runlist_init[offrun])))
-                        {
-                            continue;
-                        }
-                        for (int offrun2=0;offrun2<offrun;offrun2++)
-                        {
-                            if (int(OffData_runlist_init[offrun])==int(OffData_runlist_init[offrun2]))
-                            {
-                                std::cout << "OFF run " << int(OffData_runlist_init[offrun]) << " has been used. Remove it from training sample." << std::endl;
-                                continue;
-                            }
-                        }
-
-                        double on_run_cr_count = CountCosmicRayEvents(ON_RunID, xoff_idx, yoff_idx);
-                        double off_run_cr_count = CountCosmicRayEvents(int(OffData_runlist_init[offrun]), xoff_idx, yoff_idx);
-                        double off_evt_weight = 0.;
-                        if (off_run_cr_count>0.)
-                        {
-                            off_evt_weight = on_run_cr_count/off_run_cr_count;
-                        }
 
                         TrainingRunAnalysis(int(OffData_runlist_init[offrun]), ON_RunID, xoff_idx, yoff_idx, off_evt_weight);
 
@@ -2182,11 +2181,11 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         double total_off_sr_count = GetSRcounts(&Hist_OffData_MSCLW_Fine_Sum.at(e));
                         double least_square_scale = GetLeastSquareScale(&Hist_OnData_MSCLW_Fine.at(e), &Hist_OffData_MSCLW_Fine_Sum.at(e));
                         TH2D Hist_OffData_MSCLW_CR_scaled = TH2D("Hist_OffData_MSCLW_CR_scaled","",mtx_dim_l_fine+n_extra_lower_bins+n_extra_upper_bins,MSCL_plot_lower,MSCL_plot_upper,mtx_dim_w_fine+n_extra_lower_bins+n_extra_upper_bins,MSCW_plot_lower,MSCW_plot_upper);
-                        //if (total_off_cr_count>0.)
-                        //{
-                        //    Hist_OffData_MSCLW_CR_scaled.Add(&Hist_OffData_MSCLW_Fine_Sum.at(e),total_on_cr_count/total_off_cr_count);
-                        //}
-                        Hist_OffData_MSCLW_CR_scaled.Add(&Hist_OffData_MSCLW_Fine_Sum.at(e),least_square_scale);
+                        if (total_off_cr_count>0.)
+                        {
+                            Hist_OffData_MSCLW_CR_scaled.Add(&Hist_OffData_MSCLW_Fine_Sum.at(e),total_on_cr_count/total_off_cr_count);
+                        }
+                        //Hist_OffData_MSCLW_CR_scaled.Add(&Hist_OffData_MSCLW_Fine_Sum.at(e),least_square_scale);
 
                         //CR_count_map = Hist_OnData_CR_Skymap_Ratio.at(e).Integral();
                         double SR_predict_ratio = Hist_OffData_MSCLW_CR_scaled.Integral(binx_blind_lower_global+1,binx_blind_upper_global,biny_blind_lower_global+1,biny_blind_upper_global);
@@ -2238,10 +2237,6 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         }
                         std::cout << "total_data_sr_count = " << total_data_sr_count << ", total_bkgd_sr_count = " << total_bkgd_sr_count << std::endl;
 
-                        //int max_rank = matrix_rank[e];
-                        int max_rank = matrix_rank;
-                        double log_t_mtx_weight = 3.0;
-
                         if (total_data_sr_count==0)
                         {
                             Hist_OnData_MSCLW_Fine.at(e).Reset();
@@ -2261,7 +2256,10 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         bool use_diagonal = true;
                         bool is_blind = false;
 
-                        max_rank = 2;
+                        //int max_rank = matrix_rank[e];
+                        int max_rank = 2;
+                        double log_t_mtx_weight = 3.0;
+
                         mtx_on_t = MatrixPerturbationMethod(e,mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,max_rank,max_rank,use_diagonal,use_t_input,1.0,is_blind,1);
                         std::cout << "mtx_on_t (unblind):" << std::endl;
                         std::cout << mtx_on_t.block(0,0,3,3).real() << std::endl;
@@ -2281,7 +2279,6 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         t11_truth.push_back(mtx_on_t(1,1).real());
 
                         is_blind = true;
-                        max_rank = 2;
                         if (max_rank>=1)
                         {
 
@@ -2317,12 +2314,11 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         }
 
                         is_blind = true;
-                        max_rank = 2;
                         if (max_rank>=1)
                         {
                             use_t_input = true;
                             use_diagonal = true;
-                            log_t_mtx_weight = 3.0;
+                            log_t_mtx_weight = 0.0;
 
                             for (int rank=1;rank<=2;rank++)
                             {
@@ -2331,11 +2327,6 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                                 std::cout << mtx_on_t.block(0,0,3,3).real() << std::endl;
                                 use_t_input = true;
                             }
-                            //use_t_input = false;
-                            //mtx_on_t = MatrixPerturbationMethod(e,mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,max_rank,max_rank,use_diagonal,use_t_input,log_t_mtx_weight,is_blind,1);
-                            //std::cout << "mtx_on_t (blind, diagonal):" << std::endl;
-                            //std::cout << mtx_on_t.block(0,0,3,3).real() << std::endl;
-                            //use_t_input = true;
 
                             mtx_on_bkgd = MatrixPerturbationMethod(e,mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,max_rank,max_rank,use_diagonal,use_t_input,3.0,is_blind,0);
 

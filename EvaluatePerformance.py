@@ -101,7 +101,57 @@ def GetRunInfo(file_path):
 
     return data_expo, total_cr_count, elev_mean, azim_mean, nsb_mean, avg_diff_el, avg_diff_az, avg_diff_nsb
 
-def Find_t_matrix_correlation(t00_input,t01_input,t10_input,t11_input,e_min,e_max):
+def Find_t00_correlation(t00_input,t01_input,t10_input,e_min,e_max):
+
+    n_eqn = 0
+    t00_array = []
+    t01_array = []
+    t10_array = []
+    for e_idx in range(e_min,e_max):
+        n_eqn += len(t00_input[e_idx])
+        for entry in range(0,len(t00_input[e_idx])):
+            t00_array += [t00_input[e_idx][entry]]
+            t01_array += [t01_input[e_idx][entry]]
+            t10_array += [t10_input[e_idx][entry]]
+
+    n_var = 2
+    if n_eqn<n_var:
+        print ('Not enough equations.')
+        return
+
+    b = np.zeros(n_eqn)
+    A = np.zeros((n_eqn,n_var))
+
+    for eqn in range(0,n_eqn):
+            A[eqn,0] = t01_array[eqn]
+            A[eqn,1] = t10_array[eqn]
+            b[eqn] = t00_array[eqn]
+
+    # Now compute the SVD of  A
+    U, sigma, VT = la.svd(A)
+    # Make a matrix Sigma of the correct size
+    Sigma = np.zeros(A.shape)
+    Sigma[:n_var,:n_var] = np.diag(sigma)
+
+    # Now define Sigma_pinv as the "pseudo-"inverse of Sigma, where "pseudo" means "don't divide by zero
+    Sigma_pinv = np.zeros(A.shape).T
+    Sigma_pinv[:n_var,:n_var] = np.diag(1/sigma[:n_var])
+
+    # Now compute the SVD-based solution for the least-squares problem
+    x_svd = VT.T.dot(Sigma_pinv).dot(U.T).dot(b)
+    chi2 = la.norm(A.dot(x_svd)-b, 2)/float(n_eqn)
+
+    txt_info = 'chi2 = %0.3e \t,'%(chi2)
+    txt_info += 'x01 = %0.3f \t,'%(x_svd[0])
+    txt_info += 'x10 = %0.3f \t,'%(x_svd[1])
+    print (txt_info)
+
+    if np.isnan(x_svd[0]):
+        return 0, 0
+    else:
+        return x_svd[0], x_svd[1]
+
+def Find_t11_correlation(t00_input,t01_input,t10_input,t11_input,e_min,e_max):
 
     n_eqn = 0
     t00_array = []
@@ -117,7 +167,6 @@ def Find_t_matrix_correlation(t00_input,t01_input,t10_input,t11_input,e_min,e_ma
             t11_array += [t11_input[e_idx][entry]]
 
     n_var = 3
-    #n_var = 2
     if n_eqn<n_var:
         print ('Not enough equations.')
         return
@@ -143,7 +192,7 @@ def Find_t_matrix_correlation(t00_input,t01_input,t10_input,t11_input,e_min,e_ma
 
     # Now compute the SVD-based solution for the least-squares problem
     x_svd = VT.T.dot(Sigma_pinv).dot(U.T).dot(b)
-    chi2 = la.norm(A.dot(x_svd)-b, 2)
+    chi2 = la.norm(A.dot(x_svd)-b, 2)/float(n_eqn)
 
     txt_info = 'chi2 = %0.3e \t,'%(chi2)
     txt_info += 'x00 = %0.3f \t,'%(x_svd[0])
@@ -155,7 +204,6 @@ def Find_t_matrix_correlation(t00_input,t01_input,t10_input,t11_input,e_min,e_ma
         return 0, 0, 0
     else:
         return x_svd[0], x_svd[1], x_svd[2]
-        #return x_svd[0], x_svd[1], 0.
 
 def GetGammaCounts(file_path,ebin):
 
@@ -407,14 +455,6 @@ for energy_idx in range(0,len(energy_bin)-1):
                     array_syst_err_per_energy_init_perturbation += [-(init_perturbation_bkgd-data_truth)/pow(data_truth,0.5)]
                     array_syst_err_per_energy_perturbation += [-(perturbation_bkgd-data_truth)/pow(data_truth,0.5)]
                     array_syst_err_per_energy_combined += [-(combined_bkgd-data_truth)/pow(data_truth,0.5)]
-                    array_per_energy_t00_truth += [t00_truth]
-                    array_per_energy_t01_truth += [t01_truth]
-                    array_per_energy_t10_truth += [t10_truth]
-                    array_per_energy_t11_truth += [t11_truth]
-                    array_per_energy_t00_recon += [t00_recon]
-                    array_per_energy_t01_recon += [t01_recon]
-                    array_per_energy_t10_recon += [t10_recon]
-                    array_per_energy_t11_recon += [t11_recon]
                     perturbation_error = -(perturbation_bkgd-data_truth)/pow(data_truth,0.5)
                     if abs(perturbation_error)>15.:
                         txt_warning += '++++++++++++++++++++++++++++++++++++ \n'
@@ -424,6 +464,20 @@ for energy_idx in range(0,len(energy_bin)-1):
                         txt_warning += 'energy index = %s \n'%(energy_idx)
                         txt_warning += 'error = %0.1f \n '%(perturbation_error)
                         txt_warning += 'truth = %0.1f \n '%(data_truth)
+                    #if avg_diff_el<0.: continue
+                    #if avg_diff_el>0.: continue
+                    #if avg_diff_az<0.: continue
+                    #if avg_diff_az>0.: continue
+                    #if avg_diff_nsb<0.: continue
+                    #if avg_diff_nsb>0.: continue
+                    array_per_energy_t00_truth += [t00_truth]
+                    array_per_energy_t01_truth += [t01_truth]
+                    array_per_energy_t10_truth += [t10_truth]
+                    array_per_energy_t11_truth += [t11_truth]
+                    array_per_energy_t00_recon += [t00_recon]
+                    array_per_energy_t01_recon += [t01_recon]
+                    array_per_energy_t10_recon += [t10_recon]
+                    array_per_energy_t11_recon += [t11_recon]
             n_rebin += 1
             if n_rebin == measurement_rebin:
                 if total_data_truth>0.:
@@ -860,12 +914,27 @@ for energy_idx in range(0,len(energy_bin)-1):
 print ('================================================================================================')
 print (txt_warning)
 
-txt_info_x00 = 'double coefficient_x00[N_energy_bins] = {'
-txt_info_x01 = 'double coefficient_x01[N_energy_bins] = {'
-txt_info_x10 = 'double coefficient_x10[N_energy_bins] = {'
+txt_info_x01 = 'double coefficient_t00xt01[N_energy_bins] = {'
+txt_info_x10 = 'double coefficient_t00xt10[N_energy_bins] = {'
 print ('================================================================================================')
 for energy_idx in range(0,len(energy_bin)-1):
-    x00, x01, x10 = Find_t_matrix_correlation(array_t00_truth,array_t01_truth,array_t10_truth,array_t11_truth,energy_idx,energy_idx+1)
+    x01, x10 = Find_t00_correlation(array_t00_truth,array_t01_truth,array_t10_truth,energy_idx,energy_idx+1)
+    txt_info_x01 += '%0.3f'%(x01)
+    txt_info_x10 += '%0.3f'%(x10)
+    if energy_idx<len(energy_bin)-2:
+        txt_info_x01 += ','
+        txt_info_x10 += ','
+txt_info_x01 += '};'
+txt_info_x10 += '};'
+print (txt_info_x01)
+print (txt_info_x10)
+
+txt_info_x00 = 'double coefficient_t11xt00[N_energy_bins] = {'
+txt_info_x01 = 'double coefficient_t11xt01[N_energy_bins] = {'
+txt_info_x10 = 'double coefficient_t11xt10[N_energy_bins] = {'
+print ('================================================================================================')
+for energy_idx in range(0,len(energy_bin)-1):
+    x00, x01, x10 = Find_t11_correlation(array_t00_truth,array_t01_truth,array_t10_truth,array_t11_truth,energy_idx,energy_idx+1)
     txt_info_x00 += '%0.3f'%(x00)
     txt_info_x01 += '%0.3f'%(x01)
     txt_info_x10 += '%0.3f'%(x10)
@@ -881,7 +950,8 @@ print (txt_info_x01)
 print (txt_info_x10)
 
 print ('================================================================================================')
-x00, x01, x10 = Find_t_matrix_correlation(array_t00_truth,array_t01_truth,array_t10_truth,array_t11_truth,1,7)
+x01, x10 = Find_t00_correlation(array_t00_truth,array_t01_truth,array_t10_truth,1,7)
+x00, x01, x10 = Find_t11_correlation(array_t00_truth,array_t01_truth,array_t10_truth,array_t11_truth,1,7)
 
 print ('total_data_expo = %0.1f hrs'%(total_data_expo))
 print ('avg expo per measurement = %0.1f'%(expo_sum_all_energies/total_n_measurements))

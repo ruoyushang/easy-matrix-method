@@ -54,8 +54,8 @@ input_epoch = sys.argv[2] # 'V5' or 'V6' or 'V5V6'
 isON = sys.argv[3]  # 'ON' or 'OFF'
 
 doImposter = False
-if isON=='ON':
-    doImposter = True
+#if isON=='ON':
+#    doImposter = True
 
 doBiasCorrect = False
 #doBiasCorrect = True

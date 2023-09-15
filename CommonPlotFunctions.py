@@ -552,7 +552,7 @@ def MatplotlibMap2D(hist_map,hist_tone,hist_contour,fig,label_x,label_y,label_z,
             if hist_contour[ctr].GetMaximum()==0.: continue
             grid_contour = np.zeros((hist_contour[ctr].GetNbinsY(),hist_contour[ctr].GetNbinsX()))
             max_z_contour = 1.0*hist_contour[ctr].GetMaximum()
-            min_z_contour = 0.5*hist_contour[ctr].GetMaximum()
+            min_z_contour = 0.7*hist_contour[ctr].GetMaximum()
             delta_z = 0.3*hist_contour[ctr].GetMaximum()
             list_levels[ctr] = np.arange(min_z_contour*max_z/max_z_contour, max_z_contour*max_z/max_z_contour, delta_z*max_z/max_z_contour)
             contour_x_axis = np.linspace(MapEdge_left,MapEdge_right,hist_contour[ctr].GetNbinsX())

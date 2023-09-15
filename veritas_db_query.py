@@ -1103,7 +1103,7 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
             if not is_good_src: continue
 
             off_run_duration = all_runs_info[run][4]
-            if off_run_duration<15.*60.: continue
+            if off_run_duration<18.*60.: continue
 
             off_run_el = all_runs_info[run][2]
             off_run_az = all_runs_info[run][3]
