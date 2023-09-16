@@ -54,8 +54,8 @@ input_epoch = sys.argv[2] # 'V5' or 'V6' or 'V5V6'
 isON = sys.argv[3]  # 'ON' or 'OFF'
 
 doImposter = False
-#if isON=='ON':
-#    doImposter = True
+if isON=='ON':
+    doImposter = True
 
 doBiasCorrect = False
 #doBiasCorrect = True
@@ -1548,20 +1548,43 @@ elif '2HWC_J1953_p294' in source_name:
 
 elif 'SNR_G189_p03' in source_name:
 
-    # IC 443
+    #region_name = 'IC443'
     #src_x = 94.213
     #src_y = 22.503
     # G189.1+03.0
-    src_x = 94.25
-    src_y = 22.57
+    #region_name = 'SNR'
+    #src_x = 94.25
+    #src_y = 22.57
     # 3HWC J0617+224
+    #region_name = '3HWC'
     #src_x = 94.39
     #src_y = 22.47
 
+    region_name = 'BigOldSNRHotspot'
+    src_x = 95.30
+    src_y = 22.57
+    #region_name = 'BigOldSNR'
+    #src_x = 94.84
+    #src_y = 22.21
+    #region_name = 'Random1'
+    #src_x = 95.40
+    #src_y = 23.66
+    #region_name = 'Random2'
+    #src_x = 93.52
+    #src_y = 23.29
+    #region_name = 'Random3'
+    #src_x = 93.51
+    #src_y = 21.26
+
     region_x = [src_x]
     region_y = [src_y]
-    region_r = [0.4]
-    region_name = 'Center'
+    region_r = [0.5]
+
+    #src_x = 94.213
+    #src_y = 22.503
+    #excl_region_x = [src_x]
+    #excl_region_y = [src_y]
+    #excl_region_r = [0.4]
 
     #excl_region_x = [src_x]
     #excl_region_y = [src_y]
@@ -1908,7 +1931,7 @@ MakeSensitivityCurve(region_x,region_y,region_r,region_name,excl_region_x,excl_r
 
 hist_real_flux_skymap_sum = CommonPlotFunctions.Smooth2DMap(hist_real_flux_skymap_sum,smooth_size_spectroscopy,False)
 hist_real_flux_skymap_reflect = CommonPlotFunctions.reflectXaxis(hist_real_flux_skymap_sum)
-CommonPlotFunctions.MatplotlibMap2D(hist_real_flux_skymap_reflect,None,[],fig,'RA','Dec','$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}$]','SkymapFlux_Sum_%s'%(plot_tag),psf=0.08)
+CommonPlotFunctions.MatplotlibMap2D(hist_real_flux_skymap_reflect,None,[],fig,'RA','Dec','$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}$]','SkymapFlux_Sum_%s'%(plot_tag),roi_x=region_x,roi_y=region_y,roi_r=region_r,psf=0.08)
 SaveFITS(hist_real_flux_skymap_sum)
 
 hist_real_diff_skymap_sum = CommonPlotFunctions.Smooth2DMap(hist_real_diff_skymap_sum,smooth_size_spectroscopy,False)
