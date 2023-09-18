@@ -1036,9 +1036,9 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
         distance = pow(pow(obs_ra-source_ra,2)+pow(obs_dec-source_dec,2),0.5)
         if distance>10.:
             if 'HWC' in source_name: continue
-            #if abs(source_ra-83.633)<2. and abs(source_dec-22.014)<2.: continue # Crab
-            #if abs(source_ra-166.079)<2. and abs(source_dec-38.195)<2.: continue # Mrk 421
-            #if abs(source_ra-253.467)<2. and abs(source_dec-39.76)<2.: continue # Mrk 501
+            if abs(source_ra-83.633)<2. and abs(source_dec-22.014)<2.: continue # Crab
+            if abs(source_ra-166.079)<2. and abs(source_dec-38.195)<2.: continue # Mrk 421
+            if abs(source_ra-253.467)<2. and abs(source_dec-39.76)<2.: continue # Mrk 501
             if abs(source_ra-98.117)<3. and abs(source_dec-17.367)<3.: continue # Geminga
             if abs(source_gal_b)>10.:
                 list_off_sources += [source_name]
@@ -1117,7 +1117,7 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
             #delta_azim = off_run_az-on_run_az
 
             delta_elev = (1./math.sin(off_run_el*math.pi/180.)-1./math.sin(on_run_el*math.pi/180.));
-            #delta_elev = off_run_el-on_run_el
+            delta_elev_deg = off_run_el-on_run_el
 
             delta_nsb = off_run_nsb-on_run_nsb
             delta_runnum = all_runs_info[run][0]-list_on_run_ids[on_run]
@@ -1125,9 +1125,20 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
             if is_imposter:
                 if abs(delta_elev)>0.2: continue
                 if abs(delta_nsb)>2.: continue
+
+                if total_elev_diff>0.:
+                    if delta_elev_deg>0.: continue
+                else:
+                    if delta_elev_deg<0.: continue
+
+                if total_nsb_diff>0.:
+                    if delta_nsb>0.: continue
+                else:
+                    if delta_nsb<0.: continue
+
             else:
                 if abs(delta_elev)>0.1: continue
-                if abs(delta_azim)>0.5: continue
+                if abs(delta_azim)>0.2: continue
 
                 if abs(delta_runnum)>10000:
                     if total_runnum_diff>0.:
@@ -1136,9 +1147,9 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
                         if delta_runnum<0.: continue
 
                 if total_elev_diff>0.:
-                    if delta_elev>0.: continue
+                    if delta_elev_deg>0.: continue
                 else:
-                    if delta_elev<0.: continue
+                    if delta_elev_deg<0.: continue
 
                 if total_nsb_diff>0.:
                     if delta_nsb>0.: continue
@@ -1149,7 +1160,7 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
             number_off_runs += 1
             total_nsb_diff += delta_nsb
             total_azim_diff += delta_azim
-            total_elev_diff += delta_elev
+            total_elev_diff += delta_elev_deg
             total_runnum_diff += delta_runnum
 
             already_used = False

@@ -245,7 +245,7 @@ ONOFF_tag_sample = 'OFF'
 source_of_interest = ''
 #source_of_interest = '1ES0229'
 #source_of_interest = 'H1426'
-#source_of_interest = 'UrsaMinor'
+source_of_interest = 'UrsaMinor'
 
 sample_list = []
 

@@ -39,7 +39,7 @@ double MSCW_upper_blind = 0.7;
 double MSCL_upper_blind = 0.5;
 
 int matrix_rank = 2;
-int n_extra_lower_bins = 0;
+int n_extra_lower_bins = 2;
 int n_extra_upper_bins = 4;
 int mtx_dim_w_fine = 4;
 int mtx_dim_l_fine = 4;
