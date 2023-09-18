@@ -1442,24 +1442,6 @@ MatrixXcd MatrixPerturbationMethod(int e_idx, MatrixXcd mtx_t_input, MatrixXcd m
     avg_weight = pow(avg_weight/available_bins,0.5);
 
     
-    //if (isBlind && diagonal_rank)
-    //{
-    //    if (var_rank>=2)
-    //    {
-    //        int idx_k1 = 1;
-    //        int idx_n1 = 1;
-    //        int idx_k2 = 0;
-    //        int idx_n2 = 0;
-
-    //        int idx_v1 = idx_k1*size_n + idx_n1;
-    //        int idx_v2 = idx_k2*size_n + idx_n2;
-    //        int idx_u1 = idx_v1;
-
-    //        mtx_Constraint(idx_u1,idx_v1) = 1.;
-    //        mtx_Constraint(idx_u1,idx_v2) = -1.;
-    //    }
-    //}
-
     if (use_mtx_t_input)
     {
         for (int idx_k=0;idx_k<size_k;idx_k++)
@@ -1485,6 +1467,51 @@ MatrixXcd MatrixPerturbationMethod(int e_idx, MatrixXcd mtx_t_input, MatrixXcd m
             }
         }
     }
+    if (isBlind && diagonal_rank)
+    {
+        if (var_rank>=2)
+        {
+            int idx_k1 = 1;
+            int idx_n1 = 1;
+
+            int idx_k2 = 0;
+            int idx_n2 = 0;
+            int idx_k3 = 0;
+            int idx_n3 = 1;
+            int idx_k4 = 1;
+            int idx_n4 = 0;
+
+            int idx_v1 = idx_k1*size_n + idx_n1;
+            int idx_v2 = idx_k2*size_n + idx_n2;
+            int idx_v3 = idx_k3*size_n + idx_n3;
+            int idx_v4 = idx_k4*size_n + idx_n4;
+            int idx_u1 = idx_v1;
+
+            mtx_W(idx_u1,idx_u1) = pow(10.,-1.)*avg_weight;
+            mtx_A(idx_u1,idx_v1) = 1.;
+            mtx_A(idx_u1,idx_v2) = -1.*coefficient_t11xt00[e_idx];
+            mtx_A(idx_u1,idx_v3) = -1.*coefficient_t11xt01[e_idx];
+            mtx_A(idx_u1,idx_v4) = -1.*coefficient_t11xt10[e_idx];
+        }
+    }
+    //if (isBlind && diagonal_rank)
+    //{
+    //    if (var_rank>=2)
+    //    {
+    //        int idx_k1 = 1;
+    //        int idx_n1 = 1;
+    //        int idx_k2 = 0;
+    //        int idx_n2 = 0;
+
+    //        int idx_v1 = idx_k1*size_n + idx_n1;
+    //        int idx_v2 = idx_k2*size_n + idx_n2;
+    //        int idx_u1 = idx_v1;
+
+    //        mtx_Constraint(idx_u1,idx_v1) = 1.;
+    //        mtx_Constraint(idx_u1,idx_v2) = -1.;
+    //    }
+    //}
+
 
     VectorXcd vtr_t = VectorXcd::Zero(length_tkn);
 
@@ -1780,9 +1807,9 @@ void FillHistograms(string target_data, bool isON, int doImposter)
         sprintf(e_low, "%i", int(energy_bins[e]));
         char e_up[50];
         sprintf(e_up, "%i", int(energy_bins[e+1]));
-        Hist_OnData_MSCLW.push_back(TH2D("Hist_OnData_MSCLW_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",mtx_dim_l,MSCL_plot_lower,MSCL_plot_upper,mtx_dim_w,MSCW_plot_lower,MSCW_plot_upper));
-        Hist_OffData_MSCLW.push_back(TH2D("Hist_OffData_MSCLW_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",mtx_dim_l,MSCL_plot_lower,MSCL_plot_upper,mtx_dim_w,MSCW_plot_lower,MSCW_plot_upper));
-        Hist_OffData_MSCLW_Sum.push_back(TH2D("Hist_OffData_MSCLW_Sum_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",mtx_dim_l,MSCL_plot_lower,MSCL_plot_upper,mtx_dim_w,MSCW_plot_lower,MSCW_plot_upper));
+        Hist_OnData_MSCLW.push_back(TH2D("Hist_OnData_MSCLW_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",mtx_dim_l,MSCL_lower_blind,MSCL_upper_blind+(MSCL_upper_blind-MSCL_upper_blind),mtx_dim_w,MSCW_lower_blind,MSCW_upper_blind+(MSCW_upper_blind-MSCW_lower_blind)));
+        Hist_OffData_MSCLW.push_back(TH2D("Hist_OffData_MSCLW_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",mtx_dim_l,MSCL_lower_blind,MSCL_upper_blind+(MSCL_upper_blind-MSCL_upper_blind),mtx_dim_w,MSCW_lower_blind,MSCW_upper_blind+(MSCW_upper_blind-MSCW_lower_blind)));
+        Hist_OffData_MSCLW_Sum.push_back(TH2D("Hist_OffData_MSCLW_Sum_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",mtx_dim_l,MSCL_lower_blind,MSCL_upper_blind+(MSCL_upper_blind-MSCL_upper_blind),mtx_dim_w,MSCW_lower_blind,MSCW_upper_blind+(MSCW_upper_blind-MSCW_lower_blind)));
         Hist_OnData_MSCLW_Fine.push_back(TH2D("Hist_OnData_MSCLW_Fine_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",mtx_dim_l_fine+n_extra_lower_bins+n_extra_upper_bins,MSCL_plot_lower,MSCL_plot_upper,mtx_dim_w_fine+n_extra_lower_bins+n_extra_upper_bins,MSCW_plot_lower,MSCW_plot_upper));
         Hist_OffData_MSCLW_Fine.push_back(TH2D("Hist_OffData_MSCLW_Fine_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",mtx_dim_l_fine+n_extra_lower_bins+n_extra_upper_bins,MSCL_plot_lower,MSCL_plot_upper,mtx_dim_w_fine+n_extra_lower_bins+n_extra_upper_bins,MSCW_plot_lower,MSCW_plot_upper));
         Hist_OnBkgd_MSCLW_Fine.push_back(TH2D("Hist_OnBkgd_MSCLW_Fine_ErecS"+TString(e_low)+TString("to")+TString(e_up),"",mtx_dim_l_fine+n_extra_lower_bins+n_extra_upper_bins,MSCL_plot_lower,MSCL_plot_upper,mtx_dim_w_fine+n_extra_lower_bins+n_extra_upper_bins,MSCW_plot_lower,MSCW_plot_upper));
@@ -2093,10 +2120,10 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                             if (off_blinded_element.at(sample).at(e)>0.)
                             {
                                 double weight = 1.;
-                                if (use_stat_err_weight) 
-                                {
-                                    weight = 1./pow(max(1.,off_blinded_element.at(sample).at(e)),0.5);
-                                }
+                                //if (use_stat_err_weight) 
+                                //{
+                                //    weight = 1./pow(max(1.,off_blinded_element.at(sample).at(e)),0.5);
+                                //}
                                 mtx_W(sample,sample) = weight;
                             }
                             for (int bin=0;bin<nbins_unblind;bin++)

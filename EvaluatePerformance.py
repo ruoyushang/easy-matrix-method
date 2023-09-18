@@ -120,7 +120,7 @@ def Find_t11_correlation(t00_input,t01_input,t10_input,t11_input,t02_input,t20_i
             t02_array += [t02_input[e_idx][entry]]
             t20_array += [t20_input[e_idx][entry]]
 
-    n_var = 1
+    n_var = 3
     if n_eqn<n_var:
         print ('Not enough equations.')
         return
@@ -129,12 +129,9 @@ def Find_t11_correlation(t00_input,t01_input,t10_input,t11_input,t02_input,t20_i
     A = np.zeros((n_eqn,n_var))
 
     for eqn in range(0,n_eqn):
-            #A[eqn,0] = t00_array[eqn]
-            #A[eqn,1] = t01_array[eqn]
-            #A[eqn,2] = t10_array[eqn]
-            #A[eqn,3] = t02_array[eqn]
-            #A[eqn,4] = t20_array[eqn]
             A[eqn,0] = t00_array[eqn]
+            A[eqn,1] = t01_array[eqn]
+            A[eqn,2] = t10_array[eqn]
             b[eqn] = t11_array[eqn]
 
     # Now compute the SVD of  A
@@ -153,16 +150,14 @@ def Find_t11_correlation(t00_input,t01_input,t10_input,t11_input,t02_input,t20_i
 
     txt_info = 'chi2 = %0.3e \t,'%(chi2)
     txt_info += 'x00 = %0.3f \t,'%(x_svd[0])
-    #txt_info += 'x01 = %0.3f \t,'%(x_svd[1])
-    #txt_info += 'x10 = %0.3f \t,'%(x_svd[2])
-    #txt_info += 'x02 = %0.3f \t,'%(x_svd[3])
-    #txt_info += 'x20 = %0.3f \t,'%(x_svd[4])
+    txt_info += 'x01 = %0.3f \t,'%(x_svd[1])
+    txt_info += 'x10 = %0.3f \t,'%(x_svd[2])
     print (txt_info)
 
     if np.isnan(x_svd[0]):
-        return 0
+        return 0, 0, 0
     else:
-        return x_svd[0]
+        return x_svd[0], x_svd[1], x_svd[2]
 
 def GetGammaCounts(file_path,ebin):
 
@@ -245,7 +240,7 @@ ONOFF_tag_sample = 'OFF'
 source_of_interest = ''
 #source_of_interest = '1ES0229'
 #source_of_interest = 'H1426'
-source_of_interest = 'UrsaMinor'
+#source_of_interest = 'UrsaMinor'
 
 sample_list = []
 
@@ -787,37 +782,6 @@ for energy_idx in range(0,len(energy_bin)-1):
     fig.savefig("output_plots/SystErrDist_E%s_Perturbation_%s.png"%(energy_idx,folder_tag))
     axbig.remove()
 
-for energy_idx in range(0,len(energy_bin)-1):
-    Hists = []
-    legends = []
-    Hists += [Hist_SystErrDist_Ratio[energy_idx]]
-    legends += ['Simple Scaling']
-    Hists += [Hist_SystErrDist_Regression[energy_idx]]
-    legends += ['Regression']
-
-    fig.clf()
-    fig.set_figheight(figsize_y)
-    fig.set_figwidth(figsize_x)
-    axbig = fig.add_subplot()
-    MakeMultipleFitPlot(axbig,Hists,legends,'relative error $\epsilon$','number of entries')
-    fig.savefig("output_plots/SystErrDist_E%s_Regression_%s.png"%(energy_idx,folder_tag))
-    axbig.remove()
-
-for energy_idx in range(0,len(energy_bin)-1):
-    Hists = []
-    legends = []
-    Hists += [Hist_SystErrDist_Ratio[energy_idx]]
-    legends += ['Simple Scaling']
-    Hists += [Hist_SystErrDist_Combined[energy_idx]]
-    legends += ['Combined']
-
-    fig.clf()
-    fig.set_figheight(figsize_y)
-    fig.set_figwidth(figsize_x)
-    axbig = fig.add_subplot()
-    MakeMultipleFitPlot(axbig,Hists,legends,'relative error $\epsilon$','number of entries')
-    fig.savefig("output_plots/SystErrDist_E%s_Combined_%s.png"%(energy_idx,folder_tag))
-    axbig.remove()
 
 
 energy_dep_stat_err = []
@@ -933,18 +897,28 @@ print ('========================================================================
 print (txt_warning)
 
 
-txt_info_x00 = 'double coefficient_t11xt01[N_energy_bins] = {'
+txt_info_x00 = 'double coefficient_t11xt00[N_energy_bins] = {'
+txt_info_x01 = 'double coefficient_t11xt01[N_energy_bins] = {'
+txt_info_x10 = 'double coefficient_t11xt10[N_energy_bins] = {'
 print ('================================================================================================')
 for energy_idx in range(0,len(energy_bin)-1):
-    x00 = Find_t11_correlation(array_t00_truth,array_t01_truth,array_t10_truth,array_t11_truth,array_t02_truth,array_t20_truth,energy_idx,energy_idx+1)
+    x00, x01, x10 = Find_t11_correlation(array_t00_truth,array_t01_truth,array_t10_truth,array_t11_truth,array_t02_truth,array_t20_truth,energy_idx,energy_idx+1)
     txt_info_x00 += '%0.3f'%(x00)
+    txt_info_x01 += '%0.3f'%(x01)
+    txt_info_x10 += '%0.3f'%(x10)
     if energy_idx<len(energy_bin)-2:
         txt_info_x00 += ','
+        txt_info_x01 += ','
+        txt_info_x10 += ','
 txt_info_x00 += '};'
+txt_info_x01 += '};'
+txt_info_x10 += '};'
 print (txt_info_x00)
+print (txt_info_x01)
+print (txt_info_x10)
 
 print ('================================================================================================')
-x00 = Find_t11_correlation(array_t00_truth,array_t01_truth,array_t10_truth,array_t11_truth,array_t02_truth,array_t20_truth,1,7)
+x00, x01, x10 = Find_t11_correlation(array_t00_truth,array_t01_truth,array_t10_truth,array_t11_truth,array_t02_truth,array_t20_truth,1,7)
 
 print ('total_data_expo = %0.1f hrs'%(total_data_expo))
 print ('avg expo per measurement = %0.1f'%(expo_sum_all_energies/total_n_measurements))
