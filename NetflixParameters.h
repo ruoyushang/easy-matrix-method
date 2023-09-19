@@ -4,9 +4,12 @@ double energy_bins[N_energy_bins+1] = {100.,159.,200.,251.,316.,398.,501.,794.,1
 //int cr_correction_xyoff_bins[N_energy_bins] = {1,12,12,12,12,6,6,1,1,1,1,1};
 int cr_correction_xyoff_bins[N_energy_bins] = {1,6,6,6,6,6,6,1,1,1,1,1};
 
-double coefficient_t11xt00[N_energy_bins] = {0.443,0.332,0.236,0.198,0.246,0.376,0.363,0.282,0.289,0.334,0.119,0.000};
-double coefficient_t11xt01[N_energy_bins] = {0.190,0.081,0.049,0.067,0.011,-0.156,-0.299,-0.445,-0.396,-0.510,-0.287,0.000};
-double coefficient_t11xt10[N_energy_bins] = {0.135,-0.079,-0.132,-0.098,-0.088,-0.068,-0.029,-0.016,0.096,0.256,0.339,0.000};
+double coefficient_t11xt00_lza[N_energy_bins] = {0.313,0.594,0.339,0.393,0.341,0.554,0.466,0.334,0.405,0.095,0.136,0.000};
+double coefficient_t11xt01_lza[N_energy_bins] = {0.394,0.224,0.106,0.117,0.052,-0.128,-0.281,-0.453,-0.549,-0.342,-0.256,0.000};
+double coefficient_t11xt10_lza[N_energy_bins] = {-0.445,-0.249,-0.239,-0.146,-0.143,-0.119,-0.074,-0.082,0.038,0.183,0.483,0.000};
+double coefficient_t11xt00_sza[N_energy_bins] = {0.443,0.324,0.235,0.345,0.410,0.370,0.298,0.311,0.214,0.465,0.040,0.000};
+double coefficient_t11xt01_sza[N_energy_bins] = {0.189,0.076,0.038,-0.103,-0.157,-0.277,-0.380,-0.508,-0.260,-0.655,-0.349,0.000};
+double coefficient_t11xt10_sza[N_energy_bins] = {0.136,-0.064,-0.096,-0.007,0.082,0.058,0.043,0.078,0.141,0.425,0.008,0.000};
 
 //const int N_energy_bins = 8;
 //double energy_bins[N_energy_bins+1] = {100.,167.,300.,538.,965.,1732.,3107.,5574.,10000.};

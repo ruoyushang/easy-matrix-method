@@ -103,6 +103,12 @@ vector<double> regression_bkgd_count;
 vector<double> init_perturbation_bkgd_count;
 vector<double> perturbation_bkgd_count;
 vector<double> combined_bkgd_count;
+vector<double> s0_truth;
+vector<double> s1_truth;
+vector<double> s2_truth;
+vector<double> s0_recon;
+vector<double> s1_recon;
+vector<double> s2_recon;
 vector<double> t00_truth;
 vector<double> t01_truth;
 vector<double> t10_truth;
@@ -1331,8 +1337,22 @@ VectorXcd SolutionWithConstraints(MatrixXcd mtx_big, MatrixXcd mtx_constraints_i
 
 }
 
+MatrixXd GetSingularValues(MatrixXcd mtx_base_input)
+{
 
-MatrixXcd MatrixPerturbationMethod(int e_idx, MatrixXcd mtx_t_input, MatrixXcd mtx_base_input, MatrixXcd mtx_init_input, MatrixXcd mtx_data_input, int max_rank, int var_rank, bool diagonal_rank, bool use_mtx_t_input, double log_t_input_weight, bool isBlind, int return_type)
+    JacobiSVD<MatrixXd> svd_base(mtx_base_input.real(), ComputeFullU | ComputeFullV);
+    MatrixXd mtx_U_base = svd_base.matrixU();
+    MatrixXd mtx_V_base = svd_base.matrixV();
+    MatrixXd mtx_S_base = MatrixXd::Zero(mtx_base_input.rows(),mtx_base_input.cols());
+    for (int entry=0;entry<svd_base.singularValues().size();entry++)
+    {
+        mtx_S_base(entry,entry) = svd_base.singularValues()(entry);
+    }
+    return mtx_S_base;
+
+}
+
+MatrixXcd MatrixPerturbationMethod(int e_idx, double elev, MatrixXcd mtx_t_input, MatrixXcd mtx_base_input, MatrixXcd mtx_init_input, MatrixXcd mtx_data_input, int max_rank, int var_rank, bool diagonal_rank, bool use_mtx_t_input, double log_t_input_weight, bool isBlind, int return_type)
 {
 
     MatrixXcd mtx_output = MatrixXcd::Zero(mtx_init_input.rows(),mtx_init_input.cols());
@@ -1431,6 +1451,8 @@ MatrixXcd MatrixPerturbationMethod(int e_idx, MatrixXcd mtx_t_input, MatrixXcd m
                     if (kth_entry==nth_entry && !diagonal_rank) continue;
                     if (kth_entry>max_rank) continue;
                     if (nth_entry>max_rank) continue;
+                    //if (kth_entry>var_rank) continue;
+                    //if (nth_entry>var_rank) continue;
                     if (kth_entry>var_rank && nth_entry>var_rank) continue;
                     //if (kth_entry+nth_entry>max_rank+1) continue;
                     int idx_v = idx_k*size_n + idx_n;
@@ -1473,7 +1495,6 @@ MatrixXcd MatrixPerturbationMethod(int e_idx, MatrixXcd mtx_t_input, MatrixXcd m
         {
             int idx_k1 = 1;
             int idx_n1 = 1;
-
             int idx_k2 = 0;
             int idx_n2 = 0;
             int idx_k3 = 0;
@@ -1487,11 +1508,21 @@ MatrixXcd MatrixPerturbationMethod(int e_idx, MatrixXcd mtx_t_input, MatrixXcd m
             int idx_v4 = idx_k4*size_n + idx_n4;
             int idx_u1 = idx_v1;
 
-            mtx_W(idx_u1,idx_u1) = pow(10.,-1.)*avg_weight;
+            mtx_W(idx_u1,idx_u1) = pow(10.,0.)*avg_weight;
             mtx_A(idx_u1,idx_v1) = 1.;
-            mtx_A(idx_u1,idx_v2) = -1.*coefficient_t11xt00[e_idx];
-            mtx_A(idx_u1,idx_v3) = -1.*coefficient_t11xt01[e_idx];
-            mtx_A(idx_u1,idx_v4) = -1.*coefficient_t11xt10[e_idx];
+            if (Elev_mean>60.)
+            {
+                mtx_A(idx_u1,idx_v2) = -1.*coefficient_t11xt00_sza[e_idx];
+                mtx_A(idx_u1,idx_v3) = -1.*coefficient_t11xt01_sza[e_idx];
+                mtx_A(idx_u1,idx_v4) = -1.*coefficient_t11xt10_sza[e_idx];
+            }
+            else
+            {
+                mtx_A(idx_u1,idx_v2) = -1.*coefficient_t11xt00_lza[e_idx];
+                mtx_A(idx_u1,idx_v3) = -1.*coefficient_t11xt01_lza[e_idx];
+                mtx_A(idx_u1,idx_v4) = -1.*coefficient_t11xt10_lza[e_idx];
+            }
+            vtr_Delta(idx_u1) = 0.;
         }
     }
     //if (isBlind && diagonal_rank)
@@ -2168,6 +2199,14 @@ void FillHistograms(string target_data, bool isON, int doImposter)
 
                     std::cout << "Applying conversion to ON data..." << std::endl;
 
+                    NSB_mean = NSB_mean/double(n_samples);
+                    Elev_mean = Elev_mean/double(n_samples);
+                    Azim_mean = Azim_mean/double(n_samples);
+                    for (int e=0;e<N_energy_bins;e++) 
+                    {
+                        effective_area.at(e) = effective_area.at(e)/double(n_samples);
+                    }
+
 
                     for (int e=0;e<N_energy_bins;e++) 
                     {
@@ -2265,12 +2304,18 @@ void FillHistograms(string target_data, bool isON, int doImposter)
 
                         //int max_rank = matrix_rank[e];
                         int max_rank = 3;
+                        int min_rank = 3;
                         double log_t_mtx_weight = 3.0;
 
-                        mtx_on_t = MatrixPerturbationMethod(e,mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,max_rank,max_rank,use_diagonal,use_t_input,1.0,is_blind,1);
+                        MatrixXd mtx_on_s = GetSingularValues(mtx_on_data);
+                        s0_truth.push_back(mtx_on_s(0,0));
+                        s1_truth.push_back(mtx_on_s(1,1));
+                        s2_truth.push_back(mtx_on_s(2,2));
+
+                        mtx_on_t = MatrixPerturbationMethod(e,Elev_mean,mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,max_rank,max_rank,use_diagonal,use_t_input,1.0,is_blind,1);
                         std::cout << "mtx_on_t (unblind):" << std::endl;
                         std::cout << mtx_on_t.block(0,0,3,3).real() << std::endl;
-                        mtx_on_bkgd = MatrixPerturbationMethod(e,mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,max_rank,max_rank,use_diagonal,use_t_input,1.0,is_blind,0);
+                        mtx_on_bkgd = MatrixPerturbationMethod(e,Elev_mean,mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,max_rank,max_rank,use_diagonal,use_t_input,1.0,is_blind,0);
                         fill2DHistogram(&Hist_OnBkgd_MSCLW_Fine.at(e),mtx_on_bkgd);
                         total_data_sr_count = GetSRcounts(&Hist_OnData_MSCLW_Fine.at(e));
                         total_bkgd_sr_count = GetSRcounts(&Hist_OnBkgd_MSCLW_Fine.at(e));
@@ -2295,12 +2340,12 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                             use_diagonal = false;
                             log_t_mtx_weight = 3.0;
 
-                            mtx_on_t = MatrixPerturbationMethod(e,mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,max_rank,3,use_diagonal,use_t_input,log_t_mtx_weight,is_blind,1);
+                            mtx_on_t = MatrixPerturbationMethod(e,Elev_mean,mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,max_rank,min_rank,use_diagonal,use_t_input,log_t_mtx_weight,is_blind,1);
                             std::cout << "mtx_on_t (blind, off-diagonal):" << std::endl;
                             std::cout << mtx_on_t.block(0,0,3,3).real() << std::endl;
                             use_t_input = true;
 
-                            mtx_on_bkgd = MatrixPerturbationMethod(e,mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,max_rank,max_rank,use_diagonal,use_t_input,3.0,is_blind,0);
+                            mtx_on_bkgd = MatrixPerturbationMethod(e,Elev_mean,mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,max_rank,max_rank,use_diagonal,use_t_input,3.0,is_blind,0);
                             fill2DHistogram(&Hist_OnBkgd_MSCLW_Fine.at(e),mtx_on_bkgd);
                             total_data_sr_count = GetSRcounts(&Hist_OnData_MSCLW_Fine.at(e));
                             total_bkgd_sr_count = GetSRcounts(&Hist_OnBkgd_MSCLW_Fine.at(e));
@@ -2326,16 +2371,16 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         is_blind = true;
                         if (max_rank>=1)
                         {
-                            use_t_input = true;
+                            use_t_input = false;
                             use_diagonal = true;
                             log_t_mtx_weight = 0.0;
 
-                            mtx_on_t = MatrixPerturbationMethod(e,mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,max_rank,3,use_diagonal,use_t_input,log_t_mtx_weight,is_blind,1);
+                            mtx_on_t = MatrixPerturbationMethod(e,Elev_mean,mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,max_rank,min_rank,use_diagonal,use_t_input,log_t_mtx_weight,is_blind,1);
                             std::cout << "mtx_on_t (blind, diagonal):" << std::endl;
                             std::cout << mtx_on_t.block(0,0,3,3).real() << std::endl;
                             use_t_input = true;
 
-                            mtx_on_bkgd = MatrixPerturbationMethod(e,mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,max_rank,max_rank,use_diagonal,use_t_input,3.0,is_blind,0);
+                            mtx_on_bkgd = MatrixPerturbationMethod(e,Elev_mean,mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,max_rank,max_rank,use_diagonal,use_t_input,3.0,is_blind,0);
 
                             fill2DHistogram(&Hist_OnBkgd_MSCLW_Fine.at(e),mtx_on_bkgd);
                             total_data_sr_count = GetSRcounts(&Hist_OnData_MSCLW_Fine.at(e));
@@ -2354,6 +2399,11 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         t11_recon.push_back(mtx_on_t(1,1).real());
                         t02_recon.push_back(mtx_on_t(0,2).real());
                         t20_recon.push_back(mtx_on_t(2,0).real());
+
+                        mtx_on_s = GetSingularValues(mtx_on_bkgd);
+                        s0_recon.push_back(mtx_on_s(0,0));
+                        s1_recon.push_back(mtx_on_s(1,1));
+                        s2_recon.push_back(mtx_on_s(2,2));
 
                         if (max_rank==0)
                         {
@@ -2411,14 +2461,6 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         CR_on_count_unweighted.at(e) = 0.;
                         CR_off_count_unweighted.at(e) = 0.;
                         CR_on_count_weighted.at(e) = 0.;
-                    }
-
-                    NSB_mean = NSB_mean/double(n_samples);
-                    Elev_mean = Elev_mean/double(n_samples);
-                    Azim_mean = Azim_mean/double(n_samples);
-                    for (int e=0;e<N_energy_bins;e++) 
-                    {
-                        effective_area.at(e) = effective_area.at(e)/double(n_samples);
                     }
 
                     Hist_Data_Elev_Skymap.Divide(&Hist_Data_Norm_Skymap);
@@ -2514,6 +2556,12 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                     InfoTree.Branch("init_perturbation_bkgd_count","std::vector<double>",&init_perturbation_bkgd_count);
                     InfoTree.Branch("perturbation_bkgd_count","std::vector<double>",&perturbation_bkgd_count);
                     InfoTree.Branch("combined_bkgd_count","std::vector<double>",&combined_bkgd_count);
+                    InfoTree.Branch("s0_truth","std::vector<double>",&s0_truth);
+                    InfoTree.Branch("s1_truth","std::vector<double>",&s1_truth);
+                    InfoTree.Branch("s2_truth","std::vector<double>",&s2_truth);
+                    InfoTree.Branch("s0_recon","std::vector<double>",&s0_recon);
+                    InfoTree.Branch("s1_recon","std::vector<double>",&s1_recon);
+                    InfoTree.Branch("s2_recon","std::vector<double>",&s2_recon);
                     InfoTree.Branch("t00_truth","std::vector<double>",&t00_truth);
                     InfoTree.Branch("t01_truth","std::vector<double>",&t01_truth);
                     InfoTree.Branch("t10_truth","std::vector<double>",&t10_truth);
@@ -2544,6 +2592,12 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                     {
                         effective_area.push_back(0.);
                     }
+                    s0_truth.clear();
+                    s1_truth.clear();
+                    s2_truth.clear();
+                    s0_recon.clear();
+                    s1_recon.clear();
+                    s2_recon.clear();
                     t00_truth.clear();
                     t01_truth.clear();
                     t10_truth.clear();

@@ -43,10 +43,11 @@ input_path = '/gamma_raid/userspace/rshang/SMI_output'
 #energy_bin = [100.,200.,251.,316.,398.,501.,794.,1259.,1995.,3162.,5011.,7943.]
 
 #folder_path = 'output_test_1'
-folder_path = 'output_test_2'
+#folder_tag = '_col1'
+#folder_path = 'output_test_2'
+#folder_tag = '_row1'
+folder_path = 'output_test_3'
 folder_tag = '_test'
-#folder_path = 'output_nuclear_3tel'
-#folder_tag = '_3tel'
 
 #folder_path = 'output_weight_log_m0p0'
 #folder_path = 'output_weight_log_m0p5'

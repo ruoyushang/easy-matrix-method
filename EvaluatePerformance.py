@@ -49,8 +49,12 @@ np.set_printoptions(precision=4)
 
 measurement_rebin = 1
 
-#elev_range = [30.,90.]
+elev_tag = 'incl'
 elev_range = [40.,90.]
+#elev_tag = 'sza'
+#elev_range = [60.,90.]
+#elev_tag = 'lza'
+#elev_range = [40.,60.]
 
 total_data_expo = 0.
 expo_sum_all_energies = 0.
@@ -101,15 +105,59 @@ def GetRunInfo(file_path):
 
     return data_expo, total_cr_count, elev_mean, azim_mean, nsb_mean, avg_diff_el, avg_diff_az, avg_diff_nsb
 
-def Find_t11_correlation(t00_input,t01_input,t10_input,t11_input,t02_input,t20_input,e_min,e_max):
+def Find_s1_on_diagonal_correlation(s0_input,s1_input,e_min,e_max):
+
+    n_eqn = 0
+    s0_array = []
+    s1_array = []
+    for e_idx in range(e_min,e_max):
+        n_eqn += len(s1_input[e_idx])
+        for entry in range(0,len(s1_input[e_idx])):
+            s0_array += [s0_input[e_idx][entry]]
+            s1_array += [s1_input[e_idx][entry]]
+
+    n_var = 1
+    if n_eqn<n_var:
+        print ('Not enough equations.')
+        return
+
+    b = np.zeros(n_eqn)
+    A = np.zeros((n_eqn,n_var))
+
+    for eqn in range(0,n_eqn):
+            A[eqn,0] = s0_array[eqn]
+            b[eqn] = s1_array[eqn]
+
+    # Now compute the SVD of  A
+    U, sigma, VT = la.svd(A)
+    # Make a matrix Sigma of the correct size
+    Sigma = np.zeros(A.shape)
+    Sigma[:n_var,:n_var] = np.diag(sigma)
+
+    # Now define Sigma_pinv as the "pseudo-"inverse of Sigma, where "pseudo" means "don't divide by zero
+    Sigma_pinv = np.zeros(A.shape).T
+    Sigma_pinv[:n_var,:n_var] = np.diag(1/sigma[:n_var])
+
+    # Now compute the SVD-based solution for the least-squares problem
+    x_svd = VT.T.dot(Sigma_pinv).dot(U.T).dot(b)
+    chi2 = la.norm(A.dot(x_svd)-b, 2)/float(n_eqn)
+
+    txt_info = 'chi2 = %0.3e \t,'%(chi2)
+    txt_info += 'x0 = %0.3f \t,'%(x_svd[0])
+    print (txt_info)
+
+    if np.isnan(x_svd[0]):
+        return 0
+    else:
+        return x_svd[0]
+
+def Find_t11_off_diagonal_correlation(t00_input,t01_input,t10_input,t11_input,e_min,e_max):
 
     n_eqn = 0
     t00_array = []
     t01_array = []
     t10_array = []
     t11_array = []
-    t02_array = []
-    t20_array = []
     for e_idx in range(e_min,e_max):
         n_eqn += len(t11_input[e_idx])
         for entry in range(0,len(t11_input[e_idx])):
@@ -117,8 +165,6 @@ def Find_t11_correlation(t00_input,t01_input,t10_input,t11_input,t02_input,t20_i
             t01_array += [t01_input[e_idx][entry]]
             t10_array += [t10_input[e_idx][entry]]
             t11_array += [t11_input[e_idx][entry]]
-            t02_array += [t02_input[e_idx][entry]]
-            t20_array += [t20_input[e_idx][entry]]
 
     n_var = 3
     if n_eqn<n_var:
@@ -162,6 +208,12 @@ def Find_t11_correlation(t00_input,t01_input,t10_input,t11_input,t02_input,t20_i
 def GetGammaCounts(file_path,ebin):
 
     effective_area = ROOT.std.vector("double")(20)
+    s0_truth = ROOT.std.vector("double")(20)
+    s1_truth = ROOT.std.vector("double")(20)
+    s2_truth = ROOT.std.vector("double")(20)
+    s0_recon = ROOT.std.vector("double")(20)
+    s1_recon = ROOT.std.vector("double")(20)
+    s2_recon = ROOT.std.vector("double")(20)
     t00_truth = ROOT.std.vector("double")(20)
     t01_truth = ROOT.std.vector("double")(20)
     t10_truth = ROOT.std.vector("double")(20)
@@ -184,6 +236,12 @@ def GetGammaCounts(file_path,ebin):
     InputFile = ROOT.TFile(file_path)
     InfoTree = InputFile.Get("InfoTree")
     InfoTree.SetBranchAddress('effective_area',ROOT.AddressOf(effective_area))
+    InfoTree.SetBranchAddress('s0_truth',ROOT.AddressOf(s0_truth))
+    InfoTree.SetBranchAddress('s1_truth',ROOT.AddressOf(s1_truth))
+    InfoTree.SetBranchAddress('s2_truth',ROOT.AddressOf(s2_truth))
+    InfoTree.SetBranchAddress('s0_recon',ROOT.AddressOf(s0_recon))
+    InfoTree.SetBranchAddress('s1_recon',ROOT.AddressOf(s1_recon))
+    InfoTree.SetBranchAddress('s2_recon',ROOT.AddressOf(s2_recon))
     InfoTree.SetBranchAddress('t00_truth',ROOT.AddressOf(t00_truth))
     InfoTree.SetBranchAddress('t01_truth',ROOT.AddressOf(t01_truth))
     InfoTree.SetBranchAddress('t10_truth',ROOT.AddressOf(t10_truth))
@@ -205,7 +263,7 @@ def GetGammaCounts(file_path,ebin):
     InfoTree.GetEntry(0)
     InputFile.Close()
 
-    return effective_area[ebin], data_count[ebin], ratio_bkgd_count[ebin], regression_bkgd_count[ebin], init_perturbation_bkgd_count[ebin], perturbation_bkgd_count[ebin], combined_bkgd_count[ebin], t00_truth[ebin], t01_truth[ebin], t10_truth[ebin], t11_truth[ebin], t02_truth[ebin], t20_truth[ebin], t00_recon[ebin], t01_recon[ebin], t10_recon[ebin], t11_recon[ebin], t02_recon[ebin], t20_recon[ebin]
+    return effective_area[ebin], data_count[ebin], ratio_bkgd_count[ebin], regression_bkgd_count[ebin], init_perturbation_bkgd_count[ebin], perturbation_bkgd_count[ebin], combined_bkgd_count[ebin], t00_truth[ebin], t01_truth[ebin], t10_truth[ebin], t11_truth[ebin], t02_truth[ebin], t20_truth[ebin], t00_recon[ebin], t01_recon[ebin], t10_recon[ebin], t11_recon[ebin], t02_recon[ebin], t20_recon[ebin], s0_truth[ebin], s1_truth[ebin], s2_truth[ebin], s0_recon[ebin], s1_recon[ebin], s2_recon[ebin]
 
 def MakeMultipleFitPlot(ax_input,Hists,legends,title_x,title_y):
 
@@ -308,6 +366,12 @@ array_nsb_mean = []
 array_elev_diff = []
 array_azim_diff = []
 array_nsb_diff = []
+array_s0_truth = []
+array_s1_truth = []
+array_s2_truth = []
+array_s0_recon = []
+array_s1_recon = []
+array_s2_recon = []
 array_t00_truth = []
 array_t01_truth = []
 array_t10_truth = []
@@ -346,6 +410,12 @@ for energy_idx in range(0,len(energy_bin)-1):
     array_per_energy_nsb_mean = []
     array_per_energy_elev_diff = []
     array_per_energy_azim_diff = []
+    array_per_energy_s0_truth = []
+    array_per_energy_s1_truth = []
+    array_per_energy_s2_truth = []
+    array_per_energy_s0_recon = []
+    array_per_energy_s1_recon = []
+    array_per_energy_s2_recon = []
     array_per_energy_t00_truth = []
     array_per_energy_t01_truth = []
     array_per_energy_t10_truth = []
@@ -400,7 +470,7 @@ for energy_idx in range(0,len(energy_bin)-1):
                     SourceFilePath = "/gamma_raid/userspace/rshang/SMI_output/%s/Netflix_%s_G%d_X%d_Y%d.root"%(folder_path,sample_list[src],group,xoff_idx,yoff_idx)
                     if not os.path.exists(SourceFilePath): continue
                     print ('Read file: %s'%(SourceFilePath))
-                    eff_area, data_truth, ratio_bkgd, regression_bkgd, init_perturbation_bkgd, perturbation_bkgd, combined_bkgd, t00_truth, t01_truth, t10_truth, t11_truth, t02_truth, t20_truth, t00_recon, t01_recon, t10_recon, t11_recon, t02_recon, t20_recon = GetGammaCounts(SourceFilePath,energy_idx)
+                    eff_area, data_truth, ratio_bkgd, regression_bkgd, init_perturbation_bkgd, perturbation_bkgd, combined_bkgd, t00_truth, t01_truth, t10_truth, t11_truth, t02_truth, t20_truth, t00_recon, t01_recon, t10_recon, t11_recon, t02_recon, t20_recon, s0_truth, s1_truth, s2_truth, s0_recon, s1_recon, s2_recon = GetGammaCounts(SourceFilePath,energy_idx)
                     data_expo, total_cr_count, elev_mean, azim_mean, nsb_mean, avg_diff_el, avg_diff_az, avg_diff_nsb = GetRunInfo(SourceFilePath)
                     if elev_mean<elev_range[0] or elev_mean>elev_range[1]: continue
                     if xoff_idx==0 and yoff_idx==0:
@@ -435,6 +505,7 @@ for energy_idx in range(0,len(energy_bin)-1):
                         txt_warning += 'energy index = %s \n'%(energy_idx)
                         txt_warning += 'error = %0.1f \n '%(perturbation_error)
                         txt_warning += 'truth = %0.1f \n '%(data_truth)
+                    if s0_truth==0.: continue
                     #if avg_diff_el<0.: continue
                     #if avg_diff_el>0.: continue
                     #if avg_diff_az<0.: continue
@@ -442,6 +513,12 @@ for energy_idx in range(0,len(energy_bin)-1):
                     #if avg_diff_nsb<0.: continue
                     #if avg_diff_nsb>0.: continue
                     #if azim_mean>90.: continue
+                    array_per_energy_s0_truth += [s0_truth]
+                    array_per_energy_s1_truth += [s1_truth]
+                    array_per_energy_s2_truth += [s2_truth]
+                    array_per_energy_s0_recon += [s0_recon]
+                    array_per_energy_s1_recon += [s1_recon]
+                    array_per_energy_s2_recon += [s2_recon]
                     array_per_energy_t00_truth += [t00_truth]
                     array_per_energy_t01_truth += [t01_truth]
                     array_per_energy_t10_truth += [t10_truth]
@@ -483,6 +560,12 @@ for energy_idx in range(0,len(energy_bin)-1):
     array_elev_diff += [array_per_energy_elev_diff]
     array_azim_diff += [array_per_energy_azim_diff]
     array_nsb_diff += [array_per_energy_nsb_diff]
+    array_s0_truth += [array_per_energy_s0_truth]
+    array_s1_truth += [array_per_energy_s1_truth]
+    array_s2_truth += [array_per_energy_s2_truth]
+    array_s0_recon += [array_per_energy_s0_recon]
+    array_s1_recon += [array_per_energy_s1_recon]
+    array_s2_recon += [array_per_energy_s2_recon]
     array_t00_truth += [array_per_energy_t00_truth]
     array_t01_truth += [array_per_energy_t01_truth]
     array_t10_truth += [array_per_energy_t10_truth]
@@ -515,33 +598,21 @@ for energy_idx in range(0,len(energy_bin)-1):
     fig.set_figheight(8)
     fig.set_figwidth(8)
     axbig = fig.add_subplot()
-    axbig.scatter(array_elev_mean[energy_idx],array_t11_truth[energy_idx],color='k',alpha=0.5)
-    axbig.scatter(array_elev_mean[energy_idx],array_t11_recon[energy_idx],color='r',alpha=0.5)
-    axbig.set_xlabel('Elevation [deg]')
-    axbig.set_ylabel('$t_{11}$')
-    fig.savefig("output_plots/t11_vs_elev_E%s_%s.png"%(energy_idx,folder_tag))
+    axbig.scatter(array_s0_truth[energy_idx],array_s1_truth[energy_idx],color='k',alpha=0.5)
+    axbig.scatter(array_s0_recon[energy_idx],array_s1_recon[energy_idx],color='r',alpha=0.5)
+    axbig.set_xlabel('$s_{0}$')
+    axbig.set_ylabel('$s_{1}$')
+    fig.savefig("output_plots/s0_vs_s1_E%s_%s.png"%(energy_idx,folder_tag))
     axbig.remove()
 
     fig.clf()
     fig.set_figheight(8)
     fig.set_figwidth(8)
     axbig = fig.add_subplot()
-    axbig.scatter(array_azim_mean[energy_idx],array_t11_truth[energy_idx],color='k',alpha=0.5)
-    axbig.scatter(array_azim_mean[energy_idx],array_t11_recon[energy_idx],color='r',alpha=0.5)
-    axbig.set_xlabel('Azimuth [deg]')
-    axbig.set_ylabel('$t_{11}$')
-    fig.savefig("output_plots/t11_vs_azim_E%s_%s.png"%(energy_idx,folder_tag))
-    axbig.remove()
-
-    fig.clf()
-    fig.set_figheight(8)
-    fig.set_figwidth(8)
-    axbig = fig.add_subplot()
-    axbig.scatter(array_nsb_mean[energy_idx],array_t11_truth[energy_idx],color='k',alpha=0.5)
-    axbig.scatter(array_nsb_mean[energy_idx],array_t11_recon[energy_idx],color='r',alpha=0.5)
-    axbig.set_xlabel('NSB')
-    axbig.set_ylabel('$t_{11}$')
-    fig.savefig("output_plots/t11_vs_nsb_E%s_%s.png"%(energy_idx,folder_tag))
+    axbig.scatter(array_s0_truth[energy_idx],array_t00_truth[energy_idx],color='k',alpha=0.5)
+    axbig.set_xlabel('$s_{0}$')
+    axbig.set_ylabel('$t_{00}$')
+    fig.savefig("output_plots/s0_vs_t00_E%s_%s.png"%(energy_idx,folder_tag))
     axbig.remove()
 
     fig.clf()
@@ -897,12 +968,12 @@ print ('========================================================================
 print (txt_warning)
 
 
-txt_info_x00 = 'double coefficient_t11xt00[N_energy_bins] = {'
-txt_info_x01 = 'double coefficient_t11xt01[N_energy_bins] = {'
-txt_info_x10 = 'double coefficient_t11xt10[N_energy_bins] = {'
+txt_info_x00 = 'double coefficient_t11xt00_%s[N_energy_bins] = {'%(elev_tag)
+txt_info_x01 = 'double coefficient_t11xt01_%s[N_energy_bins] = {'%(elev_tag)
+txt_info_x10 = 'double coefficient_t11xt10_%s[N_energy_bins] = {'%(elev_tag)
 print ('================================================================================================')
 for energy_idx in range(0,len(energy_bin)-1):
-    x00, x01, x10 = Find_t11_correlation(array_t00_truth,array_t01_truth,array_t10_truth,array_t11_truth,array_t02_truth,array_t20_truth,energy_idx,energy_idx+1)
+    x00, x01, x10 = Find_t11_off_diagonal_correlation(array_t00_truth,array_t01_truth,array_t10_truth,array_t11_truth,energy_idx,energy_idx+1)
     txt_info_x00 += '%0.3f'%(x00)
     txt_info_x01 += '%0.3f'%(x01)
     txt_info_x10 += '%0.3f'%(x10)
@@ -916,9 +987,18 @@ txt_info_x10 += '};'
 print (txt_info_x00)
 print (txt_info_x01)
 print (txt_info_x10)
-
 print ('================================================================================================')
-x00, x01, x10 = Find_t11_correlation(array_t00_truth,array_t01_truth,array_t10_truth,array_t11_truth,array_t02_truth,array_t20_truth,1,7)
+
+txt_info_x0 = 'double coefficient_s1xs0_%s[N_energy_bins] = {'%(elev_tag)
+print ('================================================================================================')
+for energy_idx in range(0,len(energy_bin)-1):
+    x0 = Find_s1_on_diagonal_correlation(array_s0_truth,array_s1_truth,energy_idx,energy_idx+1)
+    txt_info_x0 += '%0.3f'%(x0)
+    if energy_idx<len(energy_bin)-2:
+        txt_info_x0 += ','
+txt_info_x0 += '};'
+print (txt_info_x0)
+print ('================================================================================================')
 
 print ('total_data_expo = %0.1f hrs'%(total_data_expo))
 print ('avg expo per measurement = %0.1f'%(expo_sum_all_energies/total_n_measurements))
