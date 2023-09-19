@@ -1122,35 +1122,44 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
             delta_nsb = off_run_nsb-on_run_nsb
             delta_runnum = all_runs_info[run][0]-list_on_run_ids[on_run]
 
+            range_elev = 0.1
+            range_nsb = 1.
+            range_runnum = 20000.
+
+            significance_diff_elev = abs(total_elev_diff/range_elev)
+            significance_diff_nsb = abs(total_nsb_diff/range_nsb)
+            significance_diff_runnum = abs(total_runnum_diff/range_runnum)
+
             if is_imposter:
                 if abs(delta_elev)>0.2: continue
+                if abs(delta_azim)>0.3: continue
                 if abs(delta_nsb)>2.: continue
 
             else:
                 if abs(delta_elev)>0.1: continue
                 if abs(delta_azim)>0.2: continue
 
-                if abs(delta_runnum)>10000:
+                if significance_diff_runnum>significance_diff_elev and significance_diff_runnum>significance_diff_nsb:
                     if total_runnum_diff>0.:
                         if delta_runnum>0.: continue
                     else:
                         if delta_runnum<0.: continue
-
-                if total_elev_diff>0.:
-                    if delta_elev_deg>0.: continue
+                elif significance_diff_nsb>significance_diff_runnum and significance_diff_nsb>significance_diff_elev:
+                    if total_nsb_diff>0.:
+                        if delta_nsb>0.: continue
+                    else:
+                        if delta_nsb<0.: continue
                 else:
-                    if delta_elev_deg<0.: continue
-
-                if total_nsb_diff>0.:
-                    if delta_nsb>0.: continue
-                else:
-                    if delta_nsb<0.: continue
+                    if total_elev_diff>0.:
+                        if delta_elev>0.: continue
+                    else:
+                        if delta_elev<0.: continue
 
             list_off_run_ids += [[int(list_on_run_ids[on_run]),int(all_runs_info[run][0]),on_run_el,off_run_el]]
             number_off_runs += 1
             total_nsb_diff += delta_nsb
             total_azim_diff += delta_azim
-            total_elev_diff += delta_elev_deg
+            total_elev_diff += delta_elev
             total_runnum_diff += delta_runnum
 
             already_used = False
@@ -1271,10 +1280,10 @@ else:
     use_local_data = False
     my_list_off_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_on_run_ids,False,'PairList')
     use_local_data = False
-    my_list_imposter_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_on_run_ids,True,'ImposterList')
-    my_list_imposter_off_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_imposter_run_ids,False,'ImposterPairList')
+    #my_list_imposter_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_on_run_ids,True,'ImposterList')
+    #my_list_imposter_off_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_imposter_run_ids,False,'ImposterPairList')
 
-    list_for_eventdisplay([my_list_on_run_ids,my_list_off_run_ids,my_list_imposter_run_ids,my_list_imposter_off_run_ids],obs_name)
+    #list_for_eventdisplay([my_list_on_run_ids,my_list_off_run_ids,my_list_imposter_run_ids,my_list_imposter_off_run_ids],obs_name)
 
 
 run_id = 103322

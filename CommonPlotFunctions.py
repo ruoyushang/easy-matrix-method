@@ -42,12 +42,12 @@ input_path = '/gamma_raid/userspace/rshang/SMI_output'
 #folder_tag = 'paper'
 #energy_bin = [100.,200.,251.,316.,398.,501.,794.,1259.,1995.,3162.,5011.,7943.]
 
-#folder_path = 'output_test_1'
-#folder_tag = '_col1'
+folder_path = 'output_test_1'
+folder_tag = '_test1'
 #folder_path = 'output_test_2'
-#folder_tag = '_row1'
-folder_path = 'output_test_3'
-folder_tag = '_test'
+#folder_tag = '_test2'
+#folder_path = 'output_test_3'
+#folder_tag = '_test3'
 
 #folder_path = 'output_weight_log_m0p0'
 #folder_path = 'output_weight_log_m0p5'

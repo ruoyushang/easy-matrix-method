@@ -88,6 +88,12 @@ if 'V6' in input_epoch:
     list_epoch += ['V6']
 
 total_data_expo = 0.
+array_mean_nsb = []
+array_mean_elev = []
+array_mean_azim = []
+array_diff_nsb = []
+array_diff_elev = []
+array_diff_azim = []
 
 MSCW_lower_blind = CommonPlotFunctions.MSCW_lower_blind
 MSCL_lower_blind = CommonPlotFunctions.MSCL_lower_blind
@@ -1552,17 +1558,17 @@ elif 'SNR_G189_p03' in source_name:
     #src_x = 94.213
     #src_y = 22.503
     # G189.1+03.0
-    #region_name = 'SNR'
-    #src_x = 94.25
-    #src_y = 22.57
+    region_name = 'SNR'
+    src_x = 94.25
+    src_y = 22.57
     # 3HWC J0617+224
     #region_name = '3HWC'
     #src_x = 94.39
     #src_y = 22.47
 
-    region_name = 'BigOldSNRHotspot'
-    src_x = 95.30
-    src_y = 22.57
+    #region_name = 'BigOldSNRHotspot'
+    #src_x = 95.30
+    #src_y = 22.57
     #region_name = 'BigOldSNR'
     #src_x = 94.84
     #src_y = 22.21
@@ -1586,13 +1592,6 @@ elif 'SNR_G189_p03' in source_name:
     #excl_region_y = [src_y]
     #excl_region_r = [0.4]
 
-    #excl_region_x = [src_x]
-    #excl_region_y = [src_y]
-    #excl_region_r = [0.4]
-    #region_x = [94.213]
-    #region_y = [22.503]
-    #region_r = [1.0]
-    #region_name = 'Ring'
 
 elif 'PSR_J2032_p4127' in source_name:
     region_x = [MapCenter_x]
@@ -1708,8 +1707,20 @@ for xoff_idx in range(0,n_xoff_bins):
                 InfoTree.SetBranchAddress('effective_area',ROOT.AddressOf(effective_area))
                 InfoTree.GetEntry(0)
                 data_expo = InfoTree.exposure_hours
+                elev_mean = InfoTree.Elev_mean
+                azim_mean = InfoTree.Azim_mean
+                nsb_mean = InfoTree.NSB_mean
+                avg_diff_nsb = InfoTree.avg_diff_nsb
+                avg_diff_el = InfoTree.avg_diff_el
+                avg_diff_az = InfoTree.avg_diff_az
                 if xoff_idx==0 and yoff_idx==0:
                     total_data_expo += data_expo
+                    array_mean_nsb += [nsb_mean]
+                    array_mean_elev += [elev_mean]
+                    array_mean_azim += [azim_mean]
+                    array_diff_nsb += [avg_diff_nsb]
+                    array_diff_elev += [avg_diff_el]
+                    array_diff_azim += [avg_diff_az]
                 HistName = "Hist_Data_AreaTime_Skymap"
                 FillSkyMapHistogram(InputFile.Get(HistName),hist_areatime_skymap)
                 HistName = "Hist_Data_Elev_Skymap"
@@ -2250,6 +2261,36 @@ elif 'SS433' in source_name:
     print ('Fit 2d Gaussian')
     fit_2d_model(hist_real_data_skymap_sum, hist_real_bkgd_skymap_sum, 288.0833333, 4.9166667)
     print ('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+
+fig.clf()
+fig.set_figheight(8)
+fig.set_figwidth(8)
+axbig = fig.add_subplot()
+axbig.scatter(array_mean_elev,array_diff_elev,color='k',alpha=0.5)
+axbig.set_xlabel('ON elevation [deg]')
+axbig.set_ylabel('ON-OFF elevation difference [deg]')
+fig.savefig("output_plots/RunElevDiff_%s.png"%(plot_tag))
+axbig.remove()
+
+fig.clf()
+fig.set_figheight(8)
+fig.set_figwidth(8)
+axbig = fig.add_subplot()
+axbig.scatter(array_mean_azim,array_diff_azim,color='k',alpha=0.5)
+axbig.set_xlabel('ON azimuth [deg]')
+axbig.set_ylabel('ON-OFF azimuth difference [deg]')
+fig.savefig("output_plots/RunAzimDiff_%s.png"%(plot_tag))
+axbig.remove()
+
+fig.clf()
+fig.set_figheight(8)
+fig.set_figwidth(8)
+axbig = fig.add_subplot()
+axbig.scatter(array_mean_nsb,array_diff_nsb,color='k',alpha=0.5)
+axbig.set_xlabel('ON NSB')
+axbig.set_ylabel('ON-OFF NSB difference')
+fig.savefig("output_plots/RunNSBDiff_%s.png"%(plot_tag))
+axbig.remove()
 
 
 print ('total_data_expo = %0.1f hrs'%(total_data_expo))
