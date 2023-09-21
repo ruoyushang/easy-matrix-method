@@ -1280,10 +1280,10 @@ else:
     use_local_data = False
     my_list_off_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_on_run_ids,False,'PairList')
     use_local_data = False
-    #my_list_imposter_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_on_run_ids,True,'ImposterList')
-    #my_list_imposter_off_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_imposter_run_ids,False,'ImposterPairList')
+    my_list_imposter_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_on_run_ids,True,'ImposterList')
+    my_list_imposter_off_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_imposter_run_ids,False,'ImposterPairList')
 
-    #list_for_eventdisplay([my_list_on_run_ids,my_list_off_run_ids,my_list_imposter_run_ids,my_list_imposter_off_run_ids],obs_name)
+    list_for_eventdisplay([my_list_on_run_ids,my_list_off_run_ids,my_list_imposter_run_ids,my_list_imposter_off_run_ids],obs_name)
 
 
 run_id = 103322

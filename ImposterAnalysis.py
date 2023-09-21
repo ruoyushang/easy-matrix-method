@@ -247,7 +247,7 @@ def PrintSpectralDataForNaima(energy_axis,src_flux,src_flux_err,data_name):
     print ('NAIMA flux points')
     print ('data_name = %s'%(data_name))
     for eb in range(0,len(energy_axis)):
-        print ('%.2f %.2f %.2f %.2e %.2e %s'%(energy_mean[eb],energy_edge_lo[eb],energy_edge_hi[eb],flux_mean[eb],flux_error[eb],0))
+        print ('%.4f %.4f %.4f %.2e %.2e %s'%(energy_mean[eb],energy_edge_lo[eb],energy_edge_hi[eb],flux_mean[eb],flux_error[eb],0))
     print ('=======================================================')
 
     qfile = open("output_plots/naima_%s.dat"%(data_name),"w") 
