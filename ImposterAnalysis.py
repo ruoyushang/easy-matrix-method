@@ -9,13 +9,10 @@ from astropy import units as my_unit
 from astropy.coordinates import SkyCoord
 from astropy.coordinates import ICRS, Galactic, FK4, FK5  # Low-level frames
 from astropy.time import Time
-from scipy import special
-import scipy.stats as st
+#from scipy.optimize import curve_fit
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.optimize import curve_fit
 from itertools import cycle
-from scipy import fftpack
 from astropy import wcs
 from astropy.io import fits
 
@@ -70,7 +67,7 @@ n_xoff_bins = CommonPlotFunctions.n_xoff_bins
 n_yoff_bins = CommonPlotFunctions.n_yoff_bins
 smooth_size_spectroscopy = CommonPlotFunctions.smooth_size_spectroscopy
 
-n_imposters = 5
+n_imposters = 6
 if not doImposter:
     n_imposters = 0
 
@@ -700,8 +697,9 @@ def MakeSpectrum(roi_x,roi_y,roi_r,roi_name,excl_roi_x,excl_roi_y,excl_roi_r):
         syst_err = 0.
         for imposter in range(0,n_imposters):
             syst_err += pow(imposter_flux_list[imposter][ebin],2)
+            syst_err += -1.*pow(imposter_flux_err_list[imposter][ebin],2)
         if n_imposters>0:
-            syst_err = pow(syst_err/float(n_imposters),0.5)
+            syst_err = pow(max(syst_err,0.)/float(n_imposters),0.5)
         real_flux_syst_err += [syst_err]
 
     vectorize_f_crab = np.vectorize(flux_crab_func)
@@ -738,8 +736,9 @@ def MakeSpectrum(roi_x,roi_y,roi_r,roi_name,excl_roi_x,excl_roi_y,excl_roi_r):
         syst_err = 0.
         for imposter in range(0,n_imposters):
             syst_err += pow(imposter_data_list[imposter][ebin]-imposter_bkgd_list[imposter][ebin],2)
+            syst_err += -1.*imposter_data_list[imposter][ebin]
         if n_imposters>0:
-            syst_err = pow(syst_err/float(n_imposters),0.5)
+            syst_err = pow(max(syst_err,0.)/float(n_imposters),0.5)
         real_bkgd_syst_err += [syst_err]
 
 
@@ -1268,30 +1267,30 @@ def fit_2d_model(hist_map_data, hist_map_bkgd, src_x, src_y):
     p0_upper = [p for prms in bound_upper_prms for p in prms]
     print ('p0 = %s'%(p0))
 
-    popt, pcov = curve_fit(_gaussian, XY_stack, image_data.ravel(), p0, sigma=image_error.ravel(), absolute_sigma=True, bounds=(p0_lower,p0_upper))
-    fit_src_x = popt[0*4+0]
-    fit_src_x_err = pow(pcov[0*4+0][0*4+0],0.5)
-    print ('fit_src_x = %0.3f +/- %0.3f'%(fit_src_x,fit_src_x_err))
-    fit_src_y = popt[0*4+1]
-    fit_src_y_err = pow(pcov[0*4+1][0*4+1],0.5)
-    print ('fit_src_y = %0.3f +/- %0.3f'%(fit_src_y,fit_src_y_err))
-    fit_src_sigma = popt[0*4+2]
-    fit_src_sigma_err = pow(pcov[0*4+2][0*4+2],0.5)
-    print ('fit_src_sigma = %0.3f +/- %0.3f'%(fit_src_sigma,fit_src_sigma_err))
-    true_src_sigma = pow(fit_src_sigma*fit_src_sigma-pow(CommonPlotFunctions.smooth_size_spectroscopy,2),0.5)
-    print ('true_src_sigma = %0.3f +/- %0.3f'%(true_src_sigma,fit_src_sigma_err))
-    fit_src_A = popt[0*4+3]
-    print ('fit_src_A = %0.1e'%(fit_src_A))
+    #popt, pcov = curve_fit(_gaussian, XY_stack, image_data.ravel(), p0, sigma=image_error.ravel(), absolute_sigma=True, bounds=(p0_lower,p0_upper))
+    #fit_src_x = popt[0*4+0]
+    #fit_src_x_err = pow(pcov[0*4+0][0*4+0],0.5)
+    #print ('fit_src_x = %0.3f +/- %0.3f'%(fit_src_x,fit_src_x_err))
+    #fit_src_y = popt[0*4+1]
+    #fit_src_y_err = pow(pcov[0*4+1][0*4+1],0.5)
+    #print ('fit_src_y = %0.3f +/- %0.3f'%(fit_src_y,fit_src_y_err))
+    #fit_src_sigma = popt[0*4+2]
+    #fit_src_sigma_err = pow(pcov[0*4+2][0*4+2],0.5)
+    #print ('fit_src_sigma = %0.3f +/- %0.3f'%(fit_src_sigma,fit_src_sigma_err))
+    #true_src_sigma = pow(fit_src_sigma*fit_src_sigma-pow(CommonPlotFunctions.smooth_size_spectroscopy,2),0.5)
+    #print ('true_src_sigma = %0.3f +/- %0.3f'%(true_src_sigma,fit_src_sigma_err))
+    #fit_src_A = popt[0*4+3]
+    #print ('fit_src_A = %0.1e'%(fit_src_A))
 
-    distance_to_psr = pow(pow(fit_src_x-src_x,2)+pow(fit_src_y-src_y,2),0.5)
-    distance_to_psr_err = pow(pow(fit_src_x_err,2)+pow(fit_src_y_err,2),0.5)
-    print ('distance_to_psr = %0.3f +/- %0.3f'%(distance_to_psr,fit_src_x_err))
+    #distance_to_psr = pow(pow(fit_src_x-src_x,2)+pow(fit_src_y-src_y,2),0.5)
+    #distance_to_psr_err = pow(pow(fit_src_x_err,2)+pow(fit_src_y_err,2),0.5)
+    #print ('distance_to_psr = %0.3f +/- %0.3f'%(distance_to_psr,fit_src_x_err))
 
-    profile_fit = _gaussian(XY_stack, *popt)
-    residual = image_data.ravel() - profile_fit
-    chisq = np.sum((residual/image_error.ravel())**2)
-    dof = len(image_data.ravel())-4
-    print ('chisq/dof = %0.3f'%(chisq/dof))
+    #profile_fit = _gaussian(XY_stack, *popt)
+    #residual = image_data.ravel() - profile_fit
+    #chisq = np.sum((residual/image_error.ravel())**2)
+    #dof = len(image_data.ravel())-4
+    #print ('chisq/dof = %0.3f'%(chisq/dof))
 
 
 def MakeExtensionProfile(roi_x,roi_y,roi_r,fit_profile,roi_name,real_map,imposter_maps,erange_tag):
@@ -1315,7 +1314,8 @@ def MakeExtensionProfile(roi_x,roi_y,roi_r,fit_profile,roi_name,real_map,imposte
         if n_imposters>0:
             for imposter in range(0,n_imposters):
                 syst_err += pow(imposter_profile_list[imposter][ubin],2)
-            syst_err = pow(syst_err/float(n_imposters),0.5)
+                syst_err += -1.*pow(imposter_profile_err_list[imposter][ubin],2)
+            syst_err = pow(max(syst_err,0.)/float(n_imposters),0.5)
         real_profile_syst_err += [syst_err]
 
     end_of_array = False
@@ -1343,38 +1343,32 @@ def MakeExtensionProfile(roi_x,roi_y,roi_r,fit_profile,roi_name,real_map,imposte
     real_profile_stat_err = np.array(real_profile_stat_err)
     real_profile_syst_err = np.array(real_profile_syst_err)
     real_profile_total_err = np.sqrt(np.square(real_profile_stat_err)+np.square(real_profile_syst_err))
-    #real_profile_total_err = []
-    #for ubin in range(0,len(theta2)):
-    #    stat_err = real_profile_stat_err[ubin]
-    #    syst_err = real_profile_syst_err[ubin]
-    #    real_profile_total_err += [pow(stat_err*stat_err+syst_err*syst_err,0.5)]
-    #real_profile_total_err = np.array(real_profile_total_err)
 
     profile_sum = 0.
     for ubin in range(0,len(theta2)):
         profile_sum += real_profile[ubin]
-    if fit_profile==1:
-        start = (profile_sum, 0.5)
-        popt, pcov = curve_fit(diffusion_func,theta2,real_profile,p0=start,sigma=real_profile_total_err,absolute_sigma=True,bounds=((0, 0.01), (np.inf, np.inf)))
-        profile_fit = diffusion_func(theta2, *popt)
-        residual = real_profile - profile_fit
-        chisq = np.sum((residual/real_profile_stat_err)**2)
-        dof = len(theta2)-2
-        print ('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
-        print (erange_tag)
-        print ('diffusion flux = %0.2E +/- %0.2E'%(popt[0],pow(pcov[0][0],0.5)))
-        print ('diffusion radius = %0.2f +/- %0.2f deg (chi2/dof = %0.2f)'%(popt[1],pow(pcov[1][1],0.5),chisq/dof))
-    elif fit_profile==2:
-        start = (profile_sum, 0.5)
-        popt, pcov = curve_fit(gauss_func,theta2,real_profile,p0=start,sigma=real_profile_stat_err,absolute_sigma=True,bounds=((0, 0.01), (np.inf, np.inf)))
-        profile_fit = gauss_func(theta2, *popt)
-        residual = real_profile - profile_fit
-        chisq = np.sum((residual/real_profile_stat_err)**2)
-        dof = len(theta2)-2
-        print ('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
-        print (erange_tag)
-        print ('gaussian flux = %0.2E +/- %0.2E'%(popt[0],pow(pcov[0][0],0.5)))
-        print ('gaussian radius = %0.2f +/- %0.2f deg (chi2/dof = %0.2f)'%(popt[1],pow(pcov[1][1],0.5),chisq/dof))
+    #if fit_profile==1:
+    #    start = (profile_sum, 0.5)
+    #    popt, pcov = curve_fit(diffusion_func,theta2,real_profile,p0=start,sigma=real_profile_total_err,absolute_sigma=True,bounds=((0, 0.01), (np.inf, np.inf)))
+    #    profile_fit = diffusion_func(theta2, *popt)
+    #    residual = real_profile - profile_fit
+    #    chisq = np.sum((residual/real_profile_stat_err)**2)
+    #    dof = len(theta2)-2
+    #    print ('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+    #    print (erange_tag)
+    #    print ('diffusion flux = %0.2E +/- %0.2E'%(popt[0],pow(pcov[0][0],0.5)))
+    #    print ('diffusion radius = %0.2f +/- %0.2f deg (chi2/dof = %0.2f)'%(popt[1],pow(pcov[1][1],0.5),chisq/dof))
+    #elif fit_profile==2:
+    #    start = (profile_sum, 0.5)
+    #    popt, pcov = curve_fit(gauss_func,theta2,real_profile,p0=start,sigma=real_profile_stat_err,absolute_sigma=True,bounds=((0, 0.01), (np.inf, np.inf)))
+    #    profile_fit = gauss_func(theta2, *popt)
+    #    residual = real_profile - profile_fit
+    #    chisq = np.sum((residual/real_profile_stat_err)**2)
+    #    dof = len(theta2)-2
+    #    print ('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+    #    print (erange_tag)
+    #    print ('gaussian flux = %0.2E +/- %0.2E'%(popt[0],pow(pcov[0][0],0.5)))
+    #    print ('gaussian radius = %0.2f +/- %0.2f deg (chi2/dof = %0.2f)'%(popt[1],pow(pcov[1][1],0.5),chisq/dof))
 
     delta_theta = theta2[1]-theta2[0]
     baseline_xaxis = []
@@ -1527,6 +1521,16 @@ elif 'SS433' in source_name:
     #region_r = [0.3]
     #region_name = 'SS433w1'
 
+elif 'PSR_J1928_p1746' in source_name:
+    region_x = [292.18]
+    region_y = [17.77]
+    region_r = [0.5]
+    region_name = 'J1928'
+
+    #region_x = [292.63]
+    #region_y = [18.87]
+    #region_r = [0.5]
+    #region_name = 'J1930'
 elif 'PSR_J1856_p0245' in source_name:
     region_x = [284.2958333]
     region_y = [2.6666667]
@@ -1982,7 +1986,7 @@ axbig.remove()
 if 'PSR_J1907_p0602' in source_name:
 
     Hist_Fermi = ROOT.TH2D("Hist_Fermi","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
-    MWL_map_file = '/home/rshang/MatrixDecompositionMethod/MWL_maps/rg_removed_residualmap_30gev-2tev_pointsource_powerlaw_2.00_residmap.fits'
+    MWL_map_file = '/nevis/ged/data/rshang/MWL_maps/rg_removed_residualmap_30gev-2tev_pointsource_powerlaw_2.00_residmap.fits'
     Hist_Fermi = CommonPlotFunctions.GetFITSMap(MWL_map_file, Hist_Fermi, True)
     Hist_Fermi = CommonPlotFunctions.Smooth2DMap(Hist_Fermi,0.1,False)
     #Hist_Fermi = CommonPlotFunctions.ConvertTSmapToZscore(Hist_Fermi)
@@ -2003,14 +2007,14 @@ if 'PSR_J1907_p0602' in source_name:
     # Dame, T. M.; Hartmann, Dap; Thaddeus, P., 2011, "Replication data for: First Quadrant, main survey (DHT08)", https://doi.org/10.7910/DVN/1PG9NV, Harvard Dataverse, V3
     # https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/1PG9NV
     FITS_correction = 1000.# the source FITS file has a mistake in velocity km/s -> m/s
-    MWL_map_file = '/home/rshang/MatrixDecompositionMethod/MWL_maps/DHT08_Quad1_interp.fits' 
+    MWL_map_file = '/nevis/ged/data/rshang/MWL_maps/DHT08_Quad1_interp.fits' 
     CommonPlotFunctions.GetSlicedDataCubeMap(MWL_map_file, Hist_mc_intensity, 10., 40.)
     Hist_mc_column.Reset()
     Hist_mc_column.Add(Hist_mc_intensity)
     Hist_mc_column.Scale(CO_intensity_to_H_column_density) # H2 column density in unit of 1/cm2
     Hist_mc_column_reflect = CommonPlotFunctions.reflectXaxis(Hist_mc_column)
     CommonPlotFunctions.MatplotlibMap2D(Hist_mc_column_reflect,None,[hist_real_diff_skymap_he_reflect,hist_real_diff_skymap_le_reflect,Hist_Fermi_reflect],fig,'RA','Dec','column density [$1/cm^{2}$]','SkymapRadioCOMap_p10p40_%s'%(plot_tag),roi_x=[287.1,287.1],roi_y=[6.5,6.5],roi_r=[0.4,0.8],colormap='gray')
-    MWL_map_file = '/home/rshang/MatrixDecompositionMethod/MWL_maps/DHT08_Quad1_interp.fits' 
+    MWL_map_file = '/nevis/ged/data/rshang/MWL_maps/DHT08_Quad1_interp.fits' 
     CommonPlotFunctions.GetSlicedDataCubeMap(MWL_map_file, Hist_mc_intensity, 40., 70.)
     Hist_mc_column.Reset()
     Hist_mc_column.Add(Hist_mc_intensity)
@@ -2018,7 +2022,7 @@ if 'PSR_J1907_p0602' in source_name:
     Hist_mc_column_reflect = CommonPlotFunctions.reflectXaxis(Hist_mc_column)
     CommonPlotFunctions.MatplotlibMap2D(Hist_mc_column_reflect,None,[hist_real_diff_skymap_he_reflect,hist_real_diff_skymap_le_reflect,Hist_Fermi_reflect],fig,'RA','Dec','column density [$1/cm^{2}$]','SkymapRadioCOMap_p40p70_%s'%(plot_tag),roi_x=[287.1,287.1],roi_y=[6.5,6.5],roi_r=[0.4,0.8],colormap='gray')
 
-    MWL_map_file = '/home/rshang/MatrixDecompositionMethod/MWL_maps/DHT08_Quad1_interp.fits' 
+    MWL_map_file = '/nevis/ged/data/rshang/MWL_maps/DHT08_Quad1_interp.fits' 
     vel_axis_inner, column_density_axis_inner = CommonPlotFunctions.GetVelocitySpectrum(MWL_map_file, 40.7, -0.8, 0.0, 0.4)
     vel_axis_outer, column_density_axis_outer = CommonPlotFunctions.GetVelocitySpectrum(MWL_map_file, 40.7, -0.8, 0.4, 0.8)
     column_density_axis_inner = CO_intensity_to_H_column_density*np.array(column_density_axis_inner)
@@ -2080,67 +2084,19 @@ if 'PSR_J1907_p0602' in source_name:
     fig.savefig("output_plots/VelocitySpectrumCO_Diff.png",bbox_inches='tight')
     axbig.remove()
 
-    MWL_map_file = '/gamma_raid/userspace/rshang/MW_FITS/GALFA_HI_RA+DEC_284.00+02.35_N.fits' 
+    MWL_map_file = '/nevis/ged/data/rshang/MW_FITS/GALFA_HI_RA+DEC_284.00+02.35_N.fits' 
     CommonPlotFunctions.GetSlicedGalfaHIDataCubeMap(MWL_map_file, Hist_mc_intensity, 10.*1e3, 40.*1e3, True)
-    MWL_map_file = '/gamma_raid/userspace/rshang/MW_FITS/GALFA_HI_RA+DEC_284.00+10.35_N.fits' 
+    MWL_map_file = '/nevis/ged/data/rshang/MW_FITS/GALFA_HI_RA+DEC_284.00+10.35_N.fits' 
     CommonPlotFunctions.GetSlicedGalfaHIDataCubeMap(MWL_map_file, Hist_mc_intensity, 10.*1e3, 40.*1e3, False)
-    MWL_map_file = '/gamma_raid/userspace/rshang/MW_FITS/GALFA_HI_RA+DEC_292.00+02.35_N.fits' 
+    MWL_map_file = '/nevis/ged/data/rshang/MW_FITS/GALFA_HI_RA+DEC_292.00+02.35_N.fits' 
     CommonPlotFunctions.GetSlicedGalfaHIDataCubeMap(MWL_map_file, Hist_mc_intensity, 10.*1e3, 40.*1e3, False)
-    MWL_map_file = '/gamma_raid/userspace/rshang/MW_FITS/GALFA_HI_RA+DEC_292.00+10.35_N.fits' 
+    MWL_map_file = '/nevis/ged/data/rshang/MW_FITS/GALFA_HI_RA+DEC_292.00+10.35_N.fits' 
     CommonPlotFunctions.GetSlicedGalfaHIDataCubeMap(MWL_map_file, Hist_mc_intensity, 10.*1e3, 40.*1e3, False)
     Hist_mc_column.Reset()
     Hist_mc_column.Add(Hist_mc_intensity)
     Hist_mc_column.Scale(CO_intensity_to_H_column_density) # H2 column density in unit of 1/cm2
     Hist_mc_column_reflect = CommonPlotFunctions.reflectXaxis(Hist_mc_column)
     CommonPlotFunctions.MatplotlibMap2D(Hist_mc_column_reflect,None,[hist_real_diff_skymap_he_reflect,hist_real_diff_skymap_le_reflect,Hist_Fermi_reflect],fig,'RA','Dec','column density [$1/cm^{2}$]','SkymapRadioHIMap_p10p40_%s'%(plot_tag),roi_x=[287.1,287.1],roi_y=[6.5,6.5],roi_r=[0.4,0.8],colormap='gray')
-
-    #MWL_map_file = '/gamma_raid/userspace/rshang/MW_FITS/GALFA_HI_RA+DEC_284.00+02.35_N.fits' 
-    #vel_axis_inner, column_density_axis_inner = CommonPlotFunctions.GetGalfaHIVelocitySpectrum(MWL_map_file, 40.7, -0.8, 0.0, 0.4)
-    #vel_axis_outer, column_density_axis_outer = CommonPlotFunctions.GetGalfaHIVelocitySpectrum(MWL_map_file, 40.7, -0.8, 0.4, 0.8)
-    #column_density_axis_inner = CO_intensity_to_H_column_density*np.array(column_density_axis_inner)
-    #column_density_axis_outer = CO_intensity_to_H_column_density*np.array(column_density_axis_outer)
-    #MWL_map_file = '/gamma_raid/userspace/rshang/MW_FITS/GALFA_HI_RA+DEC_284.00+10.35_N.fits' 
-    #vel_axis_inner, column_density_axis_inner = CommonPlotFunctions.GetGalfaHIVelocitySpectrum(MWL_map_file, 40.7, -0.8, 0.0, 0.4)
-    #vel_axis_outer, column_density_axis_outer = CommonPlotFunctions.GetGalfaHIVelocitySpectrum(MWL_map_file, 40.7, -0.8, 0.4, 0.8)
-    #column_density_axis_inner += CO_intensity_to_H_column_density*np.array(column_density_axis_inner)
-    #column_density_axis_outer += CO_intensity_to_H_column_density*np.array(column_density_axis_outer)
-    #MWL_map_file = '/gamma_raid/userspace/rshang/MW_FITS/GALFA_HI_RA+DEC_292.00+02.35_N.fits' 
-    #vel_axis_inner, column_density_axis_inner = CommonPlotFunctions.GetGalfaHIVelocitySpectrum(MWL_map_file, 40.7, -0.8, 0.0, 0.4)
-    #vel_axis_outer, column_density_axis_outer = CommonPlotFunctions.GetGalfaHIVelocitySpectrum(MWL_map_file, 40.7, -0.8, 0.4, 0.8)
-    #column_density_axis_inner += CO_intensity_to_H_column_density*np.array(column_density_axis_inner)
-    #column_density_axis_outer += CO_intensity_to_H_column_density*np.array(column_density_axis_outer)
-    #MWL_map_file = '/gamma_raid/userspace/rshang/MW_FITS/GALFA_HI_RA+DEC_292.00+10.35_N.fits' 
-    #vel_axis_inner, column_density_axis_inner = CommonPlotFunctions.GetGalfaHIVelocitySpectrum(MWL_map_file, 40.7, -0.8, 0.0, 0.4)
-    #vel_axis_outer, column_density_axis_outer = CommonPlotFunctions.GetGalfaHIVelocitySpectrum(MWL_map_file, 40.7, -0.8, 0.4, 0.8)
-    #column_density_axis_inner += CO_intensity_to_H_column_density*np.array(column_density_axis_inner)
-    #column_density_axis_outer += CO_intensity_to_H_column_density*np.array(column_density_axis_outer)
-
-    #column_density_axis_diff = column_density_axis_outer - column_density_axis_inner
-
-    #max_idx = np.argmax(column_density_axis_diff)
-    #print ('HI velocity of highest emission = %0.1f km/s'%(vel_axis_inner[max_idx]))
-    #min_idx = np.argmin(column_density_axis_diff)
-    #print ('HI velocity of lowest emission = %0.1f km/s'%(vel_axis_inner[min_idx]))
-
-    #fig.clf()
-    #fig.set_figheight(figsize_y)
-    #fig.set_figwidth(figsize_x)
-    #axbig = fig.add_subplot()
-    #axbig.plot(vel_axis_inner, column_density_axis_inner)
-    #axbig.plot(vel_axis_inner, column_density_axis_outer)
-    #axbig.set_xlabel('$V_{LSR}$ [km/s]')
-    #axbig.set_ylabel('column density per channel [$1/cm^{2}/(km/s)$]')
-    #fig.savefig("output_plots/VelocitySpectrumHI_Cavity.png",bbox_inches='tight')
-    #axbig.remove()
-    #fig.clf()
-    #fig.set_figheight(figsize_y)
-    #fig.set_figwidth(figsize_x)
-    #axbig = fig.add_subplot()
-    #axbig.plot(vel_axis_inner, column_density_axis_diff)
-    #axbig.set_xlabel('$V_{LSR}$ [km/s]')
-    #axbig.set_ylabel('column density per channel [$1/cm^{2}/(km/s)$]')
-    #fig.savefig("output_plots/VelocitySpectrumHI_Diff.png",bbox_inches='tight')
-    #axbig.remove()
 
 
     #Hist_Hawc = ROOT.TH2D("Hist_Hawc","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
@@ -2153,14 +2109,14 @@ if 'PSR_J1907_p0602' in source_name:
     #hawc_map_list += ['kl'] # 100-316 TeV
     #hawc_map_list += ['gl'] # 10-316 TeV
     #for hfile in range(0,len(hawc_map_list)):
-    #    #MWL_map_file = '/home/rshang/MatrixDecompositionMethod/MWL_maps/%s-gaussGDE.fits'%(hawc_map_list[hfile])
-    #    MWL_map_file = '/gamma_raid/userspace/rshang/MW_FITS/%s-pointlike.fits.gz'%(hawc_map_list[hfile])
+    #    #MWL_map_file = '/nevis/ged/data/rshang/MWL_maps/%s-gaussGDE.fits'%(hawc_map_list[hfile])
+    #    MWL_map_file = '/nevis/ged/data/rshang/MW_FITS/%s-pointlike.fits.gz'%(hawc_map_list[hfile])
     #    Hist_Hawc = CommonPlotFunctions.GetHealpixMap(MWL_map_file, Hist_Hawc, True)
     #    Hist_Hawc_reflect = CommonPlotFunctions.reflectXaxis(Hist_Hawc)
     #    CommonPlotFunctions.MatplotlibMap2D(Hist_Hawc_reflect,None,[],fig,'RA','Dec','Significance','SkymapHAWC_%s_%s'%(hawc_map_list[hfile],plot_tag),colormap='magma',psf=0.13)
 
     #Hist_Tobias = ROOT.TH2D("Hist_Tobias","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
-    #MWL_map_file = '/home/rshang/MatrixDecompositionMethod/MWL_maps/TobiasNewMap.fits'
+    #MWL_map_file = '/nevis/ged/data/rshang/MWL_maps/TobiasNewMap.fits'
     #Hist_Tobias = CommonPlotFunctions.GetFITSMap(MWL_map_file, Hist_Tobias, True)
     #Hist_Tobias_reflect = CommonPlotFunctions.reflectXaxis(Hist_Tobias)
     #CommonPlotFunctions.MatplotlibMap2D(Hist_Tobias_reflect,None,[],fig,'RA','Dec','Significance','SkymapTobias_%s'%(plot_tag))
@@ -2187,7 +2143,7 @@ elif 'PSR_J2032_p4127' in source_name:
     # Dame, T. M.; Hartmann, Dap; Thaddeus, P., 2011, "Replication data for: First Quadrant, main survey (DHT08)", https://doi.org/10.7910/DVN/1PG9NV, Harvard Dataverse, V3
     # https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/1PG9NV
     FITS_correction = 1000.# the source FITS file has a mistake in velocity km/s -> m/s
-    MWL_map_file = '/gamma_raid/userspace/rshang/MW_FITS/DHT10_Cygnus_interp.fits' 
+    MWL_map_file = '/nevis/ged/data/rshang/MW_FITS/DHT10_Cygnus_interp.fits' 
     CommonPlotFunctions.GetSlicedDataCubeMap(MWL_map_file, Hist_mc_intensity, -20., 20.)
     Hist_mc_column.Reset()
     Hist_mc_column.Add(Hist_mc_intensity)
@@ -2195,7 +2151,7 @@ elif 'PSR_J2032_p4127' in source_name:
     Hist_mc_column_reflect = CommonPlotFunctions.reflectXaxis(Hist_mc_column)
     CommonPlotFunctions.MatplotlibMap2D(Hist_mc_column_reflect,None,[hist_real_diff_skymap_he_reflect,hist_real_diff_skymap_le_reflect],fig,'RA','Dec','column density [$1/cm^{2}$]','SkymapRadioCOMap_%s'%(plot_tag),colormap='gray')
 
-    MWL_map_file = '/gamma_raid/userspace/rshang/MW_FITS/DHT10_Cygnus_interp.fits' 
+    MWL_map_file = '/nevis/ged/data/rshang/MW_FITS/DHT10_Cygnus_interp.fits' 
     vel_axis_inner, column_density_axis_inner = CommonPlotFunctions.GetVelocitySpectrum(MWL_map_file, 80.22, 1.04, 0.0, 0.4)
     vel_axis_outer, column_density_axis_outer = CommonPlotFunctions.GetVelocitySpectrum(MWL_map_file, 80.22, 1.04, 0.4, 0.8)
     column_density_axis_inner = CO_intensity_to_H_column_density*np.array(column_density_axis_inner)
@@ -2239,7 +2195,7 @@ elif 'PSR_J1856_p0245' in source_name:
     # Dame, T. M.; Hartmann, Dap; Thaddeus, P., 2011, "Replication data for: First Quadrant, main survey (DHT08)", https://doi.org/10.7910/DVN/1PG9NV, Harvard Dataverse, V3
     # https://dataverse.harvard.edu/dataset.xhtml?persistentId=doi:10.7910/DVN/1PG9NV
     FITS_correction = 1000.# the source FITS file has a mistake in velocity km/s -> m/s
-    MWL_map_file = '/home/rshang/MatrixDecompositionMethod/MWL_maps/DHT08_Quad1_interp.fits' 
+    MWL_map_file = '/nevis/ged/data/rshang/MWL_maps/DHT08_Quad1_interp.fits' 
     CommonPlotFunctions.GetSlicedDataCubeMap(MWL_map_file, Hist_mc_intensity, 81., 102.)
     Hist_mc_column.Reset()
     Hist_mc_column.Add(Hist_mc_intensity)
@@ -2247,7 +2203,7 @@ elif 'PSR_J1856_p0245' in source_name:
     Hist_mc_column_reflect = CommonPlotFunctions.reflectXaxis(Hist_mc_column)
     CommonPlotFunctions.MatplotlibMap2D(Hist_mc_column_reflect,None,[hist_real_diff_skymap_he_reflect,hist_real_diff_skymap_le_reflect],fig,'RA','Dec','column density [$1/cm^{2}$]','SkymapRadioCOMap_p81p102_%s'%(plot_tag),colormap='gray')
 
-    MWL_map_file = '/gamma_raid/userspace/rshang/MW_FITS/GALFA_HI_RA+DEC_284.00+02.35_N.fits' 
+    MWL_map_file = '/nevis/ged/data/rshang/MW_FITS/GALFA_HI_RA+DEC_284.00+02.35_N.fits' 
     CommonPlotFunctions.GetSlicedGalfaHIDataCubeMap(MWL_map_file, Hist_mc_intensity, 81.*1e3, 102.*1e3, True)
     Hist_mc_column.Reset()
     Hist_mc_column.Add(Hist_mc_intensity)

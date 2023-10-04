@@ -1,23 +1,17 @@
 
-source /home/rshang/EventDisplay/root_ubuntu20/root/bin/thisroot.sh
+#module load root/06.24.00
 
-#export SMI_INPUT=/gamma_raid/userspace/rshang/analysis/Results/v487
-#export SMI_RUNLIST=/home/rshang/NuclearNormMinimizationMethod/runlist_v487
-#export SMI_OUTPUT=/gamma_raid/userspace/rshang/SMI_output/output_nuclear_v487
+conda deactivate
+conda activate env_vts_ana
 
-export SMI_INPUT=/gamma_raid/userspace/rshang/analysis/Results/v490
-export SMI_RUNLIST=/home/rshang/NuclearNormMinimizationMethod/output_vts_hours
-#export SMI_RUNLIST=/home/rshang/NuclearNormMinimizationMethod/runlist_loose
+export SMI_INPUT=/nevis/ged/data/rshang/EDv490_output
+export SMI_RUNLIST=/nevis/tehanu/home/ryshang/veritas_analysis/easy-matrix-method/output_vts_hours_backup
 
-export SMI_AUX=/gamma_raid/userspace/rshang/SMI_AUX
-export SMI_DIR=/home/rshang/NuclearNormMinimizationMethod
+export SMI_AUX=/nevis/ged/data/rshang/SMI_AUX
+export SMI_DIR=/nevis/tehanu/home/ryshang/veritas_analysis/easy-matrix-method
 
 
-
-#export SMI_OUTPUT=/gamma_raid/userspace/rshang/SMI_output/output_nuclear_test
-export SMI_OUTPUT=/gamma_raid/userspace/rshang/SMI_output/output_test_1
-#export SMI_OUTPUT=/gamma_raid/userspace/rshang/SMI_output/output_test_2
-#export SMI_OUTPUT=/gamma_raid/userspace/rshang/SMI_output/output_test_3
+export SMI_OUTPUT=/nevis/vetch/data/rshang/smi_output/output_test_1
 
 export SMI_BIN=$SMI_OUTPUT/bin
 

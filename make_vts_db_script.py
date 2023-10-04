@@ -33,7 +33,7 @@ input_params += [ ['CrabNebula_elev_40_50' ,83.633  ,22.014 ,40 ,50] ]
 input_params += [ ['CrabNebula_elev_30_40' ,83.633  ,22.014 ,30 ,40] ]
 input_params += [ ['CrabNebula_1p0wobble' ,83.633  ,22.014 ,30 ,90] ]
 input_params += [ ['CrabNebula_1p5wobble' ,83.633  ,22.014 ,30 ,90] ]
-#
+
 input_params += [ ['SNR_G189_p03'          ,94.213  ,22.503 ,30 ,90] ] # ic 443
 input_params += [ ['PSR_J1907_p0602'       ,286.975 ,6.337  ,30 ,90] ]
 input_params += [ ['PSR_J2021_p4026'       ,305.37  ,40.45  ,30 ,90] ] # gamma cygni
@@ -43,37 +43,23 @@ input_params += [ ['PSR_J2032_p4127', 308.05  , 41.46  ,30 ,90] ]
 input_params += [ ['SNR_G150_p4', 66.785, 55.458,30 ,90] ] # Jamie's SNR
 input_params += [ ['PSR_J1856_p0245', 284.21  , 2.76  ,30 ,90] ]
 input_params += [ ['SS433'       ,288.404, 4.930  ,30 ,90] ]
-#
-#input_params += [ ['LHAASO_J0622_p3754', 95.50  , 37.90  ,30 ,90] ]
-#input_params += [ ['LHAASO_J1956_p2845', 299.05  , 28.75  ,30 ,90] ]
-#input_params += [ ['PSR_J0248_p6021', 42.077  , 60.359  ,30 ,90] ]
-#input_params += [ ['PSR_J0359_p5414', 59.858  , 54.248  ,30 ,90] ]
-
-#input_params += [ ['PSR_J1737_m0314A', 264.4, -3.2,30 ,90] ]
-
-#input_params += [ ['Sky_RA55Dec53'         ,55.34   ,52.97  ,30 ,90] ]
-#input_params += [ ['SgrA'                  ,266.41  ,-29.00 ,20 ,90] ] # Galactic center
-
-# galactic observations with > 50 runs
+input_params += [ ['PSR_J1928_p1746', 292.15, 17.78, 30 ,90] ]
+input_params += [ ['LHAASO_J0622_p3754', 95.50  , 37.90  ,30 ,90] ]
 input_params += [ ['CTA1', 1.608, 72.983  ,30 ,90] ]
 input_params += [ ['Tycho', 6.28  , 64.17  ,30 ,90] ]
 input_params += [ ['Cas_A', 350.8075  , 58.8072  ,30 ,90] ]
-input_params += [ ['SNR_G067p6_p0p9', 299.44, 30.88  ,30 ,90] ]
-input_params += [ ['2HWC_J1953_p294', 298.26  , 29.48  ,30 ,90] ]
-input_params += [ ['CTB109', 345.28  , 58.88  ,30 ,90] ]  # SNR CTB 109 at 3.1 kpc
-input_params += [ ['G079_p00', 308.12  , 40.33  ,30 ,90] ]
-input_params += [ ['LHAASO_J0341_p5258', 55.34  , 52.97  ,30 ,90] ]
-input_params += [ ['LHAASO_J2108_p5157', 317.15  , 51.95  ,30 ,90] ]
-input_params += [ ['HESS_J0632_p057', 98.24  , 5.81  ,30 ,90] ]
-input_params += [ ['LS_V_p4417', 70.25  , 44.53  ,30 ,90] ]  # High Mass X-ray Binary
-input_params += [ ['LS_I_p61_303', 40.13  , 61.23  ,30 ,90] ] # microquasar, a binary system
-input_params += [ ['PSR_B1937_HESS_J1943', 295.45  , 21.44  ,30 ,90] ]
-input_params += [ ['PSR_J2238_p5903', 339.50  , 59.05  ,30 ,90] ]
-input_params += [ ['TeV2032_Cyg_X3', 308.  , 41.23  ,30 ,90] ] # high-mass X-ray binary
-#
-#input_params += [ ['InputList_Mrk421', 166.0791667  , 38.1947222  ,30 ,90] ]
-#input_params += [ ['InputList_PSR_J2032_p4127_baseline', 308.05, 41.46,30 ,90] ]
-#input_params += [ ['InputList_PSR_J2032_p4127_binary', 308.05, 41.46,30 ,90] ]
+
+input_params += [ ['2HWC_J1953_p294', 298.26 , 29.48 ,30 ,90] ]
+input_params += [ ['PSR_J2238_p5903', 339.50 , 59.05 ,30 ,90] ]
+input_params += [ ['2FHL_J0431_p5553e', 67.81 , 55.89 ,30 ,90] ]
+input_params += [ ['CTB109', 345.28 , 58.88 ,30 ,90] ]
+input_params += [ ['G079_p0p3', 308.12 , 40.33 ,30 ,90] ]
+input_params += [ ['PSR_B1937_p21', 295.45 , 21.44 ,30 ,90] ]
+input_params += [ ['RX_J0648_p1516', 102.20 , 15.27 ,30 ,90] ]
+input_params += [ ['LS_V_p4417', 70.25 , 44.53 ,30 ,90] ]
+
+#input_params += [ ['PSR_J1747_m2809', 266.825  , -28.15  ,30 ,90] ] # Sgr A*
+
 
 
 #input_params += [ ['Galactic_Plane', 0., 0.  ,30 ,90] ]
@@ -85,22 +71,6 @@ job_counts = 0
 for s in range(0,len(input_params)):
     job_counts += 1
     file = open("run/vts_db_%s.sh"%(input_params[s][0]),"w") 
-    file.write('#### submit_job.sh START ####\n')
-    file.write('#!/bin/bash\n')
-    file.write('#$ -cwd\n')
-    file.write('# error = Merged with joblog\n')
-    file.write('#$ -o joblog.$JOB_ID\n')
-    file.write('#$ -j y\n')
-    file.write('## Edit the line below as needed:\n')
-    file.write('#$ -l h_rt=2:00:00,h_data=4G\n')
-    file.write('## Modify the parallel environment\n')
-    file.write('## and the number of cores as needed:\n')
-    file.write('#$ -pe shared 1\n')
-    file.write('# Email address to notify\n')
-    file.write('#$ -M $USER@mail\n')
-    file.write('# Notify when\n')
-    file.write('#$ -m e\n')
-    file.write('. /u/local/Modules/default/init/modules.sh\n')
     file.write('cd %s\n'%(SMI_DIR))
     if input_params[s][0]=='AUX_files':
         file.write('python3 veritas_db_query.py "%s" %s %s %s %s "V4V5V6"\n'%(input_params[s][0],input_params[s][1],input_params[s][2],input_params[s][3],input_params[s][4]))
@@ -111,11 +81,19 @@ for s in range(0,len(input_params)):
     file.close() 
 
 job_counts = 0
-qfile = open("run/qsub_vts_db.sh","w") 
+qfile = open("run/condor_vts_db.sh","w") 
 for s in range(0,len(input_params)):
     job_counts += 1
-    qfile.write('qsub -V -N job_vts_%s vts_db_%s.sh\n'%(input_params[s][0],input_params[s][0]))
-    qfile.write('sleep 10s\n')
+    qfile.write('universe = vanilla \n')
+    qfile.write('getenv = true \n')
+    qfile.write('executable = /bin/bash \n')
+    qfile.write('arguments = vts_db_%s.sh\n'%(input_params[s][0]))
+    qfile.write('request_cpus = 1 \n')
+    qfile.write('request_memory = 1024M \n')
+    qfile.write('request_disk = 1024M \n')
+    qfile.write('output = condor_vts_db_%s.out\n'%(input_params[s][0]))
+    qfile.write('error = condor_vts_db_%s.err\n'%(input_params[s][0]))
+    qfile.write('log = condor_vts_db_%s.log\n'%(input_params[s][0]))
+    qfile.write('queue\n')
 qfile.close() 
-
 

@@ -34,8 +34,8 @@
 //#include "/home/rshang/MatrixDecompositionMethod/EventDisplay/VEvndispRunParameter.h"
 
 #include <complex>
-#include "/home/rshang/MatrixDecompositionMethod/Eigen/eigen-eigen-323c052e1731/Eigen/Dense"
-#include "/home/rshang/MatrixDecompositionMethod/Eigen/eigen-eigen-323c052e1731/Eigen/StdVector"
+#include "/nevis/tehanu/home/ryshang/veritas_analysis/Eigen/eigen-eigen-323c052e1731/Eigen/Dense"
+#include "/nevis/tehanu/home/ryshang/veritas_analysis/Eigen/eigen-eigen-323c052e1731/Eigen/StdVector"
 using namespace Eigen;
 
 #include "GetRunList.h"
@@ -1360,10 +1360,10 @@ MatrixXcd MatrixPerturbationMethod(int e_idx, double elev, MatrixXcd mtx_t_input
     {
         return mtx_output;
     }
-    //if (max_rank==1)
-    //{
-    //    return mtx_output;
-    //}
+    if (max_rank==0)
+    {
+        return mtx_output;
+    }
 
     JacobiSVD<MatrixXd> svd_data(mtx_data_input.real(), ComputeFullU | ComputeFullV);
     MatrixXd mtx_U_data = svd_data.matrixU();
@@ -1491,37 +1491,38 @@ MatrixXcd MatrixPerturbationMethod(int e_idx, double elev, MatrixXcd mtx_t_input
     }
     if (isBlind && diagonal_rank)
     {
+        //if (var_rank>=2)
+        //{
+        //    int idx_k1 = 1;
+        //    int idx_n1 = 1;
+        //    int idx_k2 = 0;
+        //    int idx_n2 = 0;
+        //    int idx_k3 = 0;
+        //    int idx_n3 = 1;
+        //    int idx_k4 = 1;
+        //    int idx_n4 = 0;
+
+        //    int idx_v1 = idx_k1*size_n + idx_n1;
+        //    int idx_v2 = idx_k2*size_n + idx_n2;
+        //    int idx_v3 = idx_k3*size_n + idx_n3;
+        //    int idx_v4 = idx_k4*size_n + idx_n4;
+        //    int idx_u1 = idx_v1;
+
+        //    mtx_W(idx_u1,idx_u1) = pow(10.,0.)*avg_weight;
+        //    mtx_A(idx_u1,idx_v1) = 1.;
+        //    mtx_A(idx_u1,idx_v2) = -1.*coefficient_t11xt00_incl[e_idx];
+        //    mtx_A(idx_u1,idx_v3) = -1.*coefficient_t11xt01_incl[e_idx];
+        //    mtx_A(idx_u1,idx_v4) = -1.*coefficient_t11xt10_incl[e_idx];
+        //    vtr_Delta(idx_u1) = 0.;
+        //}
         if (var_rank>=2)
         {
             int idx_k1 = 1;
             int idx_n1 = 1;
-            int idx_k2 = 0;
-            int idx_n2 = 0;
-            int idx_k3 = 0;
-            int idx_n3 = 1;
-            int idx_k4 = 1;
-            int idx_n4 = 0;
-
             int idx_v1 = idx_k1*size_n + idx_n1;
-            int idx_v2 = idx_k2*size_n + idx_n2;
-            int idx_v3 = idx_k3*size_n + idx_n3;
-            int idx_v4 = idx_k4*size_n + idx_n4;
             int idx_u1 = idx_v1;
-
             mtx_W(idx_u1,idx_u1) = pow(10.,0.)*avg_weight;
             mtx_A(idx_u1,idx_v1) = 1.;
-            if (Elev_mean>60.)
-            {
-                mtx_A(idx_u1,idx_v2) = -1.*coefficient_t11xt00_sza[e_idx];
-                mtx_A(idx_u1,idx_v3) = -1.*coefficient_t11xt01_sza[e_idx];
-                mtx_A(idx_u1,idx_v4) = -1.*coefficient_t11xt10_sza[e_idx];
-            }
-            else
-            {
-                mtx_A(idx_u1,idx_v2) = -1.*coefficient_t11xt00_lza[e_idx];
-                mtx_A(idx_u1,idx_v3) = -1.*coefficient_t11xt01_lza[e_idx];
-                mtx_A(idx_u1,idx_v4) = -1.*coefficient_t11xt10_lza[e_idx];
-            }
             vtr_Delta(idx_u1) = 0.;
         }
     }
@@ -1689,7 +1690,11 @@ double GetLeastSquareScale(TH2D* hist_on, TH2D* hist_off)
             {
                 continue;
             }
-            if (cell_center_x>2.*MSCL_upper_blind || cell_center_y>2.*MSCW_upper_blind)
+            if (cell_center_x>MSCL_upper_blind && cell_center_y>MSCW_upper_blind)
+            {
+                continue;
+            }
+            if (cell_center_x<MSCL_lower_blind || cell_center_y<MSCW_lower_blind)
             {
                 continue;
             }
@@ -2208,6 +2213,15 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                     }
 
 
+                    TH2D Hist_OnData_MSCLW_SumE = TH2D("Hist_OnData_MSCLW_SumE","",mtx_dim_l_fine+n_extra_lower_bins+n_extra_upper_bins,MSCL_plot_lower,MSCL_plot_upper,mtx_dim_w_fine+n_extra_lower_bins+n_extra_upper_bins,MSCW_plot_lower,MSCW_plot_upper);
+                    TH2D Hist_OffData_MSCLW_SumE = TH2D("Hist_OffData_MSCLW_SumE","",mtx_dim_l_fine+n_extra_lower_bins+n_extra_upper_bins,MSCL_plot_lower,MSCL_plot_upper,mtx_dim_w_fine+n_extra_lower_bins+n_extra_upper_bins,MSCW_plot_lower,MSCW_plot_upper);
+                    for (int e=0;e<N_energy_bins;e++) 
+                    {
+                        Hist_OnData_MSCLW_SumE.Add(&Hist_OnData_MSCLW_Fine.at(e));
+                        Hist_OffData_MSCLW_SumE.Add(&Hist_OffData_MSCLW_Fine_Sum.at(e));
+                    }
+                    double least_square_scale_incl = GetLeastSquareScale(&Hist_OnData_MSCLW_SumE, &Hist_OffData_MSCLW_SumE);
+
                     for (int e=0;e<N_energy_bins;e++) 
                     {
 
@@ -2222,16 +2236,20 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         }
                         
                         // simple ratio method
-                        double total_on_cr_count = GetCRcounts(&Hist_OnData_MSCLW_Fine.at(e));
-                        double total_off_cr_count = GetCRcounts(&Hist_OffData_MSCLW_Fine_Sum.at(e));
-                        double total_off_sr_count = GetSRcounts(&Hist_OffData_MSCLW_Fine_Sum.at(e));
-                        double least_square_scale = GetLeastSquareScale(&Hist_OnData_MSCLW_Fine.at(e), &Hist_OffData_MSCLW_Fine_Sum.at(e));
                         TH2D Hist_OffData_MSCLW_CR_scaled = TH2D("Hist_OffData_MSCLW_CR_scaled","",mtx_dim_l_fine+n_extra_lower_bins+n_extra_upper_bins,MSCL_plot_lower,MSCL_plot_upper,mtx_dim_w_fine+n_extra_lower_bins+n_extra_upper_bins,MSCW_plot_lower,MSCW_plot_upper);
-                        if (total_off_cr_count>0.)
-                        {
-                            Hist_OffData_MSCLW_CR_scaled.Add(&Hist_OffData_MSCLW_Fine_Sum.at(e),total_on_cr_count/total_off_cr_count);
-                        }
-                        //Hist_OffData_MSCLW_CR_scaled.Add(&Hist_OffData_MSCLW_Fine_Sum.at(e),least_square_scale);
+
+                        //double total_on_cr_count = GetCRcounts(&Hist_OnData_MSCLW_Fine.at(e));
+                        //double total_off_cr_count = GetCRcounts(&Hist_OffData_MSCLW_Fine_Sum.at(e));
+                        //double total_off_sr_count = GetSRcounts(&Hist_OffData_MSCLW_Fine_Sum.at(e));
+                        //if (total_off_cr_count>0.)
+                        //{
+                        //    Hist_OffData_MSCLW_CR_scaled.Add(&Hist_OffData_MSCLW_Fine_Sum.at(e),total_on_cr_count/total_off_cr_count);
+                        //}
+                        
+                        double least_square_scale = GetLeastSquareScale(&Hist_OnData_MSCLW_Fine.at(e), &Hist_OffData_MSCLW_Fine_Sum.at(e));
+                        std::cout << "least_square_scale_incl = " << least_square_scale_incl << std::endl;
+                        std::cout << "least_square_scale = " << least_square_scale << std::endl;
+                        Hist_OffData_MSCLW_CR_scaled.Add(&Hist_OffData_MSCLW_Fine_Sum.at(e),least_square_scale);
 
                         //CR_count_map = Hist_OnData_CR_Skymap_Ratio.at(e).Integral();
                         double SR_predict_ratio = Hist_OffData_MSCLW_CR_scaled.Integral(binx_blind_lower_global+1,binx_blind_upper_global,biny_blind_lower_global+1,biny_blind_upper_global);
@@ -2302,9 +2320,13 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         bool use_diagonal = true;
                         bool is_blind = false;
 
-                        //int max_rank = matrix_rank[e];
                         int max_rank = 3;
-                        int min_rank = 3;
+                        int min_rank = 2;
+                        if (energy_bins[e]>700.)
+                        {
+                            max_rank = 0;
+                            min_rank = 0;
+                        }
                         double log_t_mtx_weight = 3.0;
 
                         MatrixXd mtx_on_s = GetSingularValues(mtx_on_data);

@@ -15,12 +15,12 @@ from astropy.wcs import WCS
 from astropy.utils.data import get_pkg_data_filename
 import astropy.utils as utils
 from astropy.nddata import Cutout2D
-from scipy import special
-from scipy import interpolate
-import scipy.stats as st
+#from scipy import special
+#from scipy import interpolate
+#import scipy.stats as st
+#from scipy.optimize import curve_fit
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.optimize import curve_fit
 from itertools import cycle
 from matplotlib import cm
 from matplotlib.colors import ListedColormap,LinearSegmentedColormap
@@ -30,12 +30,12 @@ from matplotlib.ticker import NullFormatter
 from operator import itemgetter, attrgetter
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits import mplot3d
-import healpy as hp
-from spectral_cube import SpectralCube
+#import healpy as hp
+#from spectral_cube import SpectralCube
 
 # Great examples of matplotlib plots: https://atmamani.github.io/cheatsheets/matplotlib/matplotlib_2/
 
-input_path = '/gamma_raid/userspace/rshang/SMI_output'
+input_path = '/nevis/vetch/data/rshang/smi_output'
 
 #folder_path = 'output_j1908_paper'
 #folder_path = 'output_nuclear_v487'
@@ -48,12 +48,6 @@ folder_tag = '_test1'
 #folder_tag = '_test2'
 #folder_path = 'output_test_3'
 #folder_tag = '_test3'
-
-#folder_path = 'output_weight_log_m0p0'
-#folder_path = 'output_weight_log_m0p5'
-#folder_path = 'output_weight_log_m1p0'
-#folder_path = 'output_weight_log_m1p5'
-#folder_path = 'output_weight_log_m2p0'
 
 #analysis_method = 'FoV'
 #analysis_method = 'Ratio'
@@ -1204,36 +1198,36 @@ def GetSlicedDataCubeMap(map_file, hist_map, vel_low, vel_up):
             pix_lat = int(map_pixs[2])
             hist_map.SetBinContent(binx+1,biny+1,image_data_reduced_z[pix_lat,pix_lon])
 
-def GetHealpixMap(map_file, hist_map, isRaDec):
-
-    hist_map.Reset()
-    nbins_x = hist_map.GetNbinsX()
-    nbins_y = hist_map.GetNbinsY()
-    MapEdge_left = hist_map.GetXaxis().GetBinLowEdge(1)
-    MapEdge_right = hist_map.GetXaxis().GetBinLowEdge(hist_map.GetNbinsX()+1)
-    MapEdge_lower = hist_map.GetYaxis().GetBinLowEdge(1)
-    MapEdge_upper = hist_map.GetYaxis().GetBinLowEdge(hist_map.GetNbinsY()+1)
-    MapCenter_x = (MapEdge_left+MapEdge_right)/2.
-    MapCenter_y = (MapEdge_lower+MapEdge_upper)/2.
-
-    hpx, header = hp.read_map(map_file, field=0, h=True)
-    #hpx, header = hp.read_map(map_file, field=1, h=True)
-    npix = len(hpx)
-    nside = hp.npix2nside(npix)
-    for ipix in range(0,npix):
-        theta, phi = hp.pix2ang(nside, ipix)
-        ra = np.rad2deg(phi)
-        dec = np.rad2deg(0.5 * np.pi - theta)
-        fits_data = hpx[ipix]
-        binx = hist_map.GetXaxis().FindBin(ra)
-        biny = hist_map.GetYaxis().FindBin(dec)
-        if binx<1: continue
-        if biny<1: continue
-        if binx>hist_map.GetNbinsX(): continue
-        if biny>hist_map.GetNbinsY(): continue
-        hist_map.SetBinContent(binx,biny,fits_data)
-
-    return hist_map
+#def GetHealpixMap(map_file, hist_map, isRaDec):
+#
+#    hist_map.Reset()
+#    nbins_x = hist_map.GetNbinsX()
+#    nbins_y = hist_map.GetNbinsY()
+#    MapEdge_left = hist_map.GetXaxis().GetBinLowEdge(1)
+#    MapEdge_right = hist_map.GetXaxis().GetBinLowEdge(hist_map.GetNbinsX()+1)
+#    MapEdge_lower = hist_map.GetYaxis().GetBinLowEdge(1)
+#    MapEdge_upper = hist_map.GetYaxis().GetBinLowEdge(hist_map.GetNbinsY()+1)
+#    MapCenter_x = (MapEdge_left+MapEdge_right)/2.
+#    MapCenter_y = (MapEdge_lower+MapEdge_upper)/2.
+#
+#    hpx, header = hp.read_map(map_file, field=0, h=True)
+#    #hpx, header = hp.read_map(map_file, field=1, h=True)
+#    npix = len(hpx)
+#    nside = hp.npix2nside(npix)
+#    for ipix in range(0,npix):
+#        theta, phi = hp.pix2ang(nside, ipix)
+#        ra = np.rad2deg(phi)
+#        dec = np.rad2deg(0.5 * np.pi - theta)
+#        fits_data = hpx[ipix]
+#        binx = hist_map.GetXaxis().FindBin(ra)
+#        biny = hist_map.GetYaxis().FindBin(dec)
+#        if binx<1: continue
+#        if biny<1: continue
+#        if binx>hist_map.GetNbinsX(): continue
+#        if biny>hist_map.GetNbinsY(): continue
+#        hist_map.SetBinContent(binx,biny,fits_data)
+#
+#    return hist_map
 
 def MatplotlibHist2D(hist_map,fig,label_x,label_y,label_z,plotname,zmax=0,zmin=0):
 

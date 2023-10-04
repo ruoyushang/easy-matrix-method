@@ -1,30 +1,18 @@
 
+//void ResetCoefficients(double coefficient_t11xt00[], double coefficient_t11xt01[], double coefficient_t11xt10[])
+//{
+//    for (int ebin=0;ebin<N_energy_bins;ebin++)
+//    {
+//        coefficient_t11xt00_incl[ebin] = coefficient_t11xt00[ebin];
+//        coefficient_t11xt01_incl[ebin] = coefficient_t11xt01[ebin];
+//        coefficient_t11xt10_incl[ebin] = coefficient_t11xt10[ebin];
+//    }
+//}
 
-void ResetPublicVariables(TString target_name)
+void ResetPublicVariables(TString source_name)
 {
 
     string MY_OUTPUT = string(std::getenv("SMI_OUTPUT"));
     std::cout << "MY_OUTPUT = " << MY_OUTPUT << std::endl;
-
-    if (MY_OUTPUT=="/gamma_raid/userspace/rshang/SMI_output/output_weight_log_m0p0")
-    {
-        log_coeff_weight = 0.0;
-    }
-    if (MY_OUTPUT=="/gamma_raid/userspace/rshang/SMI_output/output_weight_log_m0p5")
-    {
-        log_coeff_weight = -0.5;
-    }
-    if (MY_OUTPUT=="/gamma_raid/userspace/rshang/SMI_output/output_weight_log_m1p0")
-    {
-        log_coeff_weight = -1.;
-    }
-    if (MY_OUTPUT=="/gamma_raid/userspace/rshang/SMI_output/output_weight_log_m1p5")
-    {
-        log_coeff_weight = -1.5;
-    }
-    if (MY_OUTPUT=="/gamma_raid/userspace/rshang/SMI_output/output_weight_log_m2p0")
-    {
-        log_coeff_weight = -2.;
-    }
 
 }

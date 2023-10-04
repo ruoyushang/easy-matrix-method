@@ -8,13 +8,13 @@ from astropy import units as my_unit
 from astropy.coordinates import SkyCoord
 from astropy.coordinates import ICRS, Galactic, FK4, FK5  # Low-level frames
 from astropy.time import Time
-from scipy import special
-from scipy import interpolate
-import scipy.stats as st
+#from scipy import special
+#from scipy import interpolate
+#import scipy.stats as st
+#from scipy.optimize import curve_fit
 import numpy as np
 import numpy.linalg as la
 import matplotlib.pyplot as plt
-from scipy.optimize import curve_fit
 from itertools import cycle
 from matplotlib import ticker
 
@@ -52,9 +52,49 @@ measurement_rebin = 1
 elev_tag = 'incl'
 elev_range = [40.,90.]
 #elev_tag = 'sza'
-#elev_range = [60.,90.]
+#elev_range = [65.,90.]
+#elev_tag = 'mza'
+#elev_range = [50.,65.]
 #elev_tag = 'lza'
-#elev_range = [40.,60.]
+#elev_range = [40.,50.]
+
+source_of_interest = ''
+#source_of_interest = '1ES0229'
+#source_of_interest = 'H1426'
+#source_of_interest = 'UrsaMinor'
+
+source_name = []
+
+source_name += ['CrabNebula_elev_80_90']
+source_name += ['CrabNebula_elev_70_80']
+source_name += ['CrabNebula_elev_60_70']
+source_name += ['CrabNebula_elev_50_60']
+source_name += ['CrabNebula_elev_40_50']
+source_name += ['OJ287']
+source_name += ['Segue1']
+source_name += ['3C264']
+source_name += ['3C273']
+source_name += ['PG1553']
+source_name += ['1ES0229']
+source_name += ['PKS1424']
+source_name += ['RGB_J0710_p591'] # north 
+source_name += ['UrsaMajorII'] # north
+source_name += ['UrsaMinor'] # north
+source_name += ['H1426'] # north
+source_name += ['NGC1275'] # north
+source_name += ['Draco'] # north
+source_name += ['BLLac'] # north
+source_name += ['1ES0502'] # north
+source_name += ['M82'] # north
+source_name += ['1ES0414'] # north
+source_name += ['1ES1011'] # north
+source_name += ['1ES0647']
+
+epoch_list = []
+epoch_list += ['V4']
+epoch_list += ['V5']
+epoch_list += ['V6']
+
 
 total_data_expo = 0.
 expo_sum_all_energies = 0.
@@ -119,7 +159,7 @@ def Find_s1_on_diagonal_correlation(s0_input,s1_input,e_min,e_max):
     n_var = 1
     if n_eqn<n_var:
         print ('Not enough equations.')
-        return
+        return 0
 
     b = np.zeros(n_eqn)
     A = np.zeros((n_eqn,n_var))
@@ -169,7 +209,7 @@ def Find_t11_off_diagonal_correlation(t00_input,t01_input,t10_input,t11_input,e_
     n_var = 3
     if n_eqn<n_var:
         print ('Not enough equations.')
-        return
+        return 0, 0, 0
 
     b = np.zeros(n_eqn)
     A = np.zeros((n_eqn,n_var))
@@ -294,63 +334,16 @@ def MakeMultipleFitPlot(ax_input,Hists,legends,title_x,title_y):
     return(ax_input)
 
 
-ONOFF_tag_sample = 'OFF'
-source_of_interest = ''
-#source_of_interest = '1ES0229'
-#source_of_interest = 'H1426'
-#source_of_interest = 'UrsaMinor'
-
 sample_list = []
-
-sample_list += ['OJ287_V6_OFF']
-sample_list += ['Segue1_V6_OFF']
-sample_list += ['3C264_V6_OFF']
-sample_list += ['3C273_V6_OFF']
-sample_list += ['PG1553_V6_OFF']
-sample_list += ['1ES0229_V6_OFF']
-sample_list += ['PKS1424_V6_OFF']
-sample_list += ['RGB_J0710_p591_V6_OFF'] # north 
-sample_list += ['UrsaMajorII_V6_OFF'] # north
-sample_list += ['UrsaMinor_V6_OFF'] # north
-sample_list += ['H1426_V6_OFF'] # north
-sample_list += ['NGC1275_V6_OFF'] # north
-sample_list += ['Draco_V6_OFF'] # north
-sample_list += ['BLLac_V6_OFF'] # north
-sample_list += ['1ES0502_V6_OFF'] # north
-sample_list += ['M82_V6_OFF'] # north
-sample_list += ['1ES0414_V6_OFF'] # north
-sample_list += ['1ES1011_V6_OFF'] # north
-sample_list += ['1ES0647_V6_OFF']
-sample_list += ['OJ287_V5_OFF']
-sample_list += ['Segue1_V5_OFF']
-sample_list += ['3C264_V5_OFF']
-sample_list += ['3C273_V5_OFF']
-sample_list += ['PG1553_V5_OFF']
-sample_list += ['1ES0229_V5_OFF']
-sample_list += ['PKS1424_V5_OFF']
-sample_list += ['RGB_J0710_p591_V5_OFF'] # north 
-sample_list += ['UrsaMajorII_V5_OFF'] # north
-sample_list += ['UrsaMinor_V5_OFF'] # north
-sample_list += ['H1426_V5_OFF'] # north
-sample_list += ['NGC1275_V5_OFF'] # north
-sample_list += ['Draco_V5_OFF'] # north
-sample_list += ['BLLac_V5_OFF'] # north
-sample_list += ['1ES0502_V5_OFF'] # north
-sample_list += ['M82_V5_OFF'] # north
-sample_list += ['1ES0414_V5_OFF'] # north
-sample_list += ['1ES1011_V5_OFF'] # north
-sample_list += ['1ES0647_V5_OFF']
-
-sample_list += ['CrabNebula_elev_80_90_V6_OFF']
-sample_list += ['CrabNebula_elev_70_80_V6_OFF']
-sample_list += ['CrabNebula_elev_60_70_V6_OFF']
-sample_list += ['CrabNebula_elev_50_60_V6_OFF']
-sample_list += ['CrabNebula_elev_40_50_V6_OFF']
-sample_list += ['CrabNebula_elev_80_90_V5_OFF']
-sample_list += ['CrabNebula_elev_70_80_V5_OFF']
-sample_list += ['CrabNebula_elev_60_70_V5_OFF']
-sample_list += ['CrabNebula_elev_50_60_V5_OFF']
-sample_list += ['CrabNebula_elev_40_50_V5_OFF']
+for src in range(0,len(source_name)):
+    for ep in range(0,len(epoch_list)):
+        sample_list += [f'{source_name[src]}_{epoch_list[ep]}_OFF']
+        #sample_list += [f'{source_name[src]}_{epoch_list[ep]}_Imposter1']
+        #sample_list += [f'{source_name[src]}_{epoch_list[ep]}_Imposter2']
+        #sample_list += [f'{source_name[src]}_{epoch_list[ep]}_Imposter3']
+        #sample_list += [f'{source_name[src]}_{epoch_list[ep]}_Imposter4']
+        #sample_list += [f'{source_name[src]}_{epoch_list[ep]}_Imposter5']
+        #sample_list += [f'{source_name[src]}_{epoch_list[ep]}_Imposter6']
 
 nbins = 21
 hist_limit = 30.0
@@ -450,7 +443,7 @@ for energy_idx in range(0,len(energy_bin)-1):
                 n_groups = 0
                 file_exists = True
                 while file_exists:
-                    SourceFilePath = "/gamma_raid/userspace/rshang/SMI_output/%s/Netflix_%s_G%d_X%d_Y%d.root"%(folder_path,sample_list[src],n_groups,xoff_idx,yoff_idx)
+                    SourceFilePath = "/nevis/vetch/data/rshang/smi_output/%s/Netflix_%s_G%d_X%d_Y%d.root"%(folder_path,sample_list[src],n_groups,xoff_idx,yoff_idx)
                     if os.path.exists(SourceFilePath):
                         n_groups += 1
                         #print ('Read file: %s'%(SourceFilePath))
@@ -467,7 +460,7 @@ for energy_idx in range(0,len(energy_bin)-1):
                 total_combined_bkgd = 0.
                 n_rebin = 0
                 for group in range(0,n_groups):
-                    SourceFilePath = "/gamma_raid/userspace/rshang/SMI_output/%s/Netflix_%s_G%d_X%d_Y%d.root"%(folder_path,sample_list[src],group,xoff_idx,yoff_idx)
+                    SourceFilePath = "/nevis/vetch/data/rshang/smi_output/%s/Netflix_%s_G%d_X%d_Y%d.root"%(folder_path,sample_list[src],group,xoff_idx,yoff_idx)
                     if not os.path.exists(SourceFilePath): continue
                     print ('Read file: %s'%(SourceFilePath))
                     eff_area, data_truth, ratio_bkgd, regression_bkgd, init_perturbation_bkgd, perturbation_bkgd, combined_bkgd, t00_truth, t01_truth, t10_truth, t11_truth, t02_truth, t20_truth, t00_recon, t01_recon, t10_recon, t11_recon, t02_recon, t20_recon, s0_truth, s1_truth, s2_truth, s0_recon, s1_recon, s2_recon = GetGammaCounts(SourceFilePath,energy_idx)
@@ -992,7 +985,7 @@ print ('========================================================================
 txt_info_x0 = 'double coefficient_s1xs0_%s[N_energy_bins] = {'%(elev_tag)
 print ('================================================================================================')
 for energy_idx in range(0,len(energy_bin)-1):
-    x0 = Find_s1_on_diagonal_correlation(array_s0_truth,array_s1_truth,energy_idx,energy_idx+1)
+    x0 = Find_s1_on_diagonal_correlation(array_t00_truth,array_t11_truth,energy_idx,energy_idx+1)
     txt_info_x0 += '%0.3f'%(x0)
     if energy_idx<len(energy_bin)-2:
         txt_info_x0 += ','

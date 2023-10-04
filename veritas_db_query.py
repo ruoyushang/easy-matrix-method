@@ -1,7 +1,5 @@
 
 import os.path
-import sys,ROOT
-from ROOT import *
 import sys
 import pymysql
 from datetime import datetime, timedelta
@@ -92,7 +90,7 @@ def print_all_runs_nsb():
     res_runtime = crs.fetchall()
 
     print ('Calculate NSB...')
-    with open('/gamma_raid/userspace/rshang/SMI_AUX/NSB_allruns.txt', 'w') as file:
+    with open('/nevis/ged/data/rshang/SMI_AUX/NSB_allruns.txt', 'w') as file:
         previous_run_id = 0
         for x in res_runtime:
 
@@ -284,7 +282,7 @@ def print_all_runs_l3rate():
         all_runs_type[x['run_id']] = x['run_type']
 
     print('Calculate Run L3 rate...')
-    with open('/gamma_raid/userspace/rshang/SMI_AUX/l3rate_allruns.txt', 'w') as file:
+    with open('/nevis/ged/data/rshang/SMI_AUX/l3rate_allruns.txt', 'w') as file:
         previous_run_id = 0
         for x in res_run_info:
 
@@ -331,7 +329,7 @@ def print_all_runs_l3rate():
 
 def get_run_nsb_from_aux_file(run_id):
 
-    inputFile = open('/gamma_raid/userspace/rshang/SMI_AUX/NSB_allruns.txt')
+    inputFile = open('/nevis/ged/data/rshang/SMI_AUX/NSB_allruns.txt')
     for line in inputFile:
         line = line.strip('\n')
         line_split = line.split(' ')
@@ -342,7 +340,7 @@ def get_run_nsb_from_aux_file(run_id):
 
 def get_run_elaz_from_aux_file(run_id):
 
-    inputFile = open('/gamma_raid/userspace/rshang/SMI_AUX/elaz_allruns.txt')
+    inputFile = open('/nevis/ged/data/rshang/SMI_AUX/elaz_allruns.txt')
     for line in inputFile:
         line = line.strip('\n')
         line_split = line.split(' ')
@@ -373,7 +371,7 @@ def print_all_runs_el_az():
         all_runs_type[x['run_id']] = x['run_type']
 
     print('Calculate Run Elev Azim...')
-    with open('/gamma_raid/userspace/rshang/SMI_AUX/elaz_allruns.txt', 'w') as file:
+    with open('/nevis/ged/data/rshang/SMI_AUX/elaz_allruns.txt', 'w') as file:
         previous_run_id = 0
         for x in res_run_info:
 
@@ -490,7 +488,7 @@ def print_all_runs_timecut():
     res = crs.fetchall()
 
     print ('Get timecut...')
-    with open('/gamma_raid/userspace/rshang/SMI_AUX/timecuts_allruns.txt', 'w') as file:
+    with open('/nevis/ged/data/rshang/SMI_AUX/timecuts_allruns.txt', 'w') as file:
         for x in res:
             print('%s %s'%(x['run_id'],x['time_cut_mask']))
             file.write('%s %s\n'%(x['run_id'],x['time_cut_mask']))
@@ -526,7 +524,7 @@ def print_all_runs_usable_duration():
     # fetch from cursor
     res = crs.fetchall()
 
-    with open('/gamma_raid/userspace/rshang/SMI_AUX/usable_time_allruns.txt', 'w') as file:
+    with open('/nevis/ged/data/rshang/SMI_AUX/usable_time_allruns.txt', 'w') as file:
         for x in res:
             #duration = get_sec(str(x['usable_duration']))
             duration = get_sec(str(x['duration']))
@@ -612,7 +610,7 @@ def print_all_runs_type():
     # fetch from cursor
     res = crs.fetchall()
 
-    with open('/gamma_raid/userspace/rshang/SMI_AUX/runtype_allruns.txt', 'w') as file:
+    with open('/nevis/ged/data/rshang/SMI_AUX/runtype_allruns.txt', 'w') as file:
         for x in res:
             print ('%s %s'%(x['run_id'],x['run_type']))
             file.write('%s %s\n'%(x['run_id'],x['run_type']))
@@ -764,6 +762,15 @@ def find_runs_near_galactic_plane(obs_name,epoch,obs_type,gal_b_low,gal_b_up):
         out_file.write('run_id = %s, source_name = %s, RA = %0.2f, Dec = %0.2f \n'%(x['run_id'],x['source_id'],all_src_ra[x['source_id']],all_src_dec[x['source_id']]))
         list_on_run_ids += [x['run_id']]
         runs_per_src[x['source_id']] += 1
+
+    list_on_sources_runs = []
+    for src in range(0,len(list_on_sources)):
+        src_name = list_on_sources[src]
+        list_on_sources_runs += [runs_per_src[src_name]]
+
+    zip_list = list(zip(list_on_sources_runs, list_on_sources))
+    zip_list_sorted = sorted(zip_list)
+    list_on_sources_runs, list_on_sources = zip(*zip_list_sorted)
 
     out_file.write('++++++++++++++++++++++++++++++++++++++++++++++++++++\n')
     out_file.write('Source list\n')
@@ -939,22 +946,6 @@ def find_on_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_range
             else:
                 if run_offset>0.6 or run_offset<0.0: continue
 
-        if use_local_data:
-            file_path = '/gamma_raid/userspace/rshang/analysis/Results/v487/%s.anasum.root'%(int(x['run_id']))
-            root_folder = "run_%s/stereo/DL3EventTree"%(int(x['run_id']))
-            if os.path.exists(file_path):
-                InputFile = ROOT.TFile(file_path)
-                mytree = InputFile.Get(root_folder)
-                if InputFile.IsZombie():
-                    #print ('%s, something very wrong, cannot use this file'%(int(x['run_id']))
-                    continue
-                elif InputFile.TestBit(ROOT.TFile.kRecovered):
-                    #print ('%s, the Recover procedure has been run when opening the file'%(int(x['run_id']))
-                    continue
-                InputFile.Close()
-            else:
-                continue
-
         print ('run_id = %s, source_name = %s'%(x['run_id'],x['source_id']))
         out_file.write('run_id = %s, source_name = %s \n'%(x['run_id'],x['source_id']))
 
@@ -1064,22 +1055,6 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
 
             if all_runs_info[run][0]==list_on_run_ids[on_run]: continue
 
-            if use_local_data:
-                file_path = '/gamma_raid/userspace/rshang/analysis/Results/v487/%s.anasum.root'%(all_runs_info[run][0])
-                root_folder = "run_%s/stereo/DL3EventTree"%(all_runs_info[run][0])
-                if os.path.exists(file_path):
-                    InputFile = ROOT.TFile(file_path)
-                    mytree = InputFile.Get(root_folder)
-                    if InputFile.IsZombie():
-                        print ('%s, something very wrong, cannot use this file'%(all_runs_info[run][0]))
-                        continue
-                    elif InputFile.TestBit(ROOT.TFile.kRecovered):
-                        print ('%s, the Recover procedure has been run when opening the file'%(all_runs_info[run][0]))
-                        continue
-                    InputFile.Close()
-                else:
-                    continue
-
             #if abs(all_runs_info[run][0]-list_on_run_ids[on_run])>40000: continue
             if not 'ImposterPairList' in file_name:
                 already_used = False
@@ -1122,7 +1097,7 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
             delta_nsb = off_run_nsb-on_run_nsb
             delta_runnum = all_runs_info[run][0]-list_on_run_ids[on_run]
 
-            range_elev = 0.1
+            range_elev = 0.05
             range_nsb = 1.
             range_runnum = 20000.
 
@@ -1131,13 +1106,31 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
             significance_diff_runnum = abs(total_runnum_diff/range_runnum)
 
             if is_imposter:
-                if abs(delta_elev)>0.2: continue
-                if abs(delta_azim)>0.3: continue
-                if abs(delta_nsb)>2.: continue
+                #if abs(delta_elev)>0.2: continue
+                #if abs(delta_azim)>0.2: continue
+                #if abs(delta_nsb)>2.: continue
+                if abs(delta_elev)>0.1: continue
+                if abs(delta_azim)>0.1: continue
+
+                if significance_diff_runnum>significance_diff_elev and significance_diff_runnum>significance_diff_nsb:
+                    if total_runnum_diff>0.:
+                        if delta_runnum>0.: continue
+                    else:
+                        if delta_runnum<0.: continue
+                elif significance_diff_nsb>significance_diff_runnum and significance_diff_nsb>significance_diff_elev:
+                    if total_nsb_diff>0.:
+                        if delta_nsb>0.: continue
+                    else:
+                        if delta_nsb<0.: continue
+                else:
+                    if total_elev_diff>0.:
+                        if delta_elev>0.: continue
+                    else:
+                        if delta_elev<0.: continue
 
             else:
                 if abs(delta_elev)>0.1: continue
-                if abs(delta_azim)>0.2: continue
+                if abs(delta_azim)>0.1: continue
 
                 if significance_diff_runnum>significance_diff_elev and significance_diff_runnum>significance_diff_nsb:
                     if total_runnum_diff>0.:
@@ -1199,7 +1192,6 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
     list_off_run_ids = np.array(list_off_run_ids)
     return list_off_run_ids[:,1]
 
-use_local_data = False
 #run_obs_type = 'obsLowHV' # RHV
 run_obs_type = 'observing'
 find_off = False
@@ -1234,7 +1226,7 @@ if input_name=='AUX_files':
 elif input_name=='Galactic_Plane':
 
     obs_name = 'Galactic_Plane_%s'%(run_epoch)
-    find_runs_near_galactic_plane(obs_name,run_epoch,run_obs_type,0.0,5.0)
+    find_runs_near_galactic_plane(obs_name,run_epoch,run_obs_type,0.0,10.0)
 
 elif input_name=='LHAASO_Catalog':
 
@@ -1271,15 +1263,12 @@ else:
     obs_dec = input_dec
     run_elev_range = [input_elev_low,input_elev_up]
     
-    use_local_data = False
     my_list_on_run_ids = []
     if 'InputList' in obs_name:
         my_list_on_run_ids = find_on_runs_from_a_list(obs_name)
     else:
         my_list_on_run_ids = find_on_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,search_radius)
-    use_local_data = False
     my_list_off_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_on_run_ids,False,'PairList')
-    use_local_data = False
     my_list_imposter_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_on_run_ids,True,'ImposterList')
     my_list_imposter_off_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_imposter_run_ids,False,'ImposterPairList')
 
