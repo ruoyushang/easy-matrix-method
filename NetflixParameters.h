@@ -4,9 +4,7 @@ double energy_bins[N_energy_bins+1] = {100.,159.,200.,251.,316.,398.,501.,794.,1
 //int cr_correction_xyoff_bins[N_energy_bins] = {1,12,12,12,12,6,6,1,1,1,1,1};
 int cr_correction_xyoff_bins[N_energy_bins] = {1,6,6,6,6,6,6,1,1,1,1,1};
 
-double coefficient_t11xt00_incl[N_energy_bins] = {0.000,0.000,0.465,0.558,0.665,0.618,1.117,0.592,0.035,-0.738,-1.085,0.000};
-double coefficient_t11xt01_incl[N_energy_bins] = {0.000,0.000,0.148,0.130,0.068,-0.149,-0.289,-0.833,-0.715,-0.887,0.074,0.000};
-double coefficient_t11xt10_incl[N_energy_bins] = {0.000,0.000,-0.236,-0.206,-0.223,-0.186,-0.483,-0.401,-0.072,1.357,0.703,0.000};
+double coefficient_s1xs0_incl[N_energy_bins] = {0.931,1.370,1.299,0.660,1.621,1.595,2.252,2.460,2.436,-0.400,-2.362,-11.184};
 
 //const int N_energy_bins = 8;
 //double energy_bins[N_energy_bins+1] = {100.,167.,300.,538.,965.,1732.,3107.,5574.,10000.};

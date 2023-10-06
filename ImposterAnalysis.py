@@ -67,7 +67,7 @@ n_xoff_bins = CommonPlotFunctions.n_xoff_bins
 n_yoff_bins = CommonPlotFunctions.n_yoff_bins
 smooth_size_spectroscopy = CommonPlotFunctions.smooth_size_spectroscopy
 
-n_imposters = 6
+n_imposters = 5
 if not doImposter:
     n_imposters = 0
 

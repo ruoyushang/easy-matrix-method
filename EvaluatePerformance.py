@@ -53,10 +53,8 @@ elev_tag = 'incl'
 elev_range = [40.,90.]
 #elev_tag = 'sza'
 #elev_range = [65.,90.]
-#elev_tag = 'mza'
-#elev_range = [50.,65.]
 #elev_tag = 'lza'
-#elev_range = [40.,50.]
+#elev_range = [40.,65.]
 
 source_of_interest = ''
 #source_of_interest = '1ES0229'
@@ -498,7 +496,9 @@ for energy_idx in range(0,len(energy_bin)-1):
                         txt_warning += 'energy index = %s \n'%(energy_idx)
                         txt_warning += 'error = %0.1f \n '%(perturbation_error)
                         txt_warning += 'truth = %0.1f \n '%(data_truth)
+                    if total_cr_count<150000: continue
                     if s0_truth==0.: continue
+                    if s1_truth==0.: continue
                     #if avg_diff_el<0.: continue
                     #if avg_diff_el>0.: continue
                     #if avg_diff_az<0.: continue
@@ -512,16 +512,16 @@ for energy_idx in range(0,len(energy_bin)-1):
                     array_per_energy_s0_recon += [s0_recon]
                     array_per_energy_s1_recon += [s1_recon]
                     array_per_energy_s2_recon += [s2_recon]
-                    array_per_energy_t00_truth += [t00_truth]
+                    array_per_energy_t00_truth += [t00_truth/s0_truth]
                     array_per_energy_t01_truth += [t01_truth]
                     array_per_energy_t10_truth += [t10_truth]
-                    array_per_energy_t11_truth += [t11_truth]
+                    array_per_energy_t11_truth += [t11_truth/s1_truth]
                     array_per_energy_t02_truth += [t02_truth]
                     array_per_energy_t20_truth += [t20_truth]
-                    array_per_energy_t00_recon += [t00_recon]
+                    array_per_energy_t00_recon += [t00_recon/s0_truth]
                     array_per_energy_t01_recon += [t01_recon]
                     array_per_energy_t10_recon += [t10_recon]
-                    array_per_energy_t11_recon += [t11_recon]
+                    array_per_energy_t11_recon += [t11_recon/s1_truth]
                     array_per_energy_t02_recon += [t02_recon]
                     array_per_energy_t20_recon += [t20_recon]
             n_rebin += 1
@@ -593,9 +593,36 @@ for energy_idx in range(0,len(energy_bin)-1):
     axbig = fig.add_subplot()
     axbig.scatter(array_s0_truth[energy_idx],array_s1_truth[energy_idx],color='k',alpha=0.5)
     axbig.scatter(array_s0_recon[energy_idx],array_s1_recon[energy_idx],color='r',alpha=0.5)
+    max_s0 = np.amax(array_s0_truth[energy_idx])
+    s0_axis = np.arange(0.0, max_s0, 0.01*max_s0)
+    s1_axis = s0_axis/4.
+    axbig.plot(s0_axis, s1_axis)
+    s1_axis = s0_axis/3.
+    axbig.plot(s0_axis, s1_axis)
+    s1_axis = s0_axis/2.
+    axbig.plot(s0_axis, s1_axis)
     axbig.set_xlabel('$s_{0}$')
     axbig.set_ylabel('$s_{1}$')
     fig.savefig("output_plots/s0_vs_s1_E%s_%s.png"%(energy_idx,folder_tag))
+    axbig.remove()
+
+    fig.clf()
+    fig.set_figheight(8)
+    fig.set_figwidth(8)
+    axbig = fig.add_subplot()
+    axbig.scatter(array_s1_truth[energy_idx],array_s2_truth[energy_idx],color='k',alpha=0.5)
+    axbig.scatter(array_s1_recon[energy_idx],array_s2_recon[energy_idx],color='r',alpha=0.5)
+    max_s1 = np.amax(array_s1_truth[energy_idx])
+    s1_axis = np.arange(0.0, max_s1, 0.01*max_s1)
+    s2_axis = s1_axis/4.
+    axbig.plot(s1_axis, s2_axis)
+    s2_axis = s1_axis/3.
+    axbig.plot(s1_axis, s2_axis)
+    s2_axis = s1_axis/2.
+    axbig.plot(s1_axis, s2_axis)
+    axbig.set_xlabel('$s_{1}$')
+    axbig.set_ylabel('$s_{2}$')
+    fig.savefig("output_plots/s1_vs_s2_E%s_%s.png"%(energy_idx,folder_tag))
     axbig.remove()
 
     fig.clf()

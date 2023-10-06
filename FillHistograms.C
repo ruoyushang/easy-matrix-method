@@ -1419,6 +1419,10 @@ MatrixXcd MatrixPerturbationMethod(int e_idx, double elev, MatrixXcd mtx_t_input
 
     double available_bins = 0.;
     double avg_weight = 0.;
+    double binx_blind_center_global = 0.5*(double(binx_blind_upper_global)+double(binx_blind_lower_global));
+    double biny_blind_center_global = 0.5*(double(biny_blind_upper_global)+double(biny_blind_lower_global));
+    double binx_blind_size_global = 0.5*(double(binx_blind_upper_global)-double(binx_blind_lower_global));
+    double biny_blind_size_global = 0.5*(double(biny_blind_upper_global)-double(biny_blind_lower_global));
     for (int idx_i=0;idx_i<mtx_init_input.rows();idx_i++)
     {
         for (int idx_j=0;idx_j<mtx_init_input.rows();idx_j++)
@@ -1426,10 +1430,16 @@ MatrixXcd MatrixPerturbationMethod(int e_idx, double elev, MatrixXcd mtx_t_input
             int idx_u = idx_j*mtx_init_input.rows() + idx_i;
             double sigma_data = max(1.,pow(mtx_init_input(idx_i,idx_j).real(),0.5));
             double stat_weight = 1./pow(sigma_data*sigma_data,0.5);
+            double dist_x = abs(double(idx_i)-binx_blind_center_global)/binx_blind_size_global;
+            double dist_y = abs(double(idx_j)-biny_blind_center_global)/biny_blind_size_global;
+            if (dist_x<1.) dist_x = 1.;
+            if (dist_y<1.) dist_y = 1.;
+            double dist_x_weight = 1./dist_x;
+            double dist_y_weight = 1./dist_y;
             double weight = 1.;
             if (use_stat_err_weight) 
             {
-                weight = stat_weight;
+                weight = stat_weight*dist_x_weight*dist_y_weight;
             }
             mtx_W(idx_u,idx_u) = weight;
             vtr_Delta(idx_u) = (mtx_data_input-mtx_init_input)(idx_i,idx_j);
@@ -1497,22 +1507,16 @@ MatrixXcd MatrixPerturbationMethod(int e_idx, double elev, MatrixXcd mtx_t_input
         //    int idx_n1 = 1;
         //    int idx_k2 = 0;
         //    int idx_n2 = 0;
-        //    int idx_k3 = 0;
-        //    int idx_n3 = 1;
-        //    int idx_k4 = 1;
-        //    int idx_n4 = 0;
 
         //    int idx_v1 = idx_k1*size_n + idx_n1;
         //    int idx_v2 = idx_k2*size_n + idx_n2;
-        //    int idx_v3 = idx_k3*size_n + idx_n3;
-        //    int idx_v4 = idx_k4*size_n + idx_n4;
         //    int idx_u1 = idx_v1;
+        //    double sigma_1 = mtx_S_base(idx_k1,idx_k1);
+        //    double sigma_2 = mtx_S_base(idx_k2,idx_k2);
 
-        //    mtx_W(idx_u1,idx_u1) = pow(10.,0.)*avg_weight;
-        //    mtx_A(idx_u1,idx_v1) = 1.;
-        //    mtx_A(idx_u1,idx_v2) = -1.*coefficient_t11xt00_incl[e_idx];
-        //    mtx_A(idx_u1,idx_v3) = -1.*coefficient_t11xt01_incl[e_idx];
-        //    mtx_A(idx_u1,idx_v4) = -1.*coefficient_t11xt10_incl[e_idx];
+        //    mtx_W(idx_u1,idx_u1) = pow(10.,0.)*avg_weight*sigma_1;
+        //    mtx_A(idx_u1,idx_v1) = 1./sigma_1;
+        //    mtx_A(idx_u1,idx_v2) = -1.*coefficient_s1xs0_incl[e_idx]/sigma_2;
         //    vtr_Delta(idx_u1) = 0.;
         //}
         if (var_rank>=2)
@@ -1521,7 +1525,17 @@ MatrixXcd MatrixPerturbationMethod(int e_idx, double elev, MatrixXcd mtx_t_input
             int idx_n1 = 1;
             int idx_v1 = idx_k1*size_n + idx_n1;
             int idx_u1 = idx_v1;
-            mtx_W(idx_u1,idx_u1) = pow(10.,0.)*avg_weight;
+            mtx_W(idx_u1,idx_u1) = pow(10.,-1.5)*avg_weight;
+            mtx_A(idx_u1,idx_v1) = 1.;
+            vtr_Delta(idx_u1) = 0.;
+        }
+        if (var_rank>=3)
+        {
+            int idx_k1 = 2;
+            int idx_n1 = 2;
+            int idx_v1 = idx_k1*size_n + idx_n1;
+            int idx_u1 = idx_v1;
+            mtx_W(idx_u1,idx_u1) = pow(10.,-1.5)*avg_weight;
             mtx_A(idx_u1,idx_v1) = 1.;
             vtr_Delta(idx_u1) = 0.;
         }
@@ -1685,21 +1699,23 @@ double GetLeastSquareScale(TH2D* hist_on, TH2D* hist_off)
             double off_count = hist_off->GetBinContent(binx+1,biny+1);
             double cell_center_x = hist_on->GetXaxis()->GetBinCenter(binx+1);
             double cell_center_y = hist_on->GetYaxis()->GetBinCenter(biny+1);
-            double stat_error = 1./pow(max(on_count,1.),0.5);
+            double weight_stat_error = 1./pow(max(on_count,1.),0.5);
+            double weight_dist = 1./(abs(cell_center_x)*abs(cell_center_y));
+            double weight_total = weight_stat_error*weight_dist;
             if (cell_center_x<MSCL_upper_blind && cell_center_y<MSCW_upper_blind && cell_center_x>MSCL_lower_blind && cell_center_y>MSCW_lower_blind)
             {
                 continue;
             }
-            if (cell_center_x>MSCL_upper_blind && cell_center_y>MSCW_upper_blind)
-            {
-                continue;
-            }
-            if (cell_center_x<MSCL_lower_blind || cell_center_y<MSCW_lower_blind)
-            {
-                continue;
-            }
-            XoffTXon += on_count*stat_error*off_count;
-            XoffTXoff += off_count*stat_error*off_count;
+            //if (cell_center_x>MSCL_upper_blind && cell_center_y>MSCW_upper_blind)
+            //{
+            //    continue;
+            //}
+            //if (cell_center_x<MSCL_lower_blind || cell_center_y<MSCW_lower_blind)
+            //{
+            //    continue;
+            //}
+            XoffTXon += on_count*weight_total*off_count;
+            XoffTXoff += off_count*weight_total*off_count;
         }
     }
     double scale = 0.;
@@ -2320,19 +2336,31 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         bool use_diagonal = true;
                         bool is_blind = false;
 
+                        //int max_rank = 3;
+                        //int min_rank = 2;
+                        //if (energy_bins[e]>700.)
+                        //{
+                        //    max_rank = 0;
+                        //    min_rank = 0;
+                        //}
                         int max_rank = 3;
                         int min_rank = 2;
-                        if (energy_bins[e]>700.)
-                        {
-                            max_rank = 0;
-                            min_rank = 0;
-                        }
                         double log_t_mtx_weight = 3.0;
 
                         MatrixXd mtx_on_s = GetSingularValues(mtx_on_data);
                         s0_truth.push_back(mtx_on_s(0,0));
                         s1_truth.push_back(mtx_on_s(1,1));
                         s2_truth.push_back(mtx_on_s(2,2));
+                        if (mtx_on_s(1,1)/mtx_on_s(2,2)<4.)
+                        {
+                            max_rank = 2;
+                            min_rank = 1;
+                        }
+                        if (mtx_on_s(1,1)/mtx_on_s(2,2)<2.)
+                        {
+                            max_rank = 1;
+                            min_rank = 0;
+                        }
 
                         mtx_on_t = MatrixPerturbationMethod(e,Elev_mean,mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,max_rank,max_rank,use_diagonal,use_t_input,1.0,is_blind,1);
                         std::cout << "mtx_on_t (unblind):" << std::endl;
