@@ -106,21 +106,25 @@ vector<double> combined_bkgd_count;
 vector<double> s0_truth;
 vector<double> s1_truth;
 vector<double> s2_truth;
+vector<double> s3_truth;
 vector<double> s0_recon;
 vector<double> s1_recon;
 vector<double> s2_recon;
+vector<double> s3_recon;
 vector<double> t00_truth;
 vector<double> t01_truth;
 vector<double> t10_truth;
 vector<double> t11_truth;
 vector<double> t02_truth;
 vector<double> t20_truth;
+vector<double> t22_truth;
 vector<double> t00_recon;
 vector<double> t01_recon;
 vector<double> t10_recon;
 vector<double> t11_recon;
 vector<double> t02_recon;
 vector<double> t20_recon;
+vector<double> t22_recon;
 
 int binx_blind_upper_global;
 int biny_blind_upper_global;
@@ -1458,7 +1462,7 @@ MatrixXcd MatrixPerturbationMethod(int e_idx, double elev, MatrixXcd mtx_t_input
                 for (int idx_n=0;idx_n<size_n;idx_n++)
                 {
                     int nth_entry = idx_n+1;
-                    if (kth_entry==nth_entry && !diagonal_rank) continue;
+                    if (kth_entry==nth_entry && kth_entry>1 && !diagonal_rank) continue;
                     if (kth_entry>max_rank) continue;
                     if (nth_entry>max_rank) continue;
                     //if (kth_entry>var_rank) continue;
@@ -1501,44 +1505,61 @@ MatrixXcd MatrixPerturbationMethod(int e_idx, double elev, MatrixXcd mtx_t_input
     }
     if (isBlind && diagonal_rank)
     {
-        //if (var_rank>=2)
-        //{
-        //    int idx_k1 = 1;
-        //    int idx_n1 = 1;
-        //    int idx_k2 = 0;
-        //    int idx_n2 = 0;
-
-        //    int idx_v1 = idx_k1*size_n + idx_n1;
-        //    int idx_v2 = idx_k2*size_n + idx_n2;
-        //    int idx_u1 = idx_v1;
-        //    double sigma_1 = mtx_S_base(idx_k1,idx_k1);
-        //    double sigma_2 = mtx_S_base(idx_k2,idx_k2);
-
-        //    mtx_W(idx_u1,idx_u1) = pow(10.,0.)*avg_weight*sigma_1;
-        //    mtx_A(idx_u1,idx_v1) = 1./sigma_1;
-        //    mtx_A(idx_u1,idx_v2) = -1.*coefficient_s1xs0_incl[e_idx]/sigma_2;
-        //    vtr_Delta(idx_u1) = 0.;
-        //}
         if (var_rank>=2)
         {
             int idx_k1 = 1;
             int idx_n1 = 1;
+            int idx_k2 = 0;
+            int idx_n2 = 0;
+            int idx_k3 = 0;
+            int idx_n3 = 1;
+            int idx_k4 = 1;
+            int idx_n4 = 0;
+
             int idx_v1 = idx_k1*size_n + idx_n1;
+            int idx_v2 = idx_k2*size_n + idx_n2;
+            int idx_v3 = idx_k3*size_n + idx_n3;
+            int idx_v4 = idx_k4*size_n + idx_n4;
             int idx_u1 = idx_v1;
-            mtx_W(idx_u1,idx_u1) = pow(10.,-1.5)*avg_weight;
+            double sigma_1 = mtx_S_base(idx_k1,idx_k1);
+            double sigma_2 = mtx_S_base(idx_k2,idx_k2);
+
+            mtx_W(idx_u1,idx_u1) = pow(10.,3.)*avg_weight;
             mtx_A(idx_u1,idx_v1) = 1.;
+            if (Elev_mean>65.)
+            {
+                mtx_A(idx_u1,idx_v2) = -1.*coefficient_t11xt00_sza[e_idx];
+                mtx_A(idx_u1,idx_v3) = -1.*coefficient_t11xt01_sza[e_idx];
+                mtx_A(idx_u1,idx_v4) = -1.*coefficient_t11xt10_sza[e_idx];
+            }
+            else
+            {
+                mtx_A(idx_u1,idx_v2) = -1.*coefficient_t11xt00_lza[e_idx];
+                mtx_A(idx_u1,idx_v3) = -1.*coefficient_t11xt01_lza[e_idx];
+                mtx_A(idx_u1,idx_v4) = -1.*coefficient_t11xt10_lza[e_idx];
+            }
             vtr_Delta(idx_u1) = 0.;
         }
-        if (var_rank>=3)
-        {
-            int idx_k1 = 2;
-            int idx_n1 = 2;
-            int idx_v1 = idx_k1*size_n + idx_n1;
-            int idx_u1 = idx_v1;
-            mtx_W(idx_u1,idx_u1) = pow(10.,-1.5)*avg_weight;
-            mtx_A(idx_u1,idx_v1) = 1.;
-            vtr_Delta(idx_u1) = 0.;
-        }
+        //if (var_rank>=2)
+        //{
+        //    int idx_k1 = 1;
+        //    int idx_n1 = 1;
+        //    int idx_v1 = idx_k1*size_n + idx_n1;
+        //    int idx_u1 = idx_v1;
+        //    mtx_W(idx_u1,idx_u1) = pow(10.,log_t_input_weight)*avg_weight;
+        //    mtx_A(idx_u1,idx_v1) = 1.;
+        //    vtr_Delta(idx_u1) = 0.;
+        //}
+        //if (var_rank>=3)
+        //{
+        //    int idx_k1 = 2;
+        //    int idx_n1 = 2;
+        //    int idx_v1 = idx_k1*size_n + idx_n1;
+        //    int idx_u1 = idx_v1;
+        //    mtx_W(idx_u1,idx_u1) = pow(10.,log_t_input_weight)*avg_weight;
+        //    mtx_A(idx_u1,idx_v1) = 1.;
+        //    vtr_Delta(idx_u1) = 0.;
+        //}
     }
     //if (isBlind && diagonal_rank)
     //{
@@ -1686,6 +1707,12 @@ MatrixXcd fillMatrix(TH2D* hist)
 
 double GetLeastSquareScale(TH2D* hist_on, TH2D* hist_off)
 {
+
+    double binx_blind_center_global = 0.5*(double(binx_blind_upper_global)+double(binx_blind_lower_global));
+    double biny_blind_center_global = 0.5*(double(biny_blind_upper_global)+double(biny_blind_lower_global));
+    double binx_blind_size_global = 0.5*(double(binx_blind_upper_global)-double(binx_blind_lower_global));
+    double biny_blind_size_global = 0.5*(double(biny_blind_upper_global)-double(biny_blind_lower_global));
+
     // x_on = a * x_off
     // (x_off)T x_on = a * (x_off)T x_off
     // a = (x_off)T x_on / ( (x_off)T x_off )
@@ -1701,19 +1728,21 @@ double GetLeastSquareScale(TH2D* hist_on, TH2D* hist_off)
             double cell_center_y = hist_on->GetYaxis()->GetBinCenter(biny+1);
             double weight_stat_error = 1./pow(max(on_count,1.),0.5);
             double weight_dist = 1./(abs(cell_center_x)*abs(cell_center_y));
-            double weight_total = weight_stat_error*weight_dist;
+
+            double dist_x = abs(double(binx)-binx_blind_center_global)/binx_blind_size_global;
+            double dist_y = abs(double(biny)-biny_blind_center_global)/biny_blind_size_global;
+            if (dist_x<1.) dist_x = 1.;
+            if (dist_y<1.) dist_y = 1.;
+            double dist_x_weight = 1./dist_x;
+            double dist_y_weight = 1./dist_y;
+
+            double weight_total = weight_stat_error*dist_x_weight*dist_y_weight;
+
             if (cell_center_x<MSCL_upper_blind && cell_center_y<MSCW_upper_blind && cell_center_x>MSCL_lower_blind && cell_center_y>MSCW_lower_blind)
             {
                 continue;
             }
-            //if (cell_center_x>MSCL_upper_blind && cell_center_y>MSCW_upper_blind)
-            //{
-            //    continue;
-            //}
-            //if (cell_center_x<MSCL_lower_blind || cell_center_y<MSCW_lower_blind)
-            //{
-            //    continue;
-            //}
+
             XoffTXon += on_count*weight_total*off_count;
             XoffTXoff += off_count*weight_total*off_count;
         }
@@ -2336,30 +2365,25 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         bool use_diagonal = true;
                         bool is_blind = false;
 
-                        //int max_rank = 3;
-                        //int min_rank = 2;
-                        //if (energy_bins[e]>700.)
-                        //{
-                        //    max_rank = 0;
-                        //    min_rank = 0;
-                        //}
                         int max_rank = 3;
                         int min_rank = 2;
-                        double log_t_mtx_weight = 3.0;
+                        //double log_t_mtx_weight = 0.;
+                        double log_t_mtx_weight = -1.5;
 
                         MatrixXd mtx_on_s = GetSingularValues(mtx_on_data);
                         s0_truth.push_back(mtx_on_s(0,0));
                         s1_truth.push_back(mtx_on_s(1,1));
                         s2_truth.push_back(mtx_on_s(2,2));
+                        s3_truth.push_back(mtx_on_s(3,3));
+                        //if (mtx_on_s(2,2)/mtx_on_s(3,3)<2.)
+                        //{
+                        //    max_rank = 2;
+                        //    min_rank = 1;
+                        //}
                         if (mtx_on_s(1,1)/mtx_on_s(2,2)<4.)
                         {
-                            max_rank = 2;
-                            min_rank = 1;
-                        }
-                        if (mtx_on_s(1,1)/mtx_on_s(2,2)<2.)
-                        {
                             max_rank = 1;
-                            min_rank = 0;
+                            min_rank = 1;
                         }
 
                         mtx_on_t = MatrixPerturbationMethod(e,Elev_mean,mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,max_rank,max_rank,use_diagonal,use_t_input,1.0,is_blind,1);
@@ -2381,6 +2405,7 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         t11_truth.push_back(mtx_on_t(1,1).real());
                         t02_truth.push_back(mtx_on_t(0,2).real());
                         t20_truth.push_back(mtx_on_t(2,0).real());
+                        t22_truth.push_back(mtx_on_t(2,2).real());
 
                         is_blind = true;
                         if (max_rank>=1)
@@ -2388,7 +2413,6 @@ void FillHistograms(string target_data, bool isON, int doImposter)
 
                             use_t_input = false;
                             use_diagonal = false;
-                            log_t_mtx_weight = 3.0;
 
                             mtx_on_t = MatrixPerturbationMethod(e,Elev_mean,mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,max_rank,min_rank,use_diagonal,use_t_input,log_t_mtx_weight,is_blind,1);
                             std::cout << "mtx_on_t (blind, off-diagonal):" << std::endl;
@@ -2423,7 +2447,6 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         {
                             use_t_input = false;
                             use_diagonal = true;
-                            log_t_mtx_weight = 0.0;
 
                             mtx_on_t = MatrixPerturbationMethod(e,Elev_mean,mtx_on_t,mtx_off_data_cr_scaled,mtx_off_data_cr_scaled,mtx_on_data,max_rank,min_rank,use_diagonal,use_t_input,log_t_mtx_weight,is_blind,1);
                             std::cout << "mtx_on_t (blind, diagonal):" << std::endl;
@@ -2449,11 +2472,13 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                         t11_recon.push_back(mtx_on_t(1,1).real());
                         t02_recon.push_back(mtx_on_t(0,2).real());
                         t20_recon.push_back(mtx_on_t(2,0).real());
+                        t22_recon.push_back(mtx_on_t(2,2).real());
 
                         mtx_on_s = GetSingularValues(mtx_on_bkgd);
                         s0_recon.push_back(mtx_on_s(0,0));
                         s1_recon.push_back(mtx_on_s(1,1));
                         s2_recon.push_back(mtx_on_s(2,2));
+                        s3_recon.push_back(mtx_on_s(3,3));
 
                         if (max_rank==0)
                         {
@@ -2609,21 +2634,25 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                     InfoTree.Branch("s0_truth","std::vector<double>",&s0_truth);
                     InfoTree.Branch("s1_truth","std::vector<double>",&s1_truth);
                     InfoTree.Branch("s2_truth","std::vector<double>",&s2_truth);
+                    InfoTree.Branch("s3_truth","std::vector<double>",&s3_truth);
                     InfoTree.Branch("s0_recon","std::vector<double>",&s0_recon);
                     InfoTree.Branch("s1_recon","std::vector<double>",&s1_recon);
                     InfoTree.Branch("s2_recon","std::vector<double>",&s2_recon);
+                    InfoTree.Branch("s3_recon","std::vector<double>",&s3_recon);
                     InfoTree.Branch("t00_truth","std::vector<double>",&t00_truth);
                     InfoTree.Branch("t01_truth","std::vector<double>",&t01_truth);
                     InfoTree.Branch("t10_truth","std::vector<double>",&t10_truth);
                     InfoTree.Branch("t11_truth","std::vector<double>",&t11_truth);
                     InfoTree.Branch("t02_truth","std::vector<double>",&t02_truth);
                     InfoTree.Branch("t20_truth","std::vector<double>",&t20_truth);
+                    InfoTree.Branch("t22_truth","std::vector<double>",&t22_truth);
                     InfoTree.Branch("t00_recon","std::vector<double>",&t00_recon);
                     InfoTree.Branch("t01_recon","std::vector<double>",&t01_recon);
                     InfoTree.Branch("t10_recon","std::vector<double>",&t10_recon);
                     InfoTree.Branch("t11_recon","std::vector<double>",&t11_recon);
                     InfoTree.Branch("t02_recon","std::vector<double>",&t02_recon);
                     InfoTree.Branch("t20_recon","std::vector<double>",&t20_recon);
+                    InfoTree.Branch("t22_recon","std::vector<double>",&t22_recon);
                     InfoTree.Fill();
                     InfoTree.Write();
 
@@ -2645,21 +2674,25 @@ void FillHistograms(string target_data, bool isON, int doImposter)
                     s0_truth.clear();
                     s1_truth.clear();
                     s2_truth.clear();
+                    s3_truth.clear();
                     s0_recon.clear();
                     s1_recon.clear();
                     s2_recon.clear();
+                    s3_recon.clear();
                     t00_truth.clear();
                     t01_truth.clear();
                     t10_truth.clear();
                     t11_truth.clear();
                     t02_truth.clear();
                     t20_truth.clear();
+                    t22_truth.clear();
                     t00_recon.clear();
                     t01_recon.clear();
                     t10_recon.clear();
                     t11_recon.clear();
                     t02_recon.clear();
                     t20_recon.clear();
+                    t22_recon.clear();
                     data_count.clear();
                     ratio_bkgd_count.clear();
                     regression_bkgd_count.clear();

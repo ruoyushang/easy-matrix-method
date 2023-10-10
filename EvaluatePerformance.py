@@ -249,21 +249,25 @@ def GetGammaCounts(file_path,ebin):
     s0_truth = ROOT.std.vector("double")(20)
     s1_truth = ROOT.std.vector("double")(20)
     s2_truth = ROOT.std.vector("double")(20)
+    s3_truth = ROOT.std.vector("double")(20)
     s0_recon = ROOT.std.vector("double")(20)
     s1_recon = ROOT.std.vector("double")(20)
     s2_recon = ROOT.std.vector("double")(20)
+    s3_recon = ROOT.std.vector("double")(20)
     t00_truth = ROOT.std.vector("double")(20)
     t01_truth = ROOT.std.vector("double")(20)
     t10_truth = ROOT.std.vector("double")(20)
     t11_truth = ROOT.std.vector("double")(20)
     t02_truth = ROOT.std.vector("double")(20)
     t20_truth = ROOT.std.vector("double")(20)
+    t22_truth = ROOT.std.vector("double")(20)
     t00_recon = ROOT.std.vector("double")(20)
     t01_recon = ROOT.std.vector("double")(20)
     t10_recon = ROOT.std.vector("double")(20)
     t11_recon = ROOT.std.vector("double")(20)
     t02_recon = ROOT.std.vector("double")(20)
     t20_recon = ROOT.std.vector("double")(20)
+    t22_recon = ROOT.std.vector("double")(20)
     data_count = ROOT.std.vector("double")(20)
     ratio_bkgd_count = ROOT.std.vector("double")(20)
     regression_bkgd_count = ROOT.std.vector("double")(20)
@@ -277,21 +281,25 @@ def GetGammaCounts(file_path,ebin):
     InfoTree.SetBranchAddress('s0_truth',ROOT.AddressOf(s0_truth))
     InfoTree.SetBranchAddress('s1_truth',ROOT.AddressOf(s1_truth))
     InfoTree.SetBranchAddress('s2_truth',ROOT.AddressOf(s2_truth))
+    InfoTree.SetBranchAddress('s3_truth',ROOT.AddressOf(s3_truth))
     InfoTree.SetBranchAddress('s0_recon',ROOT.AddressOf(s0_recon))
     InfoTree.SetBranchAddress('s1_recon',ROOT.AddressOf(s1_recon))
     InfoTree.SetBranchAddress('s2_recon',ROOT.AddressOf(s2_recon))
+    InfoTree.SetBranchAddress('s3_recon',ROOT.AddressOf(s3_recon))
     InfoTree.SetBranchAddress('t00_truth',ROOT.AddressOf(t00_truth))
     InfoTree.SetBranchAddress('t01_truth',ROOT.AddressOf(t01_truth))
     InfoTree.SetBranchAddress('t10_truth',ROOT.AddressOf(t10_truth))
     InfoTree.SetBranchAddress('t11_truth',ROOT.AddressOf(t11_truth))
     InfoTree.SetBranchAddress('t02_truth',ROOT.AddressOf(t02_truth))
     InfoTree.SetBranchAddress('t20_truth',ROOT.AddressOf(t20_truth))
+    InfoTree.SetBranchAddress('t22_truth',ROOT.AddressOf(t22_truth))
     InfoTree.SetBranchAddress('t00_recon',ROOT.AddressOf(t00_recon))
     InfoTree.SetBranchAddress('t01_recon',ROOT.AddressOf(t01_recon))
     InfoTree.SetBranchAddress('t10_recon',ROOT.AddressOf(t10_recon))
     InfoTree.SetBranchAddress('t11_recon',ROOT.AddressOf(t11_recon))
     InfoTree.SetBranchAddress('t02_recon',ROOT.AddressOf(t02_recon))
     InfoTree.SetBranchAddress('t20_recon',ROOT.AddressOf(t20_recon))
+    InfoTree.SetBranchAddress('t22_recon',ROOT.AddressOf(t22_recon))
     InfoTree.SetBranchAddress('data_count',ROOT.AddressOf(data_count))
     InfoTree.SetBranchAddress('ratio_bkgd_count',ROOT.AddressOf(ratio_bkgd_count))
     InfoTree.SetBranchAddress('regression_bkgd_count',ROOT.AddressOf(regression_bkgd_count))
@@ -301,7 +309,7 @@ def GetGammaCounts(file_path,ebin):
     InfoTree.GetEntry(0)
     InputFile.Close()
 
-    return effective_area[ebin], data_count[ebin], ratio_bkgd_count[ebin], regression_bkgd_count[ebin], init_perturbation_bkgd_count[ebin], perturbation_bkgd_count[ebin], combined_bkgd_count[ebin], t00_truth[ebin], t01_truth[ebin], t10_truth[ebin], t11_truth[ebin], t02_truth[ebin], t20_truth[ebin], t00_recon[ebin], t01_recon[ebin], t10_recon[ebin], t11_recon[ebin], t02_recon[ebin], t20_recon[ebin], s0_truth[ebin], s1_truth[ebin], s2_truth[ebin], s0_recon[ebin], s1_recon[ebin], s2_recon[ebin]
+    return effective_area[ebin], data_count[ebin], ratio_bkgd_count[ebin], regression_bkgd_count[ebin], init_perturbation_bkgd_count[ebin], perturbation_bkgd_count[ebin], combined_bkgd_count[ebin], t00_truth[ebin], t01_truth[ebin], t10_truth[ebin], t11_truth[ebin], t02_truth[ebin], t20_truth[ebin], t22_truth[ebin], t00_recon[ebin], t01_recon[ebin], t10_recon[ebin], t11_recon[ebin], t02_recon[ebin], t20_recon[ebin], t22_recon[ebin], s0_truth[ebin], s1_truth[ebin], s2_truth[ebin], s3_truth[ebin], s0_recon[ebin], s1_recon[ebin], s2_recon[ebin], s3_recon[ebin]
 
 def MakeMultipleFitPlot(ax_input,Hists,legends,title_x,title_y):
 
@@ -360,21 +368,25 @@ array_nsb_diff = []
 array_s0_truth = []
 array_s1_truth = []
 array_s2_truth = []
+array_s3_truth = []
 array_s0_recon = []
 array_s1_recon = []
 array_s2_recon = []
+array_s3_recon = []
 array_t00_truth = []
 array_t01_truth = []
 array_t10_truth = []
 array_t11_truth = []
 array_t02_truth = []
 array_t20_truth = []
+array_t22_truth = []
 array_t00_recon = []
 array_t01_recon = []
 array_t10_recon = []
 array_t11_recon = []
 array_t02_recon = []
 array_t20_recon = []
+array_t22_recon = []
 array_syst_err_ratio = []
 array_syst_err_regression = []
 array_syst_err_init_perturbation = []
@@ -404,21 +416,25 @@ for energy_idx in range(0,len(energy_bin)-1):
     array_per_energy_s0_truth = []
     array_per_energy_s1_truth = []
     array_per_energy_s2_truth = []
+    array_per_energy_s3_truth = []
     array_per_energy_s0_recon = []
     array_per_energy_s1_recon = []
     array_per_energy_s2_recon = []
+    array_per_energy_s3_recon = []
     array_per_energy_t00_truth = []
     array_per_energy_t01_truth = []
     array_per_energy_t10_truth = []
     array_per_energy_t11_truth = []
     array_per_energy_t02_truth = []
     array_per_energy_t20_truth = []
+    array_per_energy_t22_truth = []
     array_per_energy_t00_recon = []
     array_per_energy_t01_recon = []
     array_per_energy_t10_recon = []
     array_per_energy_t11_recon = []
     array_per_energy_t02_recon = []
     array_per_energy_t20_recon = []
+    array_per_energy_t22_recon = []
     array_per_energy_nsb_diff = []
     array_syst_err_per_energy_ratio = []
     array_syst_err_per_energy_regression = []
@@ -461,7 +477,7 @@ for energy_idx in range(0,len(energy_bin)-1):
                     SourceFilePath = "/nevis/vetch/data/rshang/smi_output/%s/Netflix_%s_G%d_X%d_Y%d.root"%(folder_path,sample_list[src],group,xoff_idx,yoff_idx)
                     if not os.path.exists(SourceFilePath): continue
                     print ('Read file: %s'%(SourceFilePath))
-                    eff_area, data_truth, ratio_bkgd, regression_bkgd, init_perturbation_bkgd, perturbation_bkgd, combined_bkgd, t00_truth, t01_truth, t10_truth, t11_truth, t02_truth, t20_truth, t00_recon, t01_recon, t10_recon, t11_recon, t02_recon, t20_recon, s0_truth, s1_truth, s2_truth, s0_recon, s1_recon, s2_recon = GetGammaCounts(SourceFilePath,energy_idx)
+                    eff_area, data_truth, ratio_bkgd, regression_bkgd, init_perturbation_bkgd, perturbation_bkgd, combined_bkgd, t00_truth, t01_truth, t10_truth, t11_truth, t02_truth, t20_truth, t22_truth, t00_recon, t01_recon, t10_recon, t11_recon, t02_recon, t20_recon, t22_recon, s0_truth, s1_truth, s2_truth, s3_truth, s0_recon, s1_recon, s2_recon, s3_recon = GetGammaCounts(SourceFilePath,energy_idx)
                     data_expo, total_cr_count, elev_mean, azim_mean, nsb_mean, avg_diff_el, avg_diff_az, avg_diff_nsb = GetRunInfo(SourceFilePath)
                     if elev_mean<elev_range[0] or elev_mean>elev_range[1]: continue
                     if xoff_idx==0 and yoff_idx==0:
@@ -499,6 +515,7 @@ for energy_idx in range(0,len(energy_bin)-1):
                     if total_cr_count<150000: continue
                     if s0_truth==0.: continue
                     if s1_truth==0.: continue
+                    if s2_truth==0.: continue
                     #if avg_diff_el<0.: continue
                     #if avg_diff_el>0.: continue
                     #if avg_diff_az<0.: continue
@@ -509,19 +526,29 @@ for energy_idx in range(0,len(energy_bin)-1):
                     array_per_energy_s0_truth += [s0_truth]
                     array_per_energy_s1_truth += [s1_truth]
                     array_per_energy_s2_truth += [s2_truth]
+                    array_per_energy_s3_truth += [s3_truth]
                     array_per_energy_s0_recon += [s0_recon]
                     array_per_energy_s1_recon += [s1_recon]
                     array_per_energy_s2_recon += [s2_recon]
-                    array_per_energy_t00_truth += [t00_truth/s0_truth]
+                    array_per_energy_s3_recon += [s3_recon]
+                    #array_per_energy_t00_truth += [t00_truth/s0_truth]
+                    #array_per_energy_t11_truth += [t11_truth/s1_truth]
+                    #array_per_energy_t22_truth += [t22_truth/s2_truth]
+                    #array_per_energy_t00_recon += [t00_recon/s0_truth]
+                    #array_per_energy_t11_recon += [t11_recon/s1_truth]
+                    #array_per_energy_t22_recon += [t22_recon/s2_truth]
+                    array_per_energy_t00_truth += [t00_truth]
+                    array_per_energy_t11_truth += [t11_truth]
+                    array_per_energy_t22_truth += [t22_truth]
+                    array_per_energy_t00_recon += [t00_recon]
+                    array_per_energy_t11_recon += [t11_recon]
+                    array_per_energy_t22_recon += [t22_recon]
                     array_per_energy_t01_truth += [t01_truth]
                     array_per_energy_t10_truth += [t10_truth]
-                    array_per_energy_t11_truth += [t11_truth/s1_truth]
                     array_per_energy_t02_truth += [t02_truth]
                     array_per_energy_t20_truth += [t20_truth]
-                    array_per_energy_t00_recon += [t00_recon/s0_truth]
                     array_per_energy_t01_recon += [t01_recon]
                     array_per_energy_t10_recon += [t10_recon]
-                    array_per_energy_t11_recon += [t11_recon/s1_truth]
                     array_per_energy_t02_recon += [t02_recon]
                     array_per_energy_t20_recon += [t20_recon]
             n_rebin += 1
@@ -556,21 +583,25 @@ for energy_idx in range(0,len(energy_bin)-1):
     array_s0_truth += [array_per_energy_s0_truth]
     array_s1_truth += [array_per_energy_s1_truth]
     array_s2_truth += [array_per_energy_s2_truth]
+    array_s3_truth += [array_per_energy_s3_truth]
     array_s0_recon += [array_per_energy_s0_recon]
     array_s1_recon += [array_per_energy_s1_recon]
     array_s2_recon += [array_per_energy_s2_recon]
+    array_s3_recon += [array_per_energy_s3_recon]
     array_t00_truth += [array_per_energy_t00_truth]
     array_t01_truth += [array_per_energy_t01_truth]
     array_t10_truth += [array_per_energy_t10_truth]
     array_t11_truth += [array_per_energy_t11_truth]
     array_t02_truth += [array_per_energy_t02_truth]
     array_t20_truth += [array_per_energy_t20_truth]
+    array_t22_truth += [array_per_energy_t22_truth]
     array_t00_recon += [array_per_energy_t00_recon]
     array_t01_recon += [array_per_energy_t01_recon]
     array_t10_recon += [array_per_energy_t10_recon]
     array_t11_recon += [array_per_energy_t11_recon]
     array_t02_recon += [array_per_energy_t02_recon]
     array_t20_recon += [array_per_energy_t20_recon]
+    array_t22_recon += [array_per_energy_t22_recon]
     array_syst_err_ratio += [array_syst_err_per_energy_ratio]
     array_syst_err_regression += [array_syst_err_per_energy_regression]
     array_syst_err_init_perturbation += [array_syst_err_per_energy_init_perturbation]
@@ -623,6 +654,25 @@ for energy_idx in range(0,len(energy_bin)-1):
     axbig.set_xlabel('$s_{1}$')
     axbig.set_ylabel('$s_{2}$')
     fig.savefig("output_plots/s1_vs_s2_E%s_%s.png"%(energy_idx,folder_tag))
+    axbig.remove()
+
+    fig.clf()
+    fig.set_figheight(8)
+    fig.set_figwidth(8)
+    axbig = fig.add_subplot()
+    axbig.scatter(array_s2_truth[energy_idx],array_s3_truth[energy_idx],color='k',alpha=0.5)
+    axbig.scatter(array_s2_recon[energy_idx],array_s3_recon[energy_idx],color='r',alpha=0.5)
+    max_s2 = np.amax(array_s2_truth[energy_idx])
+    s2_axis = np.arange(0.0, max_s2, 0.01*max_s2)
+    s3_axis = s2_axis/4.
+    axbig.plot(s2_axis, s3_axis)
+    s3_axis = s2_axis/3.
+    axbig.plot(s2_axis, s3_axis)
+    s3_axis = s2_axis/2.
+    axbig.plot(s2_axis, s3_axis)
+    axbig.set_xlabel('$s_{2}$')
+    axbig.set_ylabel('$s_{3}$')
+    fig.savefig("output_plots/s2_vs_s3_E%s_%s.png"%(energy_idx,folder_tag))
     axbig.remove()
 
     fig.clf()
@@ -994,9 +1044,25 @@ txt_info_x10 = 'double coefficient_t11xt10_%s[N_energy_bins] = {'%(elev_tag)
 print ('================================================================================================')
 for energy_idx in range(0,len(energy_bin)-1):
     x00, x01, x10 = Find_t11_off_diagonal_correlation(array_t00_truth,array_t01_truth,array_t10_truth,array_t11_truth,energy_idx,energy_idx+1)
-    txt_info_x00 += '%0.3f'%(x00)
-    txt_info_x01 += '%0.3f'%(x01)
-    txt_info_x10 += '%0.3f'%(x10)
+
+    array_t11_pca = []
+    for entry in range(0,len(array_t00_truth[energy_idx])):
+        t11_pca = array_t00_truth[energy_idx][entry]*x00 + array_t01_truth[energy_idx][entry]*x01 + array_t10_truth[energy_idx][entry]*x10
+        array_t11_pca += [t11_pca]
+    fig.clf()
+    fig.set_figheight(8)
+    fig.set_figwidth(8)
+    axbig = fig.add_subplot()
+    axbig.scatter(array_t11_pca,array_t11_truth[energy_idx],color='k',alpha=0.5)
+    axbig.scatter(array_t11_pca,array_t11_recon[energy_idx],color='r',alpha=0.5)
+    axbig.set_xlabel('PCA $t_{11}$')
+    axbig.set_ylabel('$t_{11}$')
+    fig.savefig("output_plots/pca_t11_vs_t11_E%s_%s.png"%(energy_idx,folder_tag))
+    axbig.remove()
+
+    txt_info_x00 += '%0.1e'%(x00)
+    txt_info_x01 += '%0.1e'%(x01)
+    txt_info_x10 += '%0.1e'%(x10)
     if energy_idx<len(energy_bin)-2:
         txt_info_x00 += ','
         txt_info_x01 += ','
