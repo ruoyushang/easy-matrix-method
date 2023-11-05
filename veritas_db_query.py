@@ -649,6 +649,9 @@ def find_runs_near_galactic_plane(obs_name,epoch,obs_type,gal_b_low,gal_b_up):
     all_src_ra = {}
     all_src_dec = {}
     runs_per_src = {}
+    avg_elev_per_src = {}
+    avg_azim_per_src = {}
+    avg_nsb_per_src = {}
     query = 'SELECT source_id,ra,decl FROM tblObserving_Sources'
     crs.execute(query)
     # fetch from cursor
@@ -661,6 +664,9 @@ def find_runs_near_galactic_plane(obs_name,epoch,obs_type,gal_b_low,gal_b_up):
         all_src_ra[x['source_id']] = source_ra
         all_src_dec[x['source_id']] = source_dec
         runs_per_src[x['source_id']] = 0
+        avg_elev_per_src[x['source_id']] = 0
+        avg_azim_per_src[x['source_id']] = 0
+        avg_nsb_per_src[x['source_id']] = 0
         source_gal_l, source_gal_b = ConvertRaDecToGalactic(source_ra,source_dec)
         if abs(source_gal_b)>gal_b_low and abs(source_gal_b)<gal_b_up:
             list_on_sources += [source_name]
@@ -756,17 +762,28 @@ def find_runs_near_galactic_plane(obs_name,epoch,obs_type,gal_b_low,gal_b_up):
 
         #on_run_el, on_run_az = get_run_el_az(x['run_id'])
         on_run_el, on_run_az = get_run_elaz_from_aux_file(x['run_id'])
+        on_run_nsb = get_run_nsb_from_aux_file(x['run_id'])
         if on_run_el<45.: continue
 
         print ('run_id = %s, source_name = %s, RA = %0.2f, Dec = %0.2f'%(x['run_id'],x['source_id'],all_src_ra[x['source_id']],all_src_dec[x['source_id']]))
         out_file.write('run_id = %s, source_name = %s, RA = %0.2f, Dec = %0.2f \n'%(x['run_id'],x['source_id'],all_src_ra[x['source_id']],all_src_dec[x['source_id']]))
         list_on_run_ids += [x['run_id']]
         runs_per_src[x['source_id']] += 1
+        avg_elev_per_src[x['source_id']] += on_run_el
+        avg_azim_per_src[x['source_id']] +=  math.cos(on_run_az*math.pi/180.)
+        avg_nsb_per_src[x['source_id']] += on_run_nsb
 
     list_on_sources_runs = []
     for src in range(0,len(list_on_sources)):
         src_name = list_on_sources[src]
         list_on_sources_runs += [runs_per_src[src_name]]
+
+    for src in range(0,len(list_on_sources)):
+        src_name = list_on_sources[src]
+        if runs_per_src[src_name]==0: continue
+        avg_elev_per_src[src_name] = avg_elev_per_src[src_name]/float(runs_per_src[src_name])
+        avg_azim_per_src[src_name] = avg_azim_per_src[src_name]/float(runs_per_src[src_name])
+        avg_nsb_per_src[src_name] = avg_nsb_per_src[src_name]/float(runs_per_src[src_name])
 
     zip_list = list(zip(list_on_sources_runs, list_on_sources))
     zip_list_sorted = sorted(zip_list)
@@ -776,10 +793,9 @@ def find_runs_near_galactic_plane(obs_name,epoch,obs_type,gal_b_low,gal_b_up):
     out_file.write('Source list\n')
     for src in range(0,len(list_on_sources)):
         src_name = list_on_sources[src]
-        #if runs_per_src[src_name]<50: continue
         if runs_per_src[src_name]<10: continue
-        print ('%s, runs = %s, RA = %0.2f, Dec = %0.2f'%(src_name,runs_per_src[src_name],all_src_ra[src_name],all_src_dec[src_name]))
-        out_file.write('%s, runs = %s, RA = %0.2f, Dec = %0.2f \n'%(src_name,runs_per_src[src_name],all_src_ra[src_name],all_src_dec[src_name]))
+        print ('%s, runs = %s, RA = %0.2f, Dec = %0.2f, El. = %0.1f, Az. = %0.2f, NSB = %0.1f'%(src_name,runs_per_src[src_name],all_src_ra[src_name],all_src_dec[src_name],avg_elev_per_src[src_name],avg_azim_per_src[src_name],avg_nsb_per_src[src_name]))
+        out_file.write('%s, runs = %s, RA = %0.2f, Dec = %0.2f, El. = %0.1f, Az. = %0.2f, NSB = %0.1f \n'%(src_name,runs_per_src[src_name],all_src_ra[src_name],all_src_dec[src_name],avg_elev_per_src[src_name],avg_azim_per_src[src_name],avg_nsb_per_src[src_name]))
 
     out_file.close()
     dbcnx.close()
@@ -868,6 +884,9 @@ def find_on_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_range
     # fetch from cursor
     res = crs.fetchall()
     for x in res:
+
+        if 'PSR_J2032_p4127_baseline' in obs_name:
+            if x['run_id']>=86880 and x['run_id']<=88479: continue
 
         #if x['run_id']<46642: continue
         if x['run_id']<46642:
@@ -1097,9 +1116,9 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
             delta_nsb = off_run_nsb-on_run_nsb
             delta_runnum = all_runs_info[run][0]-list_on_run_ids[on_run]
 
-            range_elev = 0.05
+            range_elev = 0.02
             range_nsb = 1.
-            range_runnum = 20000.
+            range_runnum = 10000.
 
             significance_diff_elev = abs(total_elev_diff/range_elev)
             significance_diff_nsb = abs(total_nsb_diff/range_nsb)
@@ -1126,8 +1145,8 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
                         if delta_elev<0.: continue
 
             else:
-                if abs(delta_elev)>0.1: continue
-                if abs(delta_azim)>0.1: continue
+                if abs(delta_elev)>0.2: continue
+                if abs(delta_azim)>0.2: continue
 
                 if significance_diff_runnum>significance_diff_elev and significance_diff_runnum>significance_diff_nsb:
                     if total_runnum_diff>0.:
@@ -1224,6 +1243,11 @@ elif input_name=='Galactic_Plane':
 
     obs_name = 'Galactic_Plane_%s'%(run_epoch)
     find_runs_near_galactic_plane(obs_name,run_epoch,run_obs_type,0.0,10.0)
+
+elif input_name=='Extragalactic':
+
+    obs_name = 'Extragalactic_%s'%(run_epoch)
+    find_runs_near_galactic_plane(obs_name,run_epoch,run_obs_type,10.0,90.0)
 
 elif input_name=='LHAASO_Catalog':
 

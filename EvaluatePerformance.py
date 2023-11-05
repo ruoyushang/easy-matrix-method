@@ -56,6 +56,8 @@ elev_range = [40.,90.]
 #elev_tag = 'lza'
 #elev_range = [40.,65.]
 
+folder_tag = elev_tag+folder_tag
+
 source_of_interest = ''
 #source_of_interest = '1ES0229'
 #source_of_interest = 'H1426'
@@ -189,33 +191,30 @@ def Find_s1_on_diagonal_correlation(s0_input,s1_input,e_min,e_max):
     else:
         return x_svd[0]
 
-def Find_t11_off_diagonal_correlation(t00_input,t01_input,t10_input,t11_input,e_min,e_max):
+def Find_t11_off_diagonal_correlation(t01_input,t10_input,t11_input,e_min,e_max):
 
     n_eqn = 0
-    t00_array = []
     t01_array = []
     t10_array = []
     t11_array = []
     for e_idx in range(e_min,e_max):
         n_eqn += len(t11_input[e_idx])
         for entry in range(0,len(t11_input[e_idx])):
-            t00_array += [t00_input[e_idx][entry]]
             t01_array += [t01_input[e_idx][entry]]
             t10_array += [t10_input[e_idx][entry]]
             t11_array += [t11_input[e_idx][entry]]
 
-    n_var = 3
+    n_var = 2
     if n_eqn<n_var:
         print ('Not enough equations.')
-        return 0, 0, 0
+        return 0, 0
 
     b = np.zeros(n_eqn)
     A = np.zeros((n_eqn,n_var))
 
     for eqn in range(0,n_eqn):
-            A[eqn,0] = t00_array[eqn]
-            A[eqn,1] = t01_array[eqn]
-            A[eqn,2] = t10_array[eqn]
+            A[eqn,0] = t01_array[eqn]
+            A[eqn,1] = t10_array[eqn]
             b[eqn] = t11_array[eqn]
 
     # Now compute the SVD of  A
@@ -233,15 +232,14 @@ def Find_t11_off_diagonal_correlation(t00_input,t01_input,t10_input,t11_input,e_
     chi2 = la.norm(A.dot(x_svd)-b, 2)/float(n_eqn)
 
     txt_info = 'chi2 = %0.3e \t,'%(chi2)
-    txt_info += 'x00 = %0.3f \t,'%(x_svd[0])
-    txt_info += 'x01 = %0.3f \t,'%(x_svd[1])
-    txt_info += 'x10 = %0.3f \t,'%(x_svd[2])
+    txt_info += 'x01 = %0.3f \t,'%(x_svd[0])
+    txt_info += 'x10 = %0.3f \t,'%(x_svd[1])
     print (txt_info)
 
     if np.isnan(x_svd[0]):
-        return 0, 0, 0
+        return 0, 0
     else:
-        return x_svd[0], x_svd[1], x_svd[2]
+        return x_svd[0], x_svd[1]
 
 def GetGammaCounts(file_path,ebin):
 
@@ -491,7 +489,8 @@ for energy_idx in range(0,len(energy_bin)-1):
                     total_init_perturbation_bkgd += init_perturbation_bkgd
                     total_perturbation_bkgd += perturbation_bkgd
                     total_combined_bkgd += combined_bkgd
-                    array_per_energy_cr_count += [total_cr_count]
+                    #array_per_energy_cr_count += [total_cr_count]
+                    array_per_energy_cr_count += [data_truth]
                     array_per_energy_elev_mean += [elev_mean]
                     array_per_energy_azim_mean += [azim_mean]
                     array_per_energy_nsb_mean += [nsb_mean]
@@ -512,17 +511,28 @@ for energy_idx in range(0,len(energy_bin)-1):
                         txt_warning += 'energy index = %s \n'%(energy_idx)
                         txt_warning += 'error = %0.1f \n '%(perturbation_error)
                         txt_warning += 'truth = %0.1f \n '%(data_truth)
-                    if total_cr_count<150000: continue
+                    #if total_cr_count<150000: continue
                     if s0_truth==0.: continue
                     if s1_truth==0.: continue
                     if s2_truth==0.: continue
-                    #if avg_diff_el<0.: continue
-                    #if avg_diff_el>0.: continue
-                    #if avg_diff_az<0.: continue
-                    #if avg_diff_az>0.: continue
-                    #if avg_diff_nsb<0.: continue
-                    #if avg_diff_nsb>0.: continue
-                    #if azim_mean>90.: continue
+                    if s1_truth/s2_truth<4.: continue
+                    #if energy_idx==1: 
+                    #    if data_truth<15000: continue
+                    #if energy_idx==2: 
+                    #    if data_truth<10000: continue
+                    #if energy_idx==3: 
+                    #    if data_truth<6000: continue
+                    #if energy_idx==4: 
+                    #    if data_truth<4000: continue
+                    #if energy_idx==5: 
+                    #    if data_truth<2000: continue
+                    #if energy_idx==6: 
+                    #    if data_truth<2000: continue
+                    #if energy_idx==7: 
+                    #    if data_truth<1000: continue
+                    #if energy_idx==8: 
+                    #    if data_truth<400: continue
+                    #if data_truth<10: continue
                     array_per_energy_s0_truth += [s0_truth]
                     array_per_energy_s1_truth += [s1_truth]
                     array_per_energy_s2_truth += [s2_truth]
@@ -617,6 +627,8 @@ for energy_idx in range(0,len(energy_bin)-1):
 
 
 for energy_idx in range(0,len(energy_bin)-1):
+
+    if len(array_s0_truth[energy_idx])==0: continue
 
     fig.clf()
     fig.set_figheight(8)
@@ -1038,16 +1050,16 @@ print ('========================================================================
 print (txt_warning)
 
 
-txt_info_x00 = 'double coefficient_t11xt00_%s[N_energy_bins] = {'%(elev_tag)
 txt_info_x01 = 'double coefficient_t11xt01_%s[N_energy_bins] = {'%(elev_tag)
 txt_info_x10 = 'double coefficient_t11xt10_%s[N_energy_bins] = {'%(elev_tag)
 print ('================================================================================================')
 for energy_idx in range(0,len(energy_bin)-1):
-    x00, x01, x10 = Find_t11_off_diagonal_correlation(array_t00_truth,array_t01_truth,array_t10_truth,array_t11_truth,energy_idx,energy_idx+1)
+    x01, x10 = Find_t11_off_diagonal_correlation(array_t01_truth,array_t10_truth,array_t11_truth,energy_idx,energy_idx+1)
 
     array_t11_pca = []
     for entry in range(0,len(array_t00_truth[energy_idx])):
-        t11_pca = array_t00_truth[energy_idx][entry]*x00 + array_t01_truth[energy_idx][entry]*x01 + array_t10_truth[energy_idx][entry]*x10
+        t11_pca = array_t01_truth[energy_idx][entry]*x01
+        t11_pca += array_t10_truth[energy_idx][entry]*x10 
         array_t11_pca += [t11_pca]
     fig.clf()
     fig.set_figheight(8)
@@ -1060,17 +1072,13 @@ for energy_idx in range(0,len(energy_bin)-1):
     fig.savefig("output_plots/pca_t11_vs_t11_E%s_%s.png"%(energy_idx,folder_tag))
     axbig.remove()
 
-    txt_info_x00 += '%0.1e'%(x00)
     txt_info_x01 += '%0.1e'%(x01)
     txt_info_x10 += '%0.1e'%(x10)
     if energy_idx<len(energy_bin)-2:
-        txt_info_x00 += ','
         txt_info_x01 += ','
         txt_info_x10 += ','
-txt_info_x00 += '};'
 txt_info_x01 += '};'
 txt_info_x10 += '};'
-print (txt_info_x00)
 print (txt_info_x01)
 print (txt_info_x10)
 print ('================================================================================================')

@@ -46,8 +46,6 @@ input_path = '/nevis/vetch/data/rshang/smi_output'
 #folder_tag = '_test1'
 folder_path = 'output_test_2'
 folder_tag = '_test2'
-#folder_path = 'output_test_3'
-#folder_tag = '_test3'
 
 #analysis_method = 'FoV'
 #analysis_method = 'Ratio'
@@ -537,10 +535,14 @@ def MatplotlibMap2D(hist_map,hist_tone,hist_contour,fig,label_x,label_y,label_z,
         #min_z = skymap_mean-2.*skymap_rms
         #max_z = skymap_mean+2.*skymap_rms
 
-    list_levels = []
-    list_levels += [np.arange(0.5, 1.0, 0.3)]
-    list_levels += [np.arange(0.5, 1.0, 0.3)]
-    list_levels += [np.arange(0.5, 1.0, 0.3)]
+    list_50_levels = []
+    list_50_levels += [0.]
+    list_50_levels += [0.]
+    list_50_levels += [0.]
+    list_80_levels = []
+    list_80_levels += [0.]
+    list_80_levels += [0.]
+    list_80_levels += [0.]
     list_grid_contour = []
     if not hist_contour==None:
         for ctr in range(0,len(hist_contour)):
@@ -550,7 +552,11 @@ def MatplotlibMap2D(hist_map,hist_tone,hist_contour,fig,label_x,label_y,label_z,
             max_z_contour = 1.0*hist_contour[ctr].GetMaximum()
             min_z_contour = 0.5*hist_contour[ctr].GetMaximum()
             delta_z = 0.3*hist_contour[ctr].GetMaximum()
-            list_levels[ctr] = np.arange(min_z_contour*max_z/max_z_contour, max_z_contour*max_z/max_z_contour, delta_z*max_z/max_z_contour)
+            list_50_levels[ctr] = np.arange(min_z_contour*max_z/max_z_contour, max_z_contour*max_z/max_z_contour, delta_z*max_z/max_z_contour)
+            max_z_contour = 1.0*hist_contour[ctr].GetMaximum()
+            min_z_contour = 0.8*hist_contour[ctr].GetMaximum()
+            delta_z = 0.3*hist_contour[ctr].GetMaximum()
+            list_80_levels[ctr] = np.arange(min_z_contour*max_z/max_z_contour, max_z_contour*max_z/max_z_contour, delta_z*max_z/max_z_contour)
             contour_x_axis = np.linspace(MapEdge_left,MapEdge_right,hist_contour[ctr].GetNbinsX())
             contour_y_axis = np.linspace(MapEdge_lower,MapEdge_upper,hist_contour[ctr].GetNbinsY())
             for ybin in range(0,len(contour_y_axis)):
@@ -602,9 +608,9 @@ def MatplotlibMap2D(hist_map,hist_tone,hist_contour,fig,label_x,label_y,label_z,
         im = axbig.imshow(grid_z, origin='lower', cmap=colormap, extent=(x_axis.min(),x_axis.max(),y_axis.min(),y_axis.max()),vmin=min_z,vmax=max_z,zorder=0)
 
     list_colors = ['tomato','lime','deepskyblue']
-    list_styles = ['solid','solid','solid']
     for ctr in range(0,len(list_grid_contour)):
-        axbig.contour(list_grid_contour[len(list_grid_contour)-1-ctr], list_levels[len(list_grid_contour)-1-ctr], linestyles=list_styles[len(list_grid_contour)-1-ctr], colors=list_colors[len(list_grid_contour)-1-ctr], extent=(x_axis.min(),x_axis.max(),y_axis.min(),y_axis.max()),zorder=1)
+        axbig.contour(list_grid_contour[len(list_grid_contour)-1-ctr], list_50_levels[len(list_grid_contour)-1-ctr], linestyles='dashed', colors=list_colors[len(list_grid_contour)-1-ctr], extent=(x_axis.min(),x_axis.max(),y_axis.min(),y_axis.max()),zorder=1)
+        axbig.contour(list_grid_contour[len(list_grid_contour)-1-ctr], list_80_levels[len(list_grid_contour)-1-ctr], linestyles='solid', colors=list_colors[len(list_grid_contour)-1-ctr], extent=(x_axis.min(),x_axis.max(),y_axis.min(),y_axis.max()),zorder=1)
     favorite_color = 'k'
     if colormap=='gray':
         favorite_color = 'r'
@@ -1302,7 +1308,7 @@ def ConvertGalacticToRaDec(l, b):
     my_sky = SkyCoord(l*my_unit.deg, b*my_unit.deg, frame='galactic')
     return my_sky.icrs.ra.deg, my_sky.icrs.dec.deg
 
-def GetVelocitySpectrum(map_file, roi_lon, roi_lat, roi_inner_ring, roi_outer_ring):
+def GetVelocitySpectrum(map_file, roi_lon, roi_lat, roi_inner_ring, roi_outer_ring, roi_lat_range=1e10):
 
     roi_ra, roi_dec = ConvertGalacticToRaDec(roi_lon,roi_lat)
     print ('GetVelocitySpectrum, roi_ra = %0.1f, roi_dec = %0.1f'%(roi_ra,roi_dec))
@@ -1343,6 +1349,7 @@ def GetVelocitySpectrum(map_file, roi_lon, roi_lat, roi_inner_ring, roi_outer_ri
                 distance = pow(pow(lon-roi_lon,2)+pow(lat-roi_lat,2),0.5)
                 if distance<roi_inner_ring: continue
                 if distance>roi_outer_ring: continue
+                if abs(lat)>roi_lat_range: continue
                 avg_density += image_data[lat_pix,lon_pix,vel_pix]
                 total_pix += 1.
         avg_density = avg_density/total_pix
@@ -1350,10 +1357,12 @@ def GetVelocitySpectrum(map_file, roi_lon, roi_lat, roi_inner_ring, roi_outer_ri
 
     return vel_axis, column_density
 
-def GetGalfaHIVelocitySpectrum(map_file, roi_lon, roi_lat, roi_inner_ring, roi_outer_ring):
+def GetGalfaHIVelocitySpectrum(map_file, roi_lon, roi_lat, roi_inner_ring, roi_outer_ring, roi_lat_range=1e10):
 
-    vel_min = 0.
-    vel_max = 50.*1e3
+    #vel_min = 0.
+    #vel_max = 50.*1e3
+    vel_min = 81.*1e3
+    vel_max = 102.*1e3
 
     roi_ra, roi_dec = ConvertGalacticToRaDec(roi_lon,roi_lat)
     print ('GetVelocitySpectrum, roi_ra = %0.1f, roi_dec = %0.1f'%(roi_ra,roi_dec))
@@ -1400,6 +1409,8 @@ def GetGalfaHIVelocitySpectrum(map_file, roi_lon, roi_lat, roi_inner_ring, roi_o
                 distance = pow(pow(ra-roi_ra,2)+pow(dec-roi_dec,2),0.5)
                 if distance<roi_inner_ring: continue
                 if distance>roi_outer_ring: continue
+                gal_l, gal_b = ConvertRaDecToGalactic(ra,dec)
+                if abs(gal_b)>roi_lat_range: continue
                 avg_density += image_data[vel_pix,dec_pix,ra_pix]
                 total_pix += 1.
         avg_density = avg_density/total_pix

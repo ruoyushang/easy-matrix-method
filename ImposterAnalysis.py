@@ -9,7 +9,6 @@ from astropy import units as my_unit
 from astropy.coordinates import SkyCoord
 from astropy.coordinates import ICRS, Galactic, FK4, FK5  # Low-level frames
 from astropy.time import Time
-#from scipy.optimize import curve_fit
 import numpy as np
 import matplotlib.pyplot as plt
 from itertools import cycle
@@ -27,6 +26,10 @@ params = {'legend.fontsize': 'x-large',
 pylab.rcParams.update(params)
 
 import CommonPlotFunctions
+
+use_curvefit = False
+if use_curvefit:
+    import CurveFitMethods
 
 fig, ax = plt.subplots()
 figsize_x = 8.6
@@ -526,6 +529,42 @@ def GetFermiFluxSNRG150():
     erg_to_TeV = 0.62
     for entry in range(0,len(energies)):
         energies[entry] = pow(10.,energies[entry])
+        fluxes[entry] = pow(10.,fluxes[entry])*erg_to_TeV
+        flux_errs += [0.5*(pow(10.,flux_errs_up[entry])-pow(10.,flux_errs_lo[entry]))*erg_to_TeV]
+
+    return energies, fluxes, flux_errs
+
+def GetHessSS433e():
+
+    # https://indico.icc.ub.edu/event/46/contributions/1302/attachments/443/871/ID382_OliveraNieto_SS433.pdf
+
+    energies = [0.045,0.354,0.660,0.969,1.276,1.583]
+    fluxes = [-12.47,-12.57,-12.51,-12.53,-12.67,-12.70]
+    flux_errs_up = [-12.31,-12.40,-12.40,-12.43,-12.54,-12.54]
+    flux_errs_lo = [-12.69,-12.83,-12.66,-12.64,-12.83,-12.89]
+    flux_errs = []
+
+    erg_to_TeV = 0.62
+    for entry in range(0,len(energies)):
+        energies[entry] = pow(10.,energies[entry])*1000.
+        fluxes[entry] = pow(10.,fluxes[entry])*erg_to_TeV
+        flux_errs += [0.5*(pow(10.,flux_errs_up[entry])-pow(10.,flux_errs_lo[entry]))*erg_to_TeV]
+
+    return energies, fluxes, flux_errs
+
+def GetHessSS433w():
+
+    # https://indico.icc.ub.edu/event/46/contributions/1302/attachments/443/871/ID382_OliveraNieto_SS433.pdf
+
+    energies = [0.045,0.354,0.660,0.969,1.276,1.583]
+    fluxes = [-12.36,-12.44,-12.74,-12.56,-12.93,-12.80]
+    flux_errs_up = [-12.23,-12.30,-12.57,-12.46,-12.73,-12.61]
+    flux_errs_lo = [-12.55,-12.63,-13.00,-12.68,-13.24,-13.07]
+    flux_errs = []
+
+    erg_to_TeV = 0.62
+    for entry in range(0,len(energies)):
+        energies[entry] = pow(10.,energies[entry])*1000.
         fluxes[entry] = pow(10.,fluxes[entry])*erg_to_TeV
         flux_errs += [0.5*(pow(10.,flux_errs_up[entry])-pow(10.,flux_errs_lo[entry]))*erg_to_TeV]
 
@@ -1067,11 +1106,18 @@ def MakeSpectrum(roi_x,roi_y,roi_r,roi_name,excl_roi_x,excl_roi_y,excl_roi_r):
         cta_energies, cta_ul = GetCTASensitivity()
         Tobias_energies, Tobias_fluxes, Tobias_flux_errs = GetTobiasFluxSS433()
 
+        HessSS433e_energies, HessSS433e_fluxes, HessSS433e_flux_errs = GetHessSS433e()
+        HessSS433w_energies, HessSS433w_fluxes, HessSS433w_flux_errs = GetHessSS433w()
+
         axbig.plot(vts_energies,vts_ul,color='orange',label='50-h VERITAS sensitivity')
         #axbig.plot(cta_energies,cta_ul,color='green',label='50-h CTA-south sensitivity')
-        axbig.errorbar(Tobias_energies,Tobias_fluxes,Tobias_flux_errs,color='red',marker='s',ls='none',label='VERITAS (Gammapy-3D)')
-        axbig.bar(energy_axis, 2.*real_flux_syst_err, bottom=real_flux-real_flux_syst_err, width=2.*energy_error, color='b', align='center', alpha=0.2)
-        axbig.errorbar(energy_axis,real_flux,real_flux_total_err,xerr=energy_error,color='k',marker='_',ls='none',label='VERITAS (LPM)')
+
+        axbig.errorbar(HessSS433e_energies,HessSS433e_fluxes,HessSS433e_flux_errs,marker='s',ls='none',label='HESS eastern',zorder=1)
+        axbig.errorbar(HessSS433w_energies,HessSS433w_fluxes,HessSS433w_flux_errs,marker='s',ls='none',label='HESS western',zorder=2)
+        axbig.errorbar(Tobias_energies,Tobias_fluxes,Tobias_flux_errs,marker='s',ls='none',label='VERITAS (Gammapy-3D)',zorder=3)
+
+        axbig.bar(energy_axis, 2.*real_flux_syst_err, bottom=real_flux-real_flux_syst_err,width=2.*energy_error,color='b',align='center',alpha=0.2,zorder=4)
+        axbig.errorbar(energy_axis,real_flux,real_flux_total_err,xerr=energy_error,color='k',marker='_',ls='none',label='VERITAS (LPM)',zorder=5)
         PrintSpectralDataForNaima(energy_axis,real_flux,real_flux_total_err,'VERITAS')
 
         axbig.set_xlabel('Energy [GeV]')
@@ -1122,28 +1168,38 @@ def MakeSpectrum(roi_x,roi_y,roi_r,roi_name,excl_roi_x,excl_roi_y,excl_roi_r):
         energy_edge_hi += [pow(10,energy_mean_log[eb]+0.5*energy_log_delta)]
 
     zscore = []
-    total_data = 0.
-    total_bkgd = 0.
-    total_bkgd_syst_err = 0.
+    le_total_data = 0.
+    le_total_bkgd = 0.
+    le_total_bkgd_syst_err = 0.
+    he_total_data = 0.
+    he_total_bkgd = 0.
+    he_total_bkgd_syst_err = 0.
     for eb in range(0,len(energy_axis)):
         real_bkgd_stat_err[eb] = pow(real_data[eb],0.5)
         if real_data[eb]==0.:
             zscore += [0.]
         else:
             zscore += [(real_data[eb]-real_bkgd[eb])/pow(pow(real_bkgd_stat_err[eb],2)+pow(real_bkgd_syst_err[eb],2),0.5)]
-        total_data += real_data[eb]
-        total_bkgd += real_bkgd[eb]
-        total_bkgd_syst_err += pow(real_bkgd_syst_err[eb],2)
+        le_total_data += real_data[eb]
+        le_total_bkgd += real_bkgd[eb]
+        le_total_bkgd_syst_err += pow(real_bkgd_syst_err[eb],2)
+        if energy_axis[eb]>energy_bin[energy_bin_break]:
+            he_total_data += real_data[eb]
+            he_total_bkgd += real_bkgd[eb]
+            he_total_bkgd_syst_err += pow(real_bkgd_syst_err[eb],2)
         print ('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
         print ('Energy                  = %0.2f-%0.2f TeV'%(energy_edge_lo[eb],energy_edge_hi[eb]))
         print ('significance in RoI     = %0.2f'%(zscore[eb]))
         print ('total count in RoI      = %s'%(real_data[eb]))
         print ('background count in RoI = %0.2f +/- %0.2f (stat error) +/- %0.2f (syst error)'%(real_bkgd[eb],real_bkgd_stat_err[eb],real_bkgd_syst_err[eb]))
         print ('flux in RoI             = %0.2e +/- %0.2e +/- %0.2e TeV/cm2/s'%(real_flux[eb],real_flux_stat_err[eb],real_flux_syst_err[eb]))
-    total_bkgd_syst_err = pow(total_bkgd_syst_err,0.5)
-    zscore_total = (total_data-total_bkgd)/pow(pow(total_data,1)+pow(total_bkgd_syst_err,2),0.5)
+    le_total_bkgd_syst_err = pow(le_total_bkgd_syst_err,0.5)
+    le_zscore_total = (le_total_data-le_total_bkgd)/pow(pow(le_total_data,1)+pow(le_total_bkgd_syst_err,2),0.5)
+    he_total_bkgd_syst_err = pow(he_total_bkgd_syst_err,0.5)
+    he_zscore_total = (he_total_data-he_total_bkgd)/pow(pow(he_total_data,1)+pow(he_total_bkgd_syst_err,2),0.5)
     print ('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
-    print ('total significance in RoI     = %0.2f'%(zscore_total))
+    print ('total significance in RoI (E>%s GeV) = %0.2f'%(energy_bin[energy_bin_cut_low],le_zscore_total))
+    print ('total significance in RoI (E>%s GeV) = %0.2f'%(energy_bin[energy_bin_break],he_zscore_total))
     zscore = np.array(zscore)
     fig.clf()
     fig.set_figheight(figsize_y)
@@ -1212,85 +1268,6 @@ def MakeFluxMap(flux_map, data_map, bkgd_map, expo_map, norm_map, elev_map):
                 flux_map[ebin].SetBinContent(binx+1,biny+1,flux_content*norm_weight)
                 flux_map[ebin].SetBinError(binx+1,biny+1,flux_stat_err*norm_weight)
 
-
-# Our function to fit is going to be a sum of two-dimensional Gaussians
-def gaussian(x, y, x0, y0, sigma, A):
-    #return A * np.exp( -((x-x0)/(2.*sigma))**2 -((y-y0)/(2.*sigma))**2)
-    return A * np.exp(-((x-x0)**2+(y-y0)**2)/(2*sigma*sigma))/(2*np.pi*sigma*sigma)
-# https://scipython.com/blog/non-linear-least-squares-fitting-of-a-two-dimensional-data/
-# This is the callable that is passed to curve_fit. M is a (2,N) array
-# where N is the total number of data points in Z, which will be ravelled
-# to one dimension.
-def _gaussian(M, *args):
-    x, y = M
-    arr = np.zeros(x.shape)
-    for i in range(len(args)//4):
-       arr += gaussian(x, y, *args[i*4:i*4+4])
-    return arr
-
-def fit_2d_model(hist_map_data, hist_map_bkgd, src_x, src_y):
-
-    nbins_x = hist_map_data.GetNbinsX()
-    nbins_y = hist_map_data.GetNbinsY()
-    lon_min = MapEdge_left
-    lon_max = MapEdge_right
-    lat_min = MapEdge_lower
-    lat_max = MapEdge_upper
-    x_axis = np.linspace(lon_min,lon_max,nbins_x)
-    y_axis = np.linspace(lat_min,lat_max,nbins_y)
-    X_grid, Y_grid = np.meshgrid(x_axis, y_axis)
-    # We need to ravel the meshgrids of X, Y points to a pair of 1-D arrays.
-    XY_stack = np.vstack((X_grid.ravel(), Y_grid.ravel()))
-
-    image_data = np.zeros((hist_map_data.GetNbinsX(),hist_map_data.GetNbinsY()))
-    image_error = np.zeros((hist_map_data.GetNbinsX(),hist_map_data.GetNbinsY()))
-    for binx in range (0,hist_map_data.GetNbinsX()):
-        for biny in range (0,hist_map_data.GetNbinsY()):
-            image_data[biny,binx] = hist_map_data.GetBinContent(binx+1,biny+1) - hist_map_bkgd.GetBinContent(binx+1,biny+1)
-            error = pow(abs(hist_map_data.GetBinContent(binx+1,biny+1)),0.5)
-            image_error[biny,binx] = max(1.,pow(error,0.5))
-
-    #print ('set initial avlues and bounds')
-    initial_prms = []
-    bound_upper_prms = []
-    bound_lower_prms = []
-    lon = src_x
-    lat = src_y
-    sigma = 0.03807
-    initial_prms += [(lon,lat,sigma,10.)]
-    centroid_range = 0.5
-    bound_lower_prms += [(lon-centroid_range,lat-centroid_range,sigma+0.0,0.)]
-    bound_upper_prms += [(lon+centroid_range,lat+centroid_range,sigma+2.0,1e10)]
-    # Flatten the initial guess parameter list.
-    p0 = [p for prms in initial_prms for p in prms]
-    p0_lower = [p for prms in bound_lower_prms for p in prms]
-    p0_upper = [p for prms in bound_upper_prms for p in prms]
-    print ('p0 = %s'%(p0))
-
-    #popt, pcov = curve_fit(_gaussian, XY_stack, image_data.ravel(), p0, sigma=image_error.ravel(), absolute_sigma=True, bounds=(p0_lower,p0_upper))
-    #fit_src_x = popt[0*4+0]
-    #fit_src_x_err = pow(pcov[0*4+0][0*4+0],0.5)
-    #print ('fit_src_x = %0.3f +/- %0.3f'%(fit_src_x,fit_src_x_err))
-    #fit_src_y = popt[0*4+1]
-    #fit_src_y_err = pow(pcov[0*4+1][0*4+1],0.5)
-    #print ('fit_src_y = %0.3f +/- %0.3f'%(fit_src_y,fit_src_y_err))
-    #fit_src_sigma = popt[0*4+2]
-    #fit_src_sigma_err = pow(pcov[0*4+2][0*4+2],0.5)
-    #print ('fit_src_sigma = %0.3f +/- %0.3f'%(fit_src_sigma,fit_src_sigma_err))
-    #true_src_sigma = pow(fit_src_sigma*fit_src_sigma-pow(CommonPlotFunctions.smooth_size_spectroscopy,2),0.5)
-    #print ('true_src_sigma = %0.3f +/- %0.3f'%(true_src_sigma,fit_src_sigma_err))
-    #fit_src_A = popt[0*4+3]
-    #print ('fit_src_A = %0.1e'%(fit_src_A))
-
-    #distance_to_psr = pow(pow(fit_src_x-src_x,2)+pow(fit_src_y-src_y,2),0.5)
-    #distance_to_psr_err = pow(pow(fit_src_x_err,2)+pow(fit_src_y_err,2),0.5)
-    #print ('distance_to_psr = %0.3f +/- %0.3f'%(distance_to_psr,fit_src_x_err))
-
-    #profile_fit = _gaussian(XY_stack, *popt)
-    #residual = image_data.ravel() - profile_fit
-    #chisq = np.sum((residual/image_error.ravel())**2)
-    #dof = len(image_data.ravel())-4
-    #print ('chisq/dof = %0.3f'%(chisq/dof))
 
 
 def MakeExtensionProfile(roi_x,roi_y,roi_r,fit_profile,roi_name,real_map,imposter_maps,erange_tag):
@@ -1380,7 +1357,14 @@ def MakeExtensionProfile(roi_x,roi_y,roi_r,fit_profile,roi_name,real_map,imposte
     fig.set_figwidth(figsize_x)
     axbig = fig.add_subplot()
     axbig.plot(baseline_xaxis, baseline_yaxis, color='b', ls='dashed')
-    axbig.errorbar(theta2,real_profile,real_profile_total_err,color='k',marker='s',ls='none',label='ON data')
+    my_label = ''
+    if erange_tag=='sum':
+        my_label = 'E>%0.2f TeV'%(energy_bin[energy_bin_cut_low]/1000.)
+    if erange_tag=='le':
+        my_label = 'E>%0.2f TeV'%(energy_bin[energy_bin_cut_low]/1000.)
+    if erange_tag=='he':
+        my_label = 'E>%0.2f TeV'%(energy_bin[energy_bin_break]/1000.)
+    axbig.errorbar(theta2,real_profile,real_profile_total_err,color='k',marker='s',ls='none',label=my_label)
     axbig.bar(theta2, 2.*real_profile_syst_err, bottom=-real_profile_syst_err+real_profile, width=1.*theta2_err, color='b', align='center', alpha=0.2)
     #if fit_profile!=0:
     #    axbig.plot(theta2,diffusion_func(theta2,*popt),color='r')
@@ -1506,14 +1490,14 @@ elif 'SS433' in source_name:
     #region_name = 'SS433'
 
     #SS 433 e1
-    region_x = [288.404]
-    region_y = [4.930]
-    region_r = [0.3]
-    region_name = 'SS433e1'
-    #region_x = [288.35,288.50,288.65,288.8]
-    #region_y = [4.93,4.92,4.93,4.94]
-    #region_r = [0.1,0.1,0.1,0.1]
+    #region_x = [288.404]
+    #region_y = [4.930]
+    #region_r = [0.3]
     #region_name = 'SS433e1'
+    region_x = [288.35,288.50,288.65,288.8]
+    region_y = [4.93,4.92,4.93,4.94]
+    region_r = [0.1,0.1,0.1,0.1]
+    region_name = 'SS433e1'
 
     #SS 433 w1
     #region_x = [287.654]
@@ -1522,33 +1506,38 @@ elif 'SS433' in source_name:
     #region_name = 'SS433w1'
 
 elif 'PSR_J1928_p1746' in source_name:
-    region_x = [292.18]
-    region_y = [17.77]
-    region_r = [0.5]
-    region_name = 'J1928'
-
-    #region_x = [292.63]
-    #region_y = [18.87]
+    #region_x = [292.18]
+    #region_y = [17.77]
     #region_r = [0.5]
-    #region_name = 'J1930'
+    #region_name = 'J1928'
+
+    region_x = [292.63]
+    region_y = [18.87]
+    region_r = [0.5]
+    region_name = 'J1930'
+elif 'PSR_J2238_p5903' in source_name:
+    region_x = [340.18]
+    region_y = [58.54]
+    region_r = [0.5]
+    region_name = 'J2240'
 elif 'PSR_J1856_p0245' in source_name:
     region_x = [284.2958333]
     region_y = [2.6666667]
     region_r = [1.0]
     region_name = 'HESS'
 elif 'PSR_J2021_p4026' in source_name:
-    #region_x = [305.0200000]
-    #region_y = [40.7572222]
-    #region_r = [0.3]
-    #region_name = 'Paper'
+    region_x = [305.0200000]
+    region_y = [40.7572222]
+    region_r = [0.3]
+    region_name = 'Paper'
     #region_x = [305.37]
     #region_y = [40.45]
     #region_r = [0.5]
     #region_name = 'PSR'
-    region_x = [305.21]
-    region_y = [40.43]
-    region_r = [0.5]
-    region_name = 'SNR'
+    #region_x = [305.21]
+    #region_y = [40.43]
+    #region_r = [0.5]
+    #region_name = 'SNR'
 elif '2HWC_J1953_p294' in source_name:
     # G067.6+00.9
     region_x = [299.44]
@@ -1586,21 +1575,23 @@ elif 'SNR_G189_p03' in source_name:
     #src_x = 93.51
     #src_y = 21.26
 
+
     region_x = [src_x]
     region_y = [src_y]
     region_r = [0.5]
 
-    #src_x = 94.213
-    #src_y = 22.503
+    #region_x = [src_x]
+    #region_y = [src_y]
+    #region_r = [1.0]
     #excl_region_x = [src_x]
     #excl_region_y = [src_y]
-    #excl_region_r = [0.4]
+    #excl_region_r = [0.38]
 
 
 elif 'PSR_J2032_p4127' in source_name:
     region_x = [MapCenter_x]
     region_y = [MapCenter_y]
-    region_r = [1.5]
+    region_r = [1.0]
     region_name = 'Center'
 
 
@@ -2034,12 +2025,13 @@ if 'PSR_J1907_p0602' in source_name:
     avg_column_density_inner = 0.
     avg_column_density_outer = 0.
     n_channels = 0.
+    delta_vel = vel_axis_inner[1]-vel_axis_inner[0]
     for idx in range(0,len(vel_axis_inner)):
         if vel_axis_inner[idx]<vel_lower: continue
         if vel_axis_inner[idx]>vel_upper: continue
         n_channels += 1.
-        avg_column_density_inner += column_density_axis_inner[idx]
-        avg_column_density_outer += column_density_axis_outer[idx]
+        avg_column_density_inner += column_density_axis_inner[idx]*delta_vel
+        avg_column_density_outer += column_density_axis_outer[idx]*delta_vel
     print ('vel_lower = %s, vel_upper = %s'%(vel_lower,vel_upper))
     print ('avg_column_density_inner = %0.1e'%(avg_column_density_inner))
     print ('avg_column_density_outer = %0.1e'%(avg_column_density_outer))
@@ -2049,12 +2041,13 @@ if 'PSR_J1907_p0602' in source_name:
     avg_column_density_inner = 0.
     avg_column_density_outer = 0.
     n_channels = 0.
+    delta_vel = vel_axis_inner[1]-vel_axis_inner[0]
     for idx in range(0,len(vel_axis_inner)):
         if vel_axis_inner[idx]<vel_lower: continue
         if vel_axis_inner[idx]>vel_upper: continue
         n_channels += 1.
-        avg_column_density_inner += column_density_axis_inner[idx]
-        avg_column_density_outer += column_density_axis_outer[idx]
+        avg_column_density_inner += column_density_axis_inner[idx]*delta_vel
+        avg_column_density_outer += column_density_axis_outer[idx]*delta_vel
     print ('vel_lower = %s, vel_upper = %s'%(vel_lower,vel_upper))
     print ('avg_column_density_inner = %0.1e'%(avg_column_density_inner))
     print ('avg_column_density_outer = %0.1e'%(avg_column_density_outer))
@@ -2121,16 +2114,17 @@ if 'PSR_J1907_p0602' in source_name:
     #Hist_Tobias_reflect = CommonPlotFunctions.reflectXaxis(Hist_Tobias)
     #CommonPlotFunctions.MatplotlibMap2D(Hist_Tobias_reflect,None,[],fig,'RA','Dec','Significance','SkymapTobias_%s'%(plot_tag))
 
-    print ('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
-    print ('Fit 2d Gaussian (LE)')
-    fit_2d_model(hist_real_data_skymap_le, hist_real_bkgd_skymap_le, 286.98, 6.04)
-    print ('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
-    print ('Fit 2d Gaussian (HE)')
-    fit_2d_model(hist_real_data_skymap_he, hist_real_bkgd_skymap_he, 286.98, 6.04)
-    print ('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
-    print ('Fit 2d Gaussian (sum)')
-    fit_2d_model(hist_real_data_skymap_sum, hist_real_bkgd_skymap_sum, 286.98, 6.04)
-    print ('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+    if use_curvefit:
+        print ('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+        print ('Fit 2d Gaussian (LE)')
+        CurveFitMethods.fit_2d_model(hist_real_data_skymap_le, hist_real_bkgd_skymap_le, 286.98, 6.04)
+        print ('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+        print ('Fit 2d Gaussian (HE)')
+        CurveFitMethods.fit_2d_model(hist_real_data_skymap_he, hist_real_bkgd_skymap_he, 286.98, 6.04)
+        print ('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+        print ('Fit 2d Gaussian (sum)')
+        CurveFitMethods.fit_2d_model(hist_real_data_skymap_sum, hist_real_bkgd_skymap_sum, 286.98, 6.04)
+        print ('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
 
 elif 'PSR_J2032_p4127' in source_name:
 
@@ -2205,18 +2199,82 @@ elif 'PSR_J1856_p0245' in source_name:
 
     MWL_map_file = '/nevis/ged/data/rshang/MW_FITS/GALFA_HI_RA+DEC_284.00+02.35_N.fits' 
     CommonPlotFunctions.GetSlicedGalfaHIDataCubeMap(MWL_map_file, Hist_mc_intensity, 81.*1e3, 102.*1e3, True)
+    HI_intensity_to_H_column_density = 1.8*1e18
     Hist_mc_column.Reset()
     Hist_mc_column.Add(Hist_mc_intensity)
-    Hist_mc_column.Scale(CO_intensity_to_H_column_density) # H2 column density in unit of 1/cm2
+    Hist_mc_column.Scale(HI_intensity_to_H_column_density) # H2 column density in unit of 1/cm2
     Hist_mc_column_reflect = CommonPlotFunctions.reflectXaxis(Hist_mc_column)
     CommonPlotFunctions.MatplotlibMap2D(Hist_mc_column_reflect,None,[hist_real_diff_skymap_he_reflect,hist_real_diff_skymap_le_reflect],fig,'RA','Dec','column density [$1/cm^{2}$]','SkymapRadioHIMap_p10p40_%s'%(plot_tag),colormap='gray')
 
+    MWL_map_file = '/nevis/ged/data/rshang/MW_FITS/GALFA_HI_RA+DEC_284.00+02.35_N.fits' 
+    # HESS J1857+026, Gal. l, b = (35.96,-0.06)
+    vel_axis_inner, column_density_axis_inner = CommonPlotFunctions.GetGalfaHIVelocitySpectrum(MWL_map_file, 35.96, -0.06, 0.0, 0.3, roi_lat_range=0.5)
+    vel_axis_outer, column_density_axis_outer = CommonPlotFunctions.GetGalfaHIVelocitySpectrum(MWL_map_file, 35.96, -0.06, 0.5, 1.0, roi_lat_range=0.5)
+    column_density_axis_inner = HI_intensity_to_H_column_density*np.array(column_density_axis_inner)
+    column_density_axis_outer = HI_intensity_to_H_column_density*np.array(column_density_axis_outer)
+    column_density_axis_diff = column_density_axis_outer - column_density_axis_inner
+
+    vel_lower = 81.*1e3
+    vel_upper = 102.*1e3
+    avg_column_density_inner = 0.
+    avg_column_density_outer = 0.
+    n_channels = 0.
+    delta_vel = (vel_axis_inner[1]-vel_axis_inner[0])/1000.
+    for idx in range(0,len(vel_axis_inner)):
+        if vel_axis_inner[idx]<vel_lower: continue
+        if vel_axis_inner[idx]>vel_upper: continue
+        n_channels += 1.
+        avg_column_density_inner += column_density_axis_inner[idx]*delta_vel
+        avg_column_density_outer += column_density_axis_outer[idx]*delta_vel
+    print ('vel_lower = %s, vel_upper = %s'%(vel_lower,vel_upper))
+    print ('avg_column_density_inner = %0.1e'%(avg_column_density_inner))
+    print ('avg_column_density_outer = %0.1e'%(avg_column_density_outer))
+
+    max_idx = np.argmax(column_density_axis_diff)
+    print ('CO velocity of highest emission = %0.1f km/s'%(vel_axis_inner[max_idx]))
+    min_idx = np.argmin(column_density_axis_diff)
+    print ('CO velocity of lowest emission = %0.1f km/s'%(vel_axis_inner[min_idx]))
+
+    fig.clf()
+    fig.set_figheight(figsize_y)
+    fig.set_figwidth(figsize_x)
+    axbig = fig.add_subplot()
+    axbig.plot(vel_axis_inner, column_density_axis_inner)
+    axbig.plot(vel_axis_inner, column_density_axis_outer)
+    axbig.set_xlabel('$V_{LSR}$ [km/s]')
+    axbig.set_ylabel('column density per channel [$1/cm^{2}/(km/s)$]')
+    fig.savefig("output_plots/VelocitySpectrumCO_Cavity.png",bbox_inches='tight')
+    axbig.remove()
+    fig.clf()
+    fig.set_figheight(figsize_y)
+    fig.set_figwidth(figsize_x)
+    axbig = fig.add_subplot()
+    axbig.plot(vel_axis_inner, column_density_axis_diff)
+    axbig.set_xlabel('$V_{LSR}$ [km/s]')
+    axbig.set_ylabel('column density per channel [$1/cm^{2}/(km/s)$]')
+    fig.savefig("output_plots/VelocitySpectrumCO_Diff.png",bbox_inches='tight')
+    axbig.remove()
+
+    if use_curvefit:
+        print ('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+        print ('Fit 2d Gaussian (LE)')
+        CurveFitMethods.fit_2d_model(hist_real_data_skymap_le, hist_real_bkgd_skymap_le, 284.2958333, 2.6666667)
+        print ('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+        print ('Fit 2d Gaussian (HE)')
+        CurveFitMethods.fit_2d_model(hist_real_data_skymap_he, hist_real_bkgd_skymap_he, 284.2958333, 2.6666667)
+        print ('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+        print ('Fit 2d Gaussian (sum)')
+        CurveFitMethods.fit_2d_model(hist_real_data_skymap_sum, hist_real_bkgd_skymap_sum, 284.2958333, 2.6666667)
+        print ('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+
+
 elif 'SS433' in source_name:
 
-    print ('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
-    print ('Fit 2d Gaussian')
-    fit_2d_model(hist_real_data_skymap_sum, hist_real_bkgd_skymap_sum, 288.0833333, 4.9166667)
-    print ('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+    if use_curvefit:
+        print ('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+        print ('Fit 2d Gaussian')
+        CurveFitMethods.fit_2d_model(hist_real_data_skymap_sum, hist_real_bkgd_skymap_sum, 288.0833333, 4.9166667)
+        print ('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
 
 fig.clf()
 fig.set_figheight(8)

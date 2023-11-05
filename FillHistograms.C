@@ -1510,16 +1510,13 @@ MatrixXcd MatrixPerturbationMethod(int e_idx, double elev, MatrixXcd mtx_t_input
             int idx_k1 = 1;
             int idx_n1 = 1;
             int idx_k2 = 0;
-            int idx_n2 = 0;
-            int idx_k3 = 0;
-            int idx_n3 = 1;
-            int idx_k4 = 1;
-            int idx_n4 = 0;
+            int idx_n2 = 1;
+            int idx_k3 = 1;
+            int idx_n3 = 0;
 
             int idx_v1 = idx_k1*size_n + idx_n1;
             int idx_v2 = idx_k2*size_n + idx_n2;
             int idx_v3 = idx_k3*size_n + idx_n3;
-            int idx_v4 = idx_k4*size_n + idx_n4;
             int idx_u1 = idx_v1;
             double sigma_1 = mtx_S_base(idx_k1,idx_k1);
             double sigma_2 = mtx_S_base(idx_k2,idx_k2);
@@ -1528,15 +1525,13 @@ MatrixXcd MatrixPerturbationMethod(int e_idx, double elev, MatrixXcd mtx_t_input
             mtx_A(idx_u1,idx_v1) = 1.;
             if (Elev_mean>65.)
             {
-                mtx_A(idx_u1,idx_v2) = -1.*coefficient_t11xt00_sza[e_idx];
-                mtx_A(idx_u1,idx_v3) = -1.*coefficient_t11xt01_sza[e_idx];
-                mtx_A(idx_u1,idx_v4) = -1.*coefficient_t11xt10_sza[e_idx];
+                mtx_A(idx_u1,idx_v2) = -1.*coefficient_t11xt01_sza[e_idx];
+                mtx_A(idx_u1,idx_v3) = -1.*coefficient_t11xt10_sza[e_idx];
             }
             else
             {
-                mtx_A(idx_u1,idx_v2) = -1.*coefficient_t11xt00_lza[e_idx];
-                mtx_A(idx_u1,idx_v3) = -1.*coefficient_t11xt01_lza[e_idx];
-                mtx_A(idx_u1,idx_v4) = -1.*coefficient_t11xt10_lza[e_idx];
+                mtx_A(idx_u1,idx_v2) = -1.*coefficient_t11xt01_lza[e_idx];
+                mtx_A(idx_u1,idx_v3) = -1.*coefficient_t11xt10_lza[e_idx];
             }
             vtr_Delta(idx_u1) = 0.;
         }

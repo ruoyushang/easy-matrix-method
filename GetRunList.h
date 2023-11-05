@@ -14,6 +14,31 @@ pair<double,double> GetSourceRaDec(TString source_name)
 {
     double Source_RA = 0.;
     double Source_Dec = 0.;
+    if (source_name.Contains("1ES1959_p650"))
+    {
+            Source_RA = 300.00;
+            Source_Dec = 65.15;
+    }
+    if (source_name.Contains("PSR_J2229_p6114"))
+    {
+            Source_RA = 337.27;
+            Source_Dec = 61.23;
+    }
+    if (source_name.Contains("PSR_B1937_p21"))
+    {
+            Source_RA = 295.45;
+            Source_Dec = 21.44;
+    }
+    if (source_name.Contains("G079_p0p3"))
+    {
+            Source_RA = 308.12;
+            Source_Dec = 40.33;
+    }
+    if (source_name.Contains("2FHL_J0431_p5553e"))
+    {
+            Source_RA = 67.81;
+            Source_Dec = 55.89;
+    }
     if (source_name.Contains("PSR_J2238_p5903"))
     {
             Source_RA = 339.6079;
