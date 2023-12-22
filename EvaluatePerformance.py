@@ -1083,7 +1083,7 @@ print (txt_info_x01)
 print (txt_info_x10)
 print ('================================================================================================')
 
-txt_info_x0 = 'double coefficient_s1xs0_%s[N_energy_bins] = {'%(elev_tag)
+txt_info_x0 = 'double coefficient_t11xt00_%s[N_energy_bins] = {'%(elev_tag)
 print ('================================================================================================')
 for energy_idx in range(0,len(energy_bin)-1):
     x0 = Find_s1_on_diagonal_correlation(array_t00_truth,array_t11_truth,energy_idx,energy_idx+1)

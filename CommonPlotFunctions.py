@@ -30,7 +30,7 @@ from matplotlib.ticker import NullFormatter
 from operator import itemgetter, attrgetter
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from mpl_toolkits import mplot3d
-#import healpy as hp
+import healpy as hp
 #from spectral_cube import SpectralCube
 
 # Great examples of matplotlib plots: https://atmamani.github.io/cheatsheets/matplotlib/matplotlib_2/
@@ -42,10 +42,12 @@ input_path = '/nevis/vetch/data/rshang/smi_output'
 #folder_tag = 'paper'
 #energy_bin = [100.,200.,251.,316.,398.,501.,794.,1259.,1995.,3162.,5011.,7943.]
 
-#folder_path = 'output_test_1'
-#folder_tag = '_test1'
-folder_path = 'output_test_2'
-folder_tag = '_test2'
+folder_path = 'output_test_1'
+folder_tag = '_test1'
+energy_bin = [300.,538.,965.,1732.,3107.,5574.,10000.]
+#folder_path = 'output_test_2'
+#folder_tag = '_test2'
+#energy_bin = [100.,159.,200.,251.,316.,398.,501.,794.,1259.,1995.,3162.,5011.,7943.]
 
 #analysis_method = 'FoV'
 #analysis_method = 'Ratio'
@@ -54,8 +56,6 @@ folder_tag = '_test2'
 analysis_method = 'Perturbation'
 #analysis_method = 'Combined'
 
-energy_bin = [100.,159.,200.,251.,316.,398.,501.,794.,1259.,1995.,3162.,5011.,7943.]
-#energy_bin = [100.,167.,300.,538.,965.,1732.,3107.,5574.,10000.]
 
 smooth_size_spectroscopy = 0.07
 calibration_radius = 0.15 # need to be larger than the PSF and smaller than the integration radius
@@ -328,7 +328,7 @@ def GetGammaSourceInfo():
 
     drawBrightStar = False
     drawPulsar = True
-    drawSNR = False
+    drawSNR = True
     drawLHAASO = False
     drawFermi = False
     drawHAWC = False
@@ -342,6 +342,23 @@ def GetGammaSourceInfo():
             other_stars += [star_name[src]]
             other_stars_type += ['Star']
             other_star_coord += [[src_ra,src_dec,0.]]
+
+    if drawSNR:
+        target_snr_name, target_snr_ra, target_snr_dec, target_snr_size = ReadSNRTargetListFromCSVFile()
+        for src in range(0,len(target_snr_name)):
+            gamma_source_name = target_snr_name[src]
+            gamma_source_ra = target_snr_ra[src]
+            gamma_source_dec = target_snr_dec[src]
+            gamma_source_size = target_snr_size[src]
+            near_a_source = False
+            for entry in range(0,len(other_stars)):
+                distance = pow(gamma_source_ra-other_star_coord[entry][0],2)+pow(gamma_source_dec-other_star_coord[entry][1],2)
+                if distance<near_source_cut*near_source_cut:
+                    near_a_source = True
+            if not near_a_source:
+                other_stars += [gamma_source_name]
+                other_stars_type += ['SNR']
+                other_star_coord += [[gamma_source_ra,gamma_source_dec,gamma_source_size]]
 
     if drawPulsar:
         target_psr_name, target_psr_ra, target_psr_dec, target_psr_dist, target_psr_age = ReadATNFTargetListFromFile('ATNF_pulsar_full_list.txt')
@@ -361,23 +378,6 @@ def GetGammaSourceInfo():
                 else:
                         other_stars_type += ['PSR']
                 other_star_coord += [[gamma_source_ra,gamma_source_dec,0.]]
-
-    if drawSNR:
-        target_snr_name, target_snr_ra, target_snr_dec, target_snr_size = ReadSNRTargetListFromCSVFile()
-        for src in range(0,len(target_snr_name)):
-            gamma_source_name = target_snr_name[src]
-            gamma_source_ra = target_snr_ra[src]
-            gamma_source_dec = target_snr_dec[src]
-            gamma_source_size = target_snr_size[src]
-            near_a_source = False
-            for entry in range(0,len(other_stars)):
-                distance = pow(gamma_source_ra-other_star_coord[entry][0],2)+pow(gamma_source_dec-other_star_coord[entry][1],2)
-                if distance<near_source_cut*near_source_cut:
-                    near_a_source = True
-            if not near_a_source:
-                other_stars += [gamma_source_name]
-                other_stars_type += ['SNR']
-                other_star_coord += [[gamma_source_ra,gamma_source_dec,gamma_source_size]]
 
     if drawHAWC:
         target_hwc_name, target_hwc_ra, target_hwc_dec = ReadHAWCTargetListFromFile('Cat_3HWC.txt')
@@ -577,7 +577,7 @@ def MatplotlibMap2D(hist_map,hist_tone,hist_contour,fig,label_x,label_y,label_z,
     other_star_labels = []
     other_star_types = []
     other_star_markers = []
-    star_range = 0.8*(MapEdge_right-MapEdge_left)/2.
+    star_range = 0.4*(MapEdge_right-MapEdge_left)/2.
     source_ra = (MapEdge_left+MapEdge_right)/2.
     source_dec = (MapEdge_lower+MapEdge_upper)/2.
     n_stars = 0
@@ -614,6 +614,8 @@ def MatplotlibMap2D(hist_map,hist_tone,hist_contour,fig,label_x,label_y,label_z,
     favorite_color = 'k'
     if colormap=='gray':
         favorite_color = 'r'
+    if colormap=='magma':
+        favorite_color = 'g'
     for star in range(0,len(other_star_markers)):
         marker_size = 60
         if other_star_types[star]=='PSR':
@@ -1204,36 +1206,36 @@ def GetSlicedDataCubeMap(map_file, hist_map, vel_low, vel_up):
             pix_lat = int(map_pixs[2])
             hist_map.SetBinContent(binx+1,biny+1,image_data_reduced_z[pix_lat,pix_lon])
 
-#def GetHealpixMap(map_file, hist_map, isRaDec):
-#
-#    hist_map.Reset()
-#    nbins_x = hist_map.GetNbinsX()
-#    nbins_y = hist_map.GetNbinsY()
-#    MapEdge_left = hist_map.GetXaxis().GetBinLowEdge(1)
-#    MapEdge_right = hist_map.GetXaxis().GetBinLowEdge(hist_map.GetNbinsX()+1)
-#    MapEdge_lower = hist_map.GetYaxis().GetBinLowEdge(1)
-#    MapEdge_upper = hist_map.GetYaxis().GetBinLowEdge(hist_map.GetNbinsY()+1)
-#    MapCenter_x = (MapEdge_left+MapEdge_right)/2.
-#    MapCenter_y = (MapEdge_lower+MapEdge_upper)/2.
-#
-#    hpx, header = hp.read_map(map_file, field=0, h=True)
-#    #hpx, header = hp.read_map(map_file, field=1, h=True)
-#    npix = len(hpx)
-#    nside = hp.npix2nside(npix)
-#    for ipix in range(0,npix):
-#        theta, phi = hp.pix2ang(nside, ipix)
-#        ra = np.rad2deg(phi)
-#        dec = np.rad2deg(0.5 * np.pi - theta)
-#        fits_data = hpx[ipix]
-#        binx = hist_map.GetXaxis().FindBin(ra)
-#        biny = hist_map.GetYaxis().FindBin(dec)
-#        if binx<1: continue
-#        if biny<1: continue
-#        if binx>hist_map.GetNbinsX(): continue
-#        if biny>hist_map.GetNbinsY(): continue
-#        hist_map.SetBinContent(binx,biny,fits_data)
-#
-#    return hist_map
+def GetHealpixMap(map_file, hist_map, isRaDec):
+
+    hist_map.Reset()
+    nbins_x = hist_map.GetNbinsX()
+    nbins_y = hist_map.GetNbinsY()
+    MapEdge_left = hist_map.GetXaxis().GetBinLowEdge(1)
+    MapEdge_right = hist_map.GetXaxis().GetBinLowEdge(hist_map.GetNbinsX()+1)
+    MapEdge_lower = hist_map.GetYaxis().GetBinLowEdge(1)
+    MapEdge_upper = hist_map.GetYaxis().GetBinLowEdge(hist_map.GetNbinsY()+1)
+    MapCenter_x = (MapEdge_left+MapEdge_right)/2.
+    MapCenter_y = (MapEdge_lower+MapEdge_upper)/2.
+
+    hpx, header = hp.read_map(map_file, field=0, h=True)
+    #hpx, header = hp.read_map(map_file, field=1, h=True)
+    npix = len(hpx)
+    nside = hp.npix2nside(npix)
+    for ipix in range(0,npix):
+        theta, phi = hp.pix2ang(nside, ipix)
+        ra = np.rad2deg(phi)
+        dec = np.rad2deg(0.5 * np.pi - theta)
+        fits_data = hpx[ipix]
+        binx = hist_map.GetXaxis().FindBin(ra)
+        biny = hist_map.GetYaxis().FindBin(dec)
+        if binx<1: continue
+        if biny<1: continue
+        if binx>hist_map.GetNbinsX(): continue
+        if biny>hist_map.GetNbinsY(): continue
+        hist_map.SetBinContent(binx,biny,fits_data)
+
+    return hist_map
 
 def MatplotlibHist2D(hist_map,fig,label_x,label_y,label_z,plotname,zmax=0,zmin=0):
 

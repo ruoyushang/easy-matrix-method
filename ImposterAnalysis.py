@@ -53,6 +53,9 @@ source_name = sys.argv[1]
 input_epoch = sys.argv[2] # 'V5' or 'V6' or 'V5V6'
 isON = sys.argv[3]  # 'ON' or 'OFF'
 
+#doFluxCalibrateion = True
+doFluxCalibrateion = False
+
 doImposter = False
 if isON=='ON':
     doImposter = True
@@ -199,16 +202,14 @@ def GetMapNormalDistribution(hist_mean):
 
 def GetFluxCalibration(energy,elev):
 
-    if energy_bin_cut_low==0:
+    if doFluxCalibrateion:
         return 1.
 
     # The energy threshold needs to be as low as 100 GeV for this method to work.
 
+    str_flux_calibration = ['4.04e+00', '1.70e+00', '7.43e-01', '3.22e-01', '1.20e-01', '5.68e-02']
     # v490
-    str_flux_calibration = ['3.46e+00', '1.44e+00', '1.70e+00', '1.58e+00', '1.24e+00', '8.49e-01', '1.34e+00', '6.98e-01', '3.78e-01', '1.91e-01', '9.12e-02', '4.66e-02']
-    # v487
-    if folder_path=='output_nuclear_v487':
-        str_flux_calibration = ['1.39e+01', '2.79e+00', '2.36e+00', '1.93e+00', '1.28e+00', '1.82e+00', '8.77e-01', '4.33e-01', '2.29e-01', '1.16e-01', '6.02e-02']
+    #str_flux_calibration = ['3.46e+00', '1.44e+00', '1.70e+00', '1.58e+00', '1.24e+00', '8.49e-01', '1.34e+00', '6.98e-01', '3.78e-01', '1.91e-01', '9.12e-02', '4.66e-02']
 
     flux_calibration = []
     for string in str_flux_calibration:
@@ -625,15 +626,15 @@ def GetTobiasFluxSS433():
     #flux_lo = pow(10,log_flux_dnde_lo)*pow(energies/1000.,2)
     #flux_errs = 0.5*(flux_hi-flux_lo)
 
-    log_energy_tev = [0.00,0.22,0.43,0.64]
+    log_energy_tev = [np.log10(1.242),np.log10(2.125),np.log10(4.423),np.log10(9.203)]
     log_energy_tev = np.array(log_energy_tev)
     energies = pow(10,log_energy_tev)*1000.
-    fluxes = [3.57,2.94,1.52,0.36]
-    flux_errs = [1.02,0.56,0.31,0.12]
+    fluxes = [7.67,3.969,0.508,0.267]
+    flux_errs = [3.60,3.055,0.2425,0.2810]
     fluxes = np.array(fluxes)
     flux_errs = np.array(flux_errs)
-    fluxes = fluxes*pow(10,-13)*pow(energies/1000.,2)
-    flux_errs = flux_errs*pow(10,-13)*pow(energies/1000.,2)
+    fluxes = fluxes*pow(10,-14)*pow(energies/1000.,2)
+    flux_errs = flux_errs*pow(10,-14)*pow(energies/1000.,2)
 
     return energies, fluxes, flux_errs
 
@@ -1216,7 +1217,9 @@ def MakeSpectrum(roi_x,roi_y,roi_r,roi_name,excl_roi_x,excl_roi_y,excl_roi_r):
 
 
 
-def MakeFluxMap(flux_map, data_map, bkgd_map, expo_map, norm_map, elev_map):
+def MakeFluxMap(flux_map, data_map, bkgd_map, expo_map, norm_map, elev_map, hist_effarea):
+
+    print (f'total_data_expo = {total_data_expo}')
 
     #norm_map_smooth = CommonPlotFunctions.Smooth2DMap(norm_map,0.3,True)
     skymap_bin_size_x = data_map[0].GetXaxis().GetBinCenter(2)-data_map[0].GetXaxis().GetBinCenter(1)
@@ -1264,9 +1267,17 @@ def MakeFluxMap(flux_map, data_map, bkgd_map, expo_map, norm_map, elev_map):
                 if local_exposure<=0.: continue
                 flux_content = (data_content-bkgd_content)/local_exposure*pow(energy_bin[ebin]/1e3,2)/(100.*100.*3600.)/delta_E
                 stat_data_err = pow(max(bkgd_content,0.),0.5)
-                flux_stat_err = max(stat_data_err,1.)/local_exposure*pow(energy_bin[ebin]/1e3,2)/(100.*100.*3600.)/delta_E
+                #flux_stat_err = max(stat_data_err,1.)/local_exposure*pow(energy_bin[ebin]/1e3,2)/(100.*100.*3600.)/delta_E
+                flux_stat_err = stat_data_err/local_exposure*pow(energy_bin[ebin]/1e3,2)/(100.*100.*3600.)/delta_E
                 flux_map[ebin].SetBinContent(binx+1,biny+1,flux_content*norm_weight)
                 flux_map[ebin].SetBinError(binx+1,biny+1,flux_stat_err*norm_weight)
+
+                #mean_energy = (energy_bin[ebin+1]+energy_bin[ebin])/2.
+                mean_energy = energy_bin[ebin]
+                effarea = 0.
+                if (flux_content)>0.:
+                    effarea = (data_content-bkgd_content)*(pow(energy_bin[ebin]/1e3,2))/(flux_content*norm_weight*total_data_expo*3600.)/(delta_E/1000.)
+                hist_effarea.Fill(mean_energy,effarea,pow(data_content,0.5))
 
 
 
@@ -1490,14 +1501,14 @@ elif 'SS433' in source_name:
     #region_name = 'SS433'
 
     #SS 433 e1
-    #region_x = [288.404]
-    #region_y = [4.930]
-    #region_r = [0.3]
-    #region_name = 'SS433e1'
-    region_x = [288.35,288.50,288.65,288.8]
-    region_y = [4.93,4.92,4.93,4.94]
-    region_r = [0.1,0.1,0.1,0.1]
+    region_x = [288.404]
+    region_y = [4.930]
+    region_r = [0.3]
     region_name = 'SS433e1'
+    #region_x = [288.35,288.50,288.65,288.8]
+    #region_y = [4.93,4.92,4.93,4.94]
+    #region_r = [0.1,0.1,0.1,0.1]
+    #region_name = 'SS433e1'
 
     #SS 433 w1
     #region_x = [287.654]
@@ -1506,15 +1517,15 @@ elif 'SS433' in source_name:
     #region_name = 'SS433w1'
 
 elif 'PSR_J1928_p1746' in source_name:
-    #region_x = [292.18]
-    #region_y = [17.77]
-    #region_r = [0.5]
-    #region_name = 'J1928'
-
-    region_x = [292.63]
-    region_y = [18.87]
+    region_x = [292.18]
+    region_y = [17.77]
     region_r = [0.5]
-    region_name = 'J1930'
+    region_name = 'J1928'
+
+    #region_x = [292.63]
+    #region_y = [18.87]
+    #region_r = [0.5]
+    #region_name = 'J1930'
 elif 'PSR_J2238_p5903' in source_name:
     region_x = [340.18]
     region_y = [58.54]
@@ -1576,21 +1587,28 @@ elif 'SNR_G189_p03' in source_name:
     #src_y = 21.26
 
 
-    region_x = [src_x]
-    region_y = [src_y]
-    region_r = [0.5]
-
     #region_x = [src_x]
     #region_y = [src_y]
-    #region_r = [1.0]
-    #excl_region_x = [src_x]
-    #excl_region_y = [src_y]
-    #excl_region_r = [0.38]
+    #region_r = [0.5]
+
+    region_x = [src_x]
+    region_y = [src_y]
+    region_r = [1.0]
+    excl_region_x = [src_x]
+    excl_region_y = [src_y]
+    excl_region_r = [0.38]
 
 
 elif 'PSR_J2032_p4127' in source_name:
     region_x = [MapCenter_x]
     region_y = [MapCenter_y]
+    region_r = [1.0]
+    region_name = 'Center'
+
+elif 'LHAASO_J0622_p3754' in source_name:
+    region_x = [MapCenter_x]
+    region_y = [MapCenter_y]
+    #region_r = [0.1]
     region_r = [1.0]
     region_name = 'Center'
 
@@ -1897,9 +1915,36 @@ CommonPlotFunctions.MatplotlibMap2D(hist_azim_skymap_reflect,hist_azim_skymap_re
 hist_nsb_skymap_reflect = CommonPlotFunctions.reflectXaxis(hist_nsb_skymap)
 CommonPlotFunctions.MatplotlibMap2D(hist_nsb_skymap_reflect,hist_nsb_skymap_reflect,[],fig,'RA','Dec','NSB','SkymapNSB')
 
-MakeFluxMap(hist_real_flux_skymap, hist_real_data_skymap, hist_real_bkgd_skymap, hist_real_expo_skymap, hist_real_norm_skymap_sum, hist_elev_skymap)
+hist_effarea_on = ROOT.TProfile("hist_effarea_on","",len(energy_bin)-1,energy_bin[0],energy_bin[len(energy_bin)-1])
+hist_effarea_off = ROOT.TProfile("hist_effarea_off","",len(energy_bin)-1,energy_bin[0],energy_bin[len(energy_bin)-1])
+MakeFluxMap(hist_real_flux_skymap, hist_real_data_skymap, hist_real_bkgd_skymap, hist_real_expo_skymap, hist_real_norm_skymap_sum, hist_elev_skymap, hist_effarea_on)
 for imp in range(0,n_imposters):
-    MakeFluxMap(hist_imposter_flux_skymap[imp], hist_imposter_data_skymap[imp], hist_imposter_bkgd_skymap[imp], hist_real_expo_skymap, hist_real_norm_skymap_sum, hist_elev_skymap)
+    MakeFluxMap(hist_imposter_flux_skymap[imp], hist_imposter_data_skymap[imp], hist_imposter_bkgd_skymap[imp], hist_real_expo_skymap, hist_real_norm_skymap_sum, hist_elev_skymap,hist_effarea_off)
+
+effarea_energy = []
+on_effarea_size = []
+off_effarea_size = []
+for entry in range(0,hist_effarea_on.GetNbinsX()):
+    if hist_effarea_on.GetBinContent(entry)==0.: continue
+    effarea_energy += [hist_effarea_on.GetXaxis().GetBinCenter(entry)]
+    on_effarea_size += [hist_effarea_on.GetBinContent(entry)/1e4]
+    off_effarea_size += [hist_effarea_off.GetBinContent(entry)/1e4]
+
+fig.clf()
+fig.set_figheight(figsize_x)
+fig.set_figwidth(figsize_x)
+axbig = fig.add_subplot()
+axbig.set_xlabel('Energy [GeV]')
+axbig.set_ylabel('Effective area [$m^{2}$]')
+axbig.set_xscale('log')
+axbig.set_yscale('log')
+axbig.plot(effarea_energy,on_effarea_size,label='ON data')
+axbig.plot(effarea_energy,off_effarea_size,label='Mimic data')
+axbig.legend(loc='best')
+fig.savefig("output_plots/EffectiveArea_%s.png"%(plot_tag),bbox_inches='tight')
+axbig.remove()
+
+
 
 for ebin in range(energy_bin_cut_low,energy_bin_cut_up):
     hist_real_flux_skymap_sum.Add(hist_real_flux_skymap[ebin])
@@ -2092,21 +2137,28 @@ if 'PSR_J1907_p0602' in source_name:
     CommonPlotFunctions.MatplotlibMap2D(Hist_mc_column_reflect,None,[hist_real_diff_skymap_he_reflect,hist_real_diff_skymap_le_reflect,Hist_Fermi_reflect],fig,'RA','Dec','column density [$1/cm^{2}$]','SkymapRadioHIMap_p10p40_%s'%(plot_tag),roi_x=[287.1,287.1],roi_y=[6.5,6.5],roi_r=[0.4,0.8],colormap='gray')
 
 
-    #Hist_Hawc = ROOT.TH2D("Hist_Hawc","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
-    #Hist_Hawc.Rebin2D(3,3)
-    #hawc_map_list = []
-    #hawc_map_list += ['cd'] # 1-3.16 TeV
-    #hawc_map_list += ['ef'] # 3.16-10 TeV
-    #hawc_map_list += ['gh'] # 10-31.6 TeV
-    #hawc_map_list += ['ij'] # 31.6-100 TeV
-    #hawc_map_list += ['kl'] # 100-316 TeV
-    #hawc_map_list += ['gl'] # 10-316 TeV
-    #for hfile in range(0,len(hawc_map_list)):
-    #    #MWL_map_file = '/nevis/ged/data/rshang/MWL_maps/%s-gaussGDE.fits'%(hawc_map_list[hfile])
-    #    MWL_map_file = '/nevis/ged/data/rshang/MW_FITS/%s-pointlike.fits.gz'%(hawc_map_list[hfile])
-    #    Hist_Hawc = CommonPlotFunctions.GetHealpixMap(MWL_map_file, Hist_Hawc, True)
-    #    Hist_Hawc_reflect = CommonPlotFunctions.reflectXaxis(Hist_Hawc)
-    #    CommonPlotFunctions.MatplotlibMap2D(Hist_Hawc_reflect,None,[],fig,'RA','Dec','Significance','SkymapHAWC_%s_%s'%(hawc_map_list[hfile],plot_tag),colormap='magma',psf=0.13)
+    Hist_Hawc = ROOT.TH2D("Hist_Hawc","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
+    Hist_Hawc.Rebin2D(3,3)
+    hawc_map_list = []
+    hawc_psf_list = []
+    hawc_map_list += ['cd'] # 1-3.16 TeV
+    hawc_psf_list += [0.55]
+    hawc_map_list += ['ef'] # 3.16-10 TeV
+    hawc_psf_list += [0.55]
+    hawc_map_list += ['gh'] # 10-31.6 TeV
+    hawc_psf_list += [0.50]
+    hawc_map_list += ['ij'] # 31.6-100 TeV
+    hawc_psf_list += [0.18]
+    hawc_map_list += ['kl'] # 100-316 TeV
+    hawc_psf_list += [0.13]
+    hawc_map_list += ['gl'] # 10-316 TeV
+    hawc_psf_list += [0.13]
+    for hfile in range(0,len(hawc_map_list)):
+        #MWL_map_file = '/nevis/ged/data/rshang/MWL_maps/%s-gaussGDE.fits'%(hawc_map_list[hfile])
+        MWL_map_file = '/nevis/ged/data/rshang/MW_FITS/%s-pointlike.fits.gz'%(hawc_map_list[hfile])
+        Hist_Hawc = CommonPlotFunctions.GetHealpixMap(MWL_map_file, Hist_Hawc, True)
+        Hist_Hawc_reflect = CommonPlotFunctions.reflectXaxis(Hist_Hawc)
+        CommonPlotFunctions.MatplotlibMap2D(Hist_Hawc_reflect,None,[],fig,'RA','Dec','Significance','SkymapHAWC_%s_%s'%(hawc_map_list[hfile],plot_tag),colormap='magma',psf=hawc_psf_list[hfile])
 
     #Hist_Tobias = ROOT.TH2D("Hist_Tobias","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
     #MWL_map_file = '/nevis/ged/data/rshang/MWL_maps/TobiasNewMap.fits'
