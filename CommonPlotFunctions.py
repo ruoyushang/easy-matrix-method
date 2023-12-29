@@ -42,12 +42,14 @@ input_path = '/nevis/vetch/data/rshang/smi_output'
 #folder_tag = 'paper'
 #energy_bin = [100.,200.,251.,316.,398.,501.,794.,1259.,1995.,3162.,5011.,7943.]
 
-folder_path = 'output_test_1'
-folder_tag = '_test1'
-energy_bin = [300.,538.,965.,1732.,3107.,5574.,10000.]
-#folder_path = 'output_test_2'
-#folder_tag = '_test2'
-#energy_bin = [100.,159.,200.,251.,316.,398.,501.,794.,1259.,1995.,3162.,5011.,7943.]
+#folder_path = 'output_test_1'
+#folder_tag = '_test1'
+#energy_bin = [300.,538.,965.,1732.,3107.,5574.,10000.]
+#str_flux_calibration = ['4.04e+00', '1.70e+00', '7.43e-01', '3.22e-01', '1.20e-01', '5.68e-02']
+folder_path = 'output_test_2'
+folder_tag = '_test2'
+energy_bin = [100.,159.,200.,251.,316.,398.,501.,794.,1259.,1995.,3162.,5011.,7943.]
+str_flux_calibration = ['3.46e+00', '1.44e+00', '1.70e+00', '1.58e+00', '1.24e+00', '8.49e-01', '1.34e+00', '6.98e-01', '3.78e-01', '1.91e-01', '9.12e-02', '4.66e-02']
 
 #analysis_method = 'FoV'
 #analysis_method = 'Ratio'
@@ -328,7 +330,7 @@ def GetGammaSourceInfo():
 
     drawBrightStar = False
     drawPulsar = True
-    drawSNR = True
+    drawSNR = False
     drawLHAASO = False
     drawFermi = False
     drawHAWC = False
@@ -655,9 +657,12 @@ def MatplotlibMap2D(hist_map,hist_tone,hist_contour,fig,label_x,label_y,label_z,
     axbig.set_xticks(x_axis_sparse)
     axbig.set_xticklabels(x_axis_reflect)
 
-    for roi in range(0,len(roi_r)):
-        mycircle = plt.Circle((-roi_x[roi], roi_y[roi]), roi_r[roi], color='w', linestyle='dashed', fill=False)
-        axbig.add_patch(mycircle)
+    #draw_region_circle = True
+    draw_region_circle = False
+    if draw_region_circle:
+        for roi in range(0,len(roi_r)):
+            mycircle = plt.Circle((-roi_x[roi], roi_y[roi]), roi_r[roi], color='w', linestyle='dashed', fill=False)
+            axbig.add_patch(mycircle)
 
     fig.savefig("output_plots/%s.png"%(plotname),bbox_inches='tight')
 

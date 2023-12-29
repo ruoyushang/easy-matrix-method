@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 from itertools import cycle
 from astropy import wcs
 from astropy.io import fits
+from scipy.optimize import curve_fit
 
 import matplotlib.pylab as pylab
 
@@ -37,12 +38,12 @@ figsize_y = 6.4
 fig.set_figheight(figsize_y)
 fig.set_figwidth(figsize_x)
 
-new_nbins_x = 100
-new_nbins_y = 100
+#new_nbins_x = 100  # only use this binning for spectral measurement
+#new_nbins_y = 100
 #new_nbins_x = 80
 #new_nbins_y = 80
-#new_nbins_x = 50
-#new_nbins_y = 50
+new_nbins_x = 50
+new_nbins_y = 50
 
 effective_area_cut = 10000.
 energy_bin = CommonPlotFunctions.energy_bin
@@ -72,6 +73,7 @@ analysis_method = CommonPlotFunctions.analysis_method
 n_xoff_bins = CommonPlotFunctions.n_xoff_bins
 n_yoff_bins = CommonPlotFunctions.n_yoff_bins
 smooth_size_spectroscopy = CommonPlotFunctions.smooth_size_spectroscopy
+str_flux_calibration = CommonPlotFunctions.str_flux_calibration
 
 n_imposters = 5
 if not doImposter:
@@ -207,7 +209,7 @@ def GetFluxCalibration(energy,elev):
 
     # The energy threshold needs to be as low as 100 GeV for this method to work.
 
-    str_flux_calibration = ['4.04e+00', '1.70e+00', '7.43e-01', '3.22e-01', '1.20e-01', '5.68e-02']
+    #str_flux_calibration = ['4.04e+00', '1.70e+00', '7.43e-01', '3.22e-01', '1.20e-01', '5.68e-02']
     # v490
     #str_flux_calibration = ['3.46e+00', '1.44e+00', '1.70e+00', '1.58e+00', '1.24e+00', '8.49e-01', '1.34e+00', '6.98e-01', '3.78e-01', '1.91e-01', '9.12e-02', '4.66e-02']
 
@@ -1279,7 +1281,8 @@ def MakeFluxMap(flux_map, data_map, bkgd_map, expo_map, norm_map, elev_map, hist
                     effarea = (data_content-bkgd_content)*(pow(energy_bin[ebin]/1e3,2))/(flux_content*norm_weight*total_data_expo*3600.)/(delta_E/1000.)
                 hist_effarea.Fill(mean_energy,effarea,pow(data_content,0.5))
 
-
+def diffusion_func(x,A,d):
+    return A*1.22/(pow(3.14,1.5)*d*(x+0.06*d))*np.exp(-x*x/(d*d))
 
 def MakeExtensionProfile(roi_x,roi_y,roi_r,fit_profile,roi_name,real_map,imposter_maps,erange_tag):
 
@@ -1335,17 +1338,17 @@ def MakeExtensionProfile(roi_x,roi_y,roi_r,fit_profile,roi_name,real_map,imposte
     profile_sum = 0.
     for ubin in range(0,len(theta2)):
         profile_sum += real_profile[ubin]
-    #if fit_profile==1:
-    #    start = (profile_sum, 0.5)
-    #    popt, pcov = curve_fit(diffusion_func,theta2,real_profile,p0=start,sigma=real_profile_total_err,absolute_sigma=True,bounds=((0, 0.01), (np.inf, np.inf)))
-    #    profile_fit = diffusion_func(theta2, *popt)
-    #    residual = real_profile - profile_fit
-    #    chisq = np.sum((residual/real_profile_stat_err)**2)
-    #    dof = len(theta2)-2
-    #    print ('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
-    #    print (erange_tag)
-    #    print ('diffusion flux = %0.2E +/- %0.2E'%(popt[0],pow(pcov[0][0],0.5)))
-    #    print ('diffusion radius = %0.2f +/- %0.2f deg (chi2/dof = %0.2f)'%(popt[1],pow(pcov[1][1],0.5),chisq/dof))
+    if fit_profile==1:
+        start = (profile_sum, 0.5)
+        popt, pcov = curve_fit(diffusion_func,theta2,real_profile,p0=start,sigma=real_profile_total_err,absolute_sigma=True,bounds=((0, 0.01), (np.inf, np.inf)))
+        profile_fit = diffusion_func(theta2, *popt)
+        residual = real_profile - profile_fit
+        chisq = np.sum((residual/real_profile_stat_err)**2)
+        dof = len(theta2)-2
+        print ('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+        print (erange_tag)
+        print ('diffusion flux = %0.2E +/- %0.2E'%(popt[0],pow(pcov[0][0],0.5)))
+        print ('diffusion radius = %0.2f +/- %0.2f deg (chi2/dof = %0.2f)'%(popt[1],pow(pcov[1][1],0.5),chisq/dof))
     #elif fit_profile==2:
     #    start = (profile_sum, 0.5)
     #    popt, pcov = curve_fit(gauss_func,theta2,real_profile,p0=start,sigma=real_profile_stat_err,absolute_sigma=True,bounds=((0, 0.01), (np.inf, np.inf)))
@@ -1377,8 +1380,8 @@ def MakeExtensionProfile(roi_x,roi_y,roi_r,fit_profile,roi_name,real_map,imposte
         my_label = 'E>%0.2f TeV'%(energy_bin[energy_bin_break]/1000.)
     axbig.errorbar(theta2,real_profile,real_profile_total_err,color='k',marker='s',ls='none',label=my_label)
     axbig.bar(theta2, 2.*real_profile_syst_err, bottom=-real_profile_syst_err+real_profile, width=1.*theta2_err, color='b', align='center', alpha=0.2)
-    #if fit_profile!=0:
-    #    axbig.plot(theta2,diffusion_func(theta2,*popt),color='r')
+    if fit_profile!=0:
+        axbig.plot(theta2,diffusion_func(theta2,*popt),color='r')
     axbig.set_ylabel('surface brightness [$\mathrm{TeV}\ \mathrm{cm}^{-2}\mathrm{s}^{-1}\mathrm{deg}^{-2}$]')
     axbig.set_xlabel('angular distance from source [degree]')
     axbig.legend(loc='best')
@@ -1536,19 +1539,20 @@ elif 'PSR_J1856_p0245' in source_name:
     region_y = [2.6666667]
     region_r = [1.0]
     region_name = 'HESS'
+    do_fit = 1
 elif 'PSR_J2021_p4026' in source_name:
-    region_x = [305.0200000]
-    region_y = [40.7572222]
-    region_r = [0.3]
-    region_name = 'Paper'
+    #region_x = [305.0200000]
+    #region_y = [40.7572222]
+    #region_r = [0.3]
+    #region_name = 'Paper'
     #region_x = [305.37]
     #region_y = [40.45]
     #region_r = [0.5]
     #region_name = 'PSR'
-    #region_x = [305.21]
-    #region_y = [40.43]
-    #region_r = [0.5]
-    #region_name = 'SNR'
+    region_x = [305.21]
+    region_y = [40.43]
+    region_r = [0.5]
+    region_name = 'SNR'
 elif '2HWC_J1953_p294' in source_name:
     # G067.6+00.9
     region_x = [299.44]
@@ -2137,28 +2141,28 @@ if 'PSR_J1907_p0602' in source_name:
     CommonPlotFunctions.MatplotlibMap2D(Hist_mc_column_reflect,None,[hist_real_diff_skymap_he_reflect,hist_real_diff_skymap_le_reflect,Hist_Fermi_reflect],fig,'RA','Dec','column density [$1/cm^{2}$]','SkymapRadioHIMap_p10p40_%s'%(plot_tag),roi_x=[287.1,287.1],roi_y=[6.5,6.5],roi_r=[0.4,0.8],colormap='gray')
 
 
-    Hist_Hawc = ROOT.TH2D("Hist_Hawc","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
-    Hist_Hawc.Rebin2D(3,3)
-    hawc_map_list = []
-    hawc_psf_list = []
-    hawc_map_list += ['cd'] # 1-3.16 TeV
-    hawc_psf_list += [0.55]
-    hawc_map_list += ['ef'] # 3.16-10 TeV
-    hawc_psf_list += [0.55]
-    hawc_map_list += ['gh'] # 10-31.6 TeV
-    hawc_psf_list += [0.50]
-    hawc_map_list += ['ij'] # 31.6-100 TeV
-    hawc_psf_list += [0.18]
-    hawc_map_list += ['kl'] # 100-316 TeV
-    hawc_psf_list += [0.13]
-    hawc_map_list += ['gl'] # 10-316 TeV
-    hawc_psf_list += [0.13]
-    for hfile in range(0,len(hawc_map_list)):
-        #MWL_map_file = '/nevis/ged/data/rshang/MWL_maps/%s-gaussGDE.fits'%(hawc_map_list[hfile])
-        MWL_map_file = '/nevis/ged/data/rshang/MW_FITS/%s-pointlike.fits.gz'%(hawc_map_list[hfile])
-        Hist_Hawc = CommonPlotFunctions.GetHealpixMap(MWL_map_file, Hist_Hawc, True)
-        Hist_Hawc_reflect = CommonPlotFunctions.reflectXaxis(Hist_Hawc)
-        CommonPlotFunctions.MatplotlibMap2D(Hist_Hawc_reflect,None,[],fig,'RA','Dec','Significance','SkymapHAWC_%s_%s'%(hawc_map_list[hfile],plot_tag),colormap='magma',psf=hawc_psf_list[hfile])
+    #Hist_Hawc = ROOT.TH2D("Hist_Hawc","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
+    #Hist_Hawc.Rebin2D(3,3)
+    #hawc_map_list = []
+    #hawc_psf_list = []
+    #hawc_map_list += ['cd'] # 1-3.16 TeV
+    #hawc_psf_list += [0.55]
+    #hawc_map_list += ['ef'] # 3.16-10 TeV
+    #hawc_psf_list += [0.55]
+    #hawc_map_list += ['gh'] # 10-31.6 TeV
+    #hawc_psf_list += [0.50]
+    #hawc_map_list += ['ij'] # 31.6-100 TeV
+    #hawc_psf_list += [0.18]
+    #hawc_map_list += ['kl'] # 100-316 TeV
+    #hawc_psf_list += [0.13]
+    #hawc_map_list += ['gl'] # 10-316 TeV
+    #hawc_psf_list += [0.13]
+    #for hfile in range(0,len(hawc_map_list)):
+    #    #MWL_map_file = '/nevis/ged/data/rshang/MWL_maps/%s-gaussGDE.fits'%(hawc_map_list[hfile])
+    #    MWL_map_file = '/nevis/ged/data/rshang/MW_FITS/%s-pointlike.fits.gz'%(hawc_map_list[hfile])
+    #    Hist_Hawc = CommonPlotFunctions.GetHealpixMap(MWL_map_file, Hist_Hawc, True)
+    #    Hist_Hawc_reflect = CommonPlotFunctions.reflectXaxis(Hist_Hawc)
+    #    CommonPlotFunctions.MatplotlibMap2D(Hist_Hawc_reflect,None,[],fig,'RA','Dec','Significance','SkymapHAWC_%s_%s'%(hawc_map_list[hfile],plot_tag),colormap='magma',psf=hawc_psf_list[hfile])
 
     #Hist_Tobias = ROOT.TH2D("Hist_Tobias","",nbins_x,MapEdge_left,MapEdge_right,nbins_y,MapEdge_lower,MapEdge_upper)
     #MWL_map_file = '/nevis/ged/data/rshang/MWL_maps/TobiasNewMap.fits'
