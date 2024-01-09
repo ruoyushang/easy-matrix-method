@@ -35,7 +35,7 @@ import healpy as hp
 
 # Great examples of matplotlib plots: https://atmamani.github.io/cheatsheets/matplotlib/matplotlib_2/
 
-input_path = '/nevis/vetch/data/rshang/smi_output'
+input_path = '/nevis/ged/data/rshang/smi_output'
 
 #folder_path = 'output_j1908_paper'
 #folder_path = 'output_nuclear_v487'
@@ -45,7 +45,7 @@ input_path = '/nevis/vetch/data/rshang/smi_output'
 #folder_path = 'output_test_1'
 #folder_tag = '_test1'
 #energy_bin = [300.,538.,965.,1732.,3107.,5574.,10000.]
-#str_flux_calibration = ['4.04e+00', '1.70e+00', '7.43e-01', '3.22e-01', '1.20e-01', '5.68e-02']
+#str_flux_calibration = ['1.36e+01', '6.05e+00', '2.58e+00', '1.09e+00', '4.04e-01', '1.73e-01']
 folder_path = 'output_test_2'
 folder_tag = '_test2'
 energy_bin = [100.,159.,200.,251.,316.,398.,501.,794.,1259.,1995.,3162.,5011.,7943.]
@@ -330,7 +330,7 @@ def GetGammaSourceInfo():
 
     drawBrightStar = False
     drawPulsar = True
-    drawSNR = False
+    drawSNR = True
     drawLHAASO = False
     drawFermi = False
     drawHAWC = False
@@ -657,8 +657,8 @@ def MatplotlibMap2D(hist_map,hist_tone,hist_contour,fig,label_x,label_y,label_z,
     axbig.set_xticks(x_axis_sparse)
     axbig.set_xticklabels(x_axis_reflect)
 
-    #draw_region_circle = True
-    draw_region_circle = False
+    draw_region_circle = True
+    #draw_region_circle = False
     if draw_region_circle:
         for roi in range(0,len(roi_r)):
             mycircle = plt.Circle((-roi_x[roi], roi_y[roi]), roi_r[roi], color='w', linestyle='dashed', fill=False)

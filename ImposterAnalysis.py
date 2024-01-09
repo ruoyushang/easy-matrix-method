@@ -38,12 +38,13 @@ figsize_y = 6.4
 fig.set_figheight(figsize_y)
 fig.set_figwidth(figsize_x)
 
-#new_nbins_x = 100  # only use this binning for spectral measurement
-#new_nbins_y = 100
+# the binning needs to match the binning that was used for calibration constants
+new_nbins_x = 100
+new_nbins_y = 100
 #new_nbins_x = 80
 #new_nbins_y = 80
-new_nbins_x = 50
-new_nbins_y = 50
+#new_nbins_x = 50
+#new_nbins_y = 50
 
 effective_area_cut = 10000.
 energy_bin = CommonPlotFunctions.energy_bin
