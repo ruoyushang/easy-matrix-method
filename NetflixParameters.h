@@ -2,10 +2,12 @@
 const int N_energy_bins = 12;
 double energy_bins[N_energy_bins+1] = {100.,159.,200.,251.,316.,398.,501.,794.,1259.,1995.,3162.,5011.,7943.};
 int cr_correction_xyoff_bins[N_energy_bins] = {1,6,6,6,6,6,6,1,1,1,1,1};
-double coefficient_t11xt01_sza[N_energy_bins] = {-2.3e-02,2.6e-02,-1.9e-02,-5.0e-02,-2.8e-02,-1.0e-01,-3.4e-01,-5.5e-01,0.0e+00,0.0e+00,0.0e+00,0.0e+00};
-double coefficient_t11xt10_sza[N_energy_bins] = {-1.4e-02,-2.6e-01,-2.0e-01,8.3e-02,2.3e-01,1.3e-01,5.4e-02,-1.0e-01,0.0e+00,0.0e+00,0.0e+00,0.0e+00};
-double coefficient_t11xt01_lza[N_energy_bins] = {-2.5e-01,-5.5e-02,-5.4e-02,-4.9e-02,-4.9e-02,-9.5e-02,-2.0e-01,-3.3e-01,-4.8e-01,0.0e+00,0.0e+00,0.0e+00};
-double coefficient_t11xt10_lza[N_energy_bins] = {-6.3e-01,-3.2e-01,-2.9e-01,-1.3e-01,-3.6e-02,-6.5e-03,6.4e-02,6.9e-02,-6.9e-02,0.0e+00,0.0e+00,0.0e+00};
+//double coefficient_t11xt01_sza[N_energy_bins] = {-2.3e-02,2.6e-02,-1.9e-02,-5.0e-02,-2.8e-02,-1.0e-01,-3.4e-01,-5.5e-01,0.0e+00,0.0e+00,0.0e+00,0.0e+00};
+//double coefficient_t11xt10_sza[N_energy_bins] = {-1.4e-02,-2.6e-01,-2.0e-01,8.3e-02,2.3e-01,1.3e-01,5.4e-02,-1.0e-01,0.0e+00,0.0e+00,0.0e+00,0.0e+00};
+//double coefficient_t11xt01_lza[N_energy_bins] = {-2.5e-01,-5.5e-02,-5.4e-02,-4.9e-02,-4.9e-02,-9.5e-02,-2.0e-01,-3.3e-01,-4.8e-01,0.0e+00,0.0e+00,0.0e+00};
+//double coefficient_t11xt10_lza[N_energy_bins] = {-6.3e-01,-3.2e-01,-2.9e-01,-1.3e-01,-3.6e-02,-6.5e-03,6.4e-02,6.9e-02,-6.9e-02,0.0e+00,0.0e+00,0.0e+00};
+double coefficient_t11xt01_incl[N_energy_bins] = {5.3e-02,1.0e-02,-5.6e-02,-4.6e-02,-5.7e-02,-1.2e-01,-2.3e-01,-3.5e-01,-4.2e-01,0.0e+00,0.0e+00,0.0e+00};
+double coefficient_t11xt10_incl[N_energy_bins] = {-4.3e-02,-2.5e-01,-2.4e-01,-1.2e-01,1.7e-03,2.5e-02,8.7e-02,8.8e-02,-1.7e-02,0.0e+00,0.0e+00,0.0e+00};
 
 //const int N_energy_bins = 6;
 //double energy_bins[N_energy_bins+1] = {300.,538.,965.,1732.,3107.,5574.,10000.};
@@ -28,7 +30,8 @@ double Elev_cut_upper = 90.;
 
 double expo_hour_per_analysis = 5.;
 //double min_CR_count = 200000.;
-double min_CR_count = 100000.;
+//double min_CR_count = 100000.;
+double min_CR_count = 400000.;
 
 int min_NImages = 3;
 //double MSCW_lower_blind = -0.7;
@@ -48,8 +51,8 @@ int mtx_dim_l_fine = 4;
 int mtx_dim_w = 2;
 int mtx_dim_l = 2;
 
-bool use_stat_err_weight = true;
-//bool use_stat_err_weight = false;
+//bool use_stat_err_weight = true;
+bool use_stat_err_weight = false;
 
 //double max_Roff = 1.6;
 //double max_EmissionHeight_cut = 20.;

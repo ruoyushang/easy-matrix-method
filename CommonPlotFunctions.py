@@ -38,14 +38,14 @@ import healpy as hp
 input_path = '/nevis/ged/data/rshang/smi_output'
 
 #folder_path = 'output_j1908_paper'
-#folder_path = 'output_nuclear_v487'
 #folder_tag = 'paper'
 #energy_bin = [100.,200.,251.,316.,398.,501.,794.,1259.,1995.,3162.,5011.,7943.]
+#str_flux_calibration = ['2.06e-04', '1.53e-05', '1.20e-05', '1.10e-05', '9.91e-06', '1.25e-05', '1.17e-05', '1.08e-05', '1.06e-05', '1.00e-05', '1.04e-05']
 
 #folder_path = 'output_test_1'
 #folder_tag = '_test1'
 #energy_bin = [300.,538.,965.,1732.,3107.,5574.,10000.]
-#str_flux_calibration = ['1.36e+01', '6.05e+00', '2.58e+00', '1.09e+00', '4.04e-01', '1.73e-01']
+#str_flux_calibration = ['4.04e+00', '1.70e+00', '7.43e-01', '3.22e-01', '1.20e-01', '5.68e-02']
 folder_path = 'output_test_2'
 folder_tag = '_test2'
 energy_bin = [100.,159.,200.,251.,316.,398.,501.,794.,1259.,1995.,3162.,5011.,7943.]
@@ -537,6 +537,10 @@ def MatplotlibMap2D(hist_map,hist_tone,hist_contour,fig,label_x,label_y,label_z,
         #min_z = skymap_mean-2.*skymap_rms
         #max_z = skymap_mean+2.*skymap_rms
 
+    list_70_levels = []
+    list_70_levels += [0.]
+    list_70_levels += [0.]
+    list_70_levels += [0.]
     list_50_levels = []
     list_50_levels += [0.]
     list_50_levels += [0.]
@@ -551,6 +555,10 @@ def MatplotlibMap2D(hist_map,hist_tone,hist_contour,fig,label_x,label_y,label_z,
             if max_z==0.: continue
             if hist_contour[ctr].GetMaximum()==0.: continue
             grid_contour = np.zeros((hist_contour[ctr].GetNbinsY(),hist_contour[ctr].GetNbinsX()))
+            max_z_contour = 1.0*hist_contour[ctr].GetMaximum()
+            min_z_contour = 0.7*hist_contour[ctr].GetMaximum()
+            delta_z = 0.3*hist_contour[ctr].GetMaximum()
+            list_70_levels[ctr] = np.arange(min_z_contour*max_z/max_z_contour, max_z_contour*max_z/max_z_contour, delta_z*max_z/max_z_contour)
             max_z_contour = 1.0*hist_contour[ctr].GetMaximum()
             min_z_contour = 0.5*hist_contour[ctr].GetMaximum()
             delta_z = 0.3*hist_contour[ctr].GetMaximum()
@@ -611,8 +619,9 @@ def MatplotlibMap2D(hist_map,hist_tone,hist_contour,fig,label_x,label_y,label_z,
 
     list_colors = ['tomato','lime','deepskyblue']
     for ctr in range(0,len(list_grid_contour)):
-        axbig.contour(list_grid_contour[len(list_grid_contour)-1-ctr], list_50_levels[len(list_grid_contour)-1-ctr], linestyles='dashed', colors=list_colors[len(list_grid_contour)-1-ctr], extent=(x_axis.min(),x_axis.max(),y_axis.min(),y_axis.max()),zorder=1)
-        axbig.contour(list_grid_contour[len(list_grid_contour)-1-ctr], list_80_levels[len(list_grid_contour)-1-ctr], linestyles='solid', colors=list_colors[len(list_grid_contour)-1-ctr], extent=(x_axis.min(),x_axis.max(),y_axis.min(),y_axis.max()),zorder=1)
+        #axbig.contour(list_grid_contour[len(list_grid_contour)-1-ctr], list_50_levels[len(list_grid_contour)-1-ctr], linestyles='dashed', colors=list_colors[len(list_grid_contour)-1-ctr], extent=(x_axis.min(),x_axis.max(),y_axis.min(),y_axis.max()),zorder=1)
+        #axbig.contour(list_grid_contour[len(list_grid_contour)-1-ctr], list_80_levels[len(list_grid_contour)-1-ctr], linestyles='solid', colors=list_colors[len(list_grid_contour)-1-ctr], extent=(x_axis.min(),x_axis.max(),y_axis.min(),y_axis.max()),zorder=1)
+        axbig.contour(list_grid_contour[len(list_grid_contour)-1-ctr], list_70_levels[len(list_grid_contour)-1-ctr], linestyles='solid', colors=list_colors[len(list_grid_contour)-1-ctr], extent=(x_axis.min(),x_axis.max(),y_axis.min(),y_axis.max()),zorder=1)
     favorite_color = 'k'
     if colormap=='gray':
         favorite_color = 'r'

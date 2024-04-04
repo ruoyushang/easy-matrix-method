@@ -47,7 +47,7 @@ ROOT.TH1.AddDirectory(False) # without this, the histograms returned from a func
 ROOT.gStyle.SetPaintTextFormat("0.3f")
 np.set_printoptions(precision=4)
 
-measurement_rebin = 1
+measurement_rebin = 10
 
 elev_tag = 'incl'
 elev_range = [40.,90.]
@@ -450,29 +450,29 @@ for energy_idx in range(0,len(energy_bin)-1):
             if not source_of_interest in sample_list[src]: continue
         xoff_idx = 0
         yoff_idx = 0
-        for xoff_idx in range(0,n_xoff_bins):
-            for yoff_idx in range(0,n_yoff_bins):
-                n_groups = 0
-                file_exists = True
-                while file_exists:
-                    SourceFilePath = "/nevis/vetch/data/rshang/smi_output/%s/Netflix_%s_G%d_X%d_Y%d.root"%(folder_path,sample_list[src],n_groups,xoff_idx,yoff_idx)
-                    if os.path.exists(SourceFilePath):
-                        n_groups += 1
-                        #print ('Read file: %s'%(SourceFilePath))
-                        #print ('file exists.')
-                    else:
-                        file_exists = False
-                        print ('Read file: %s'%(SourceFilePath))
-                        print ('file does not exist.')
-                total_data_truth = 0.
-                total_ratio_bkgd = 0.
-                total_regression_bkgd = 0.
-                total_init_perturbation_bkgd = 0.
-                total_perturbation_bkgd = 0.
-                total_combined_bkgd = 0.
-                n_rebin = 0
-                for group in range(0,n_groups):
-                    SourceFilePath = "/nevis/vetch/data/rshang/smi_output/%s/Netflix_%s_G%d_X%d_Y%d.root"%(folder_path,sample_list[src],group,xoff_idx,yoff_idx)
+        n_groups = 0
+        file_exists = True
+        while file_exists:
+            SourceFilePath = "/nevis/ged/data/rshang/smi_output/%s/Netflix_%s_G%d_X%d_Y%d.root"%(folder_path,sample_list[src],n_groups,xoff_idx,yoff_idx)
+            if os.path.exists(SourceFilePath):
+                n_groups += 1
+                #print ('Read file: %s'%(SourceFilePath))
+                #print ('file exists.')
+            else:
+                file_exists = False
+                print ('Read file: %s'%(SourceFilePath))
+                print ('file does not exist.')
+        total_data_truth = 0.
+        total_ratio_bkgd = 0.
+        total_regression_bkgd = 0.
+        total_init_perturbation_bkgd = 0.
+        total_perturbation_bkgd = 0.
+        total_combined_bkgd = 0.
+        n_rebin = 0
+        for group in range(0,n_groups):
+            for xoff_idx in range(0,n_xoff_bins):
+                for yoff_idx in range(0,n_yoff_bins):
+                    SourceFilePath = "/nevis/ged/data/rshang/smi_output/%s/Netflix_%s_G%d_X%d_Y%d.root"%(folder_path,sample_list[src],group,xoff_idx,yoff_idx)
                     if not os.path.exists(SourceFilePath): continue
                     print ('Read file: %s'%(SourceFilePath))
                     eff_area, data_truth, ratio_bkgd, regression_bkgd, init_perturbation_bkgd, perturbation_bkgd, combined_bkgd, t00_truth, t01_truth, t10_truth, t11_truth, t02_truth, t20_truth, t22_truth, t00_recon, t01_recon, t10_recon, t11_recon, t02_recon, t20_recon, t22_recon, s0_truth, s1_truth, s2_truth, s3_truth, s0_recon, s1_recon, s2_recon, s3_recon = GetGammaCounts(SourceFilePath,energy_idx)
@@ -576,7 +576,7 @@ for energy_idx in range(0,len(energy_bin)-1):
                     Hist_SystErrDist_Init_Perturbation[energy_idx].Fill((total_init_perturbation_bkgd-total_data_truth)/pow(total_data_truth,0.5))
                     Hist_SystErrDist_Perturbation[energy_idx].Fill((total_perturbation_bkgd-total_data_truth)/pow(total_data_truth,0.5))
                     Hist_SystErrDist_Combined[energy_idx].Fill((total_combined_bkgd-total_data_truth)/pow(total_data_truth,0.5))
-                    array_rebin_stat_err_per_energy += [1.]
+                    array_rebin_stat_err_per_energy += [1./pow(total_data_truth,0.5)]
                     array_rebin_syst_err_per_energy_ratio += [(total_ratio_bkgd-total_data_truth)/pow(total_data_truth,0.5)]
                     array_rebin_syst_err_per_energy_regression += [(total_regression_bkgd-total_data_truth)/pow(total_data_truth,0.5)]
                     array_rebin_syst_err_per_energy_init_perturbation += [(total_init_perturbation_bkgd-total_data_truth)/pow(total_data_truth,0.5)]
@@ -589,7 +589,8 @@ for energy_idx in range(0,len(energy_bin)-1):
                 total_perturbation_bkgd = 0.
                 total_combined_bkgd = 0.
                 n_rebin = 0
-                total_n_measurements += 1.
+                if energy_idx==1:
+                    total_n_measurements += 1.
     array_cr_count += [array_per_energy_cr_count]
     array_elev_mean += [array_per_energy_elev_mean]
     array_azim_mean += [array_per_energy_azim_mean]
@@ -783,7 +784,7 @@ for energy_idx in range(0,len(energy_bin)-1):
     fig.set_figheight(figsize_y)
     fig.set_figwidth(figsize_x)
     axbig = fig.add_subplot()
-    x_start = 55.
+    x_start = 50.
     x_end = 90.
     x_delta = 5.
     baseline_xaxis = np.linspace(x_start,x_end,100)
@@ -841,6 +842,7 @@ for energy_idx in range(0,len(energy_bin)-1):
     axbig.errorbar(xaxis_nsb+0.2*x_delta,yaxis_perturbation_mean,yaxis_perturbation_rms,color='r',marker='_',ls='none',linewidth=2)
     axbig.set_xlabel('NSB')
     axbig.set_ylabel('Error significance $\epsilon$')
+    axbig.set_xlim(x_start, x_end)
     axbig.legend(loc='best')
     fig.savefig("output_plots/NSB_vs_Error_Perturbation_E%s_%s.png"%(energy_idx,folder_tag))
     axbig.remove()
@@ -988,13 +990,15 @@ for energy_idx in range(0,len(energy_bin)-1):
 txt_string += '};'
 print (txt_string)
 print ('================================================================================================')
+print ('systematic error in the unit of stat error')
 for energy_idx in range(0,len(energy_bin)-1):
     txt_string = 'Energy %0.1f GeV\t, '%(energy_bin[energy_idx])
-    txt_string += '%0.3f \t, '%(energy_dep_syst_err_ratio_rms[energy_idx])
-    txt_string += '%0.3f \t, '%(energy_dep_syst_err_init_perturbation_rms[energy_idx])
-    txt_string += '%0.3f \t, '%(energy_dep_syst_err_perturbation_rms[energy_idx])
-    txt_string += '%0.3f \t, '%(energy_dep_syst_err_regression_rms[energy_idx])
-    txt_string += '%0.3f \t, '%(energy_dep_syst_err_combined_rms[energy_idx])
+    txt_string += '(stat) %0.3f \t, '%(energy_dep_stat_err[energy_idx])
+    txt_string += '(ratio) %0.3f \t, '%(energy_dep_syst_err_ratio_rms[energy_idx])
+    txt_string += '(init) %0.3f \t, '%(energy_dep_syst_err_init_perturbation_rms[energy_idx])
+    txt_string += '(perturb) %0.3f \t, '%(energy_dep_syst_err_perturbation_rms[energy_idx])
+    #txt_string += '%0.3f \t, '%(energy_dep_syst_err_regression_rms[energy_idx])
+    #txt_string += '%0.3f \t, '%(energy_dep_syst_err_combined_rms[energy_idx])
     print (txt_string)
 
 print ('================================================================================================')
@@ -1016,8 +1020,8 @@ for energy_idx in range(0,len(energy_bin)-1):
     fig.set_figheight(figsize_y)
     fig.set_figwidth(figsize_x)
     axbig = fig.add_subplot()
-    axbig.scatter(array_t11_pca,array_t11_truth[energy_idx],color='k',alpha=0.5)
-    #axbig.scatter(array_t11_pca,array_t11_recon[energy_idx],color='r',alpha=0.5)
+    axbig.scatter(array_t11_pca,array_t11_truth[energy_idx],color='k',alpha=0.2)
+    axbig.scatter(array_t11_pca,array_t11_recon[energy_idx],color='r',alpha=0.2)
     axbig.set_xlabel('PCA $t_{11}$')
     axbig.set_ylabel('$t_{11}$')
     fig.savefig("output_plots/pca_t11_vs_t11_E%s_%s.png"%(energy_idx,folder_tag))
@@ -1046,4 +1050,10 @@ print (txt_info_x0)
 print ('================================================================================================')
 
 print ('total_data_expo = %0.1f hrs'%(total_data_expo))
-print ('avg expo per measurement = %0.1f'%(expo_sum_all_energies/total_n_measurements))
+print (f'total_n_measurements = {total_n_measurements}')
+#print ('avg expo per measurement = %0.1f'%(expo_sum_all_energies/total_n_measurements))
+total_n_measurements = 0.
+for energy_idx in range(0,len(energy_bin)-1):
+    total_n_measurements = float(len(array_syst_err_perturbation[energy_idx]))
+    print (f'energy = {energy_bin[energy_idx]}')
+    print ('avg expo per measurement = %0.1f'%(total_data_expo/total_n_measurements))

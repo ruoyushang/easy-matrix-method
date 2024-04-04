@@ -699,14 +699,18 @@ def MakeSensitivityCurve(roi_x,roi_y,roi_r,roi_name,excl_roi_x,excl_roi_y,excl_r
 
     real_flux_syst_err = []
     for ebin in range(0,len(energy_axis)):
+        stat_err = real_flux_stat_err[ebin]
         syst_err = 0.
         for imposter in range(0,n_imposters):
             syst_err += pow(imposter_flux_list[imposter][ebin],2)
         if n_imposters>0:
             syst_err = pow(syst_err/float(n_imposters),0.5)
-        real_flux_syst_err += [syst_err]
+        real_flux_syst_err += [max(syst_err,stat_err)]
 
     real_flux_syst_err = np.array(real_flux_syst_err)
+    print ('===================================================================================')
+    #for ebin in range(0,len(energy_axis)):
+    #    print (f'energy = {energy_axis[ebin]:%0.2e} GeV, UL = {real_flux_syst_err[ebin]*2.:0.2e} TeV/cm2/s')
 
     axbig = fig.add_subplot()
     vts_energies, vts_ul = GetVeritasSensitivity()
@@ -1256,13 +1260,6 @@ def MakeFluxMap(flux_map, data_map, bkgd_map, expo_map, norm_map, elev_map, hist
                 norm_ratio = norm_content/norm_content_max
                 norm_weight = correction*1./(1.+np.exp(-(norm_ratio-0.3)/0.1))
 
-                #correction = correction*norm_weight
-                #stat_data_err = pow(max(data_content,0.),0.5)
-                #flux_stat_err = max(stat_data_err,1.)/norm_content*correction*pow(energy_bin[ebin]/1e3,2)
-                #flux_content = (data_content-bkgd_content)/norm_content*correction*pow(energy_bin[ebin]/1e3,2)
-                #flux_map[ebin].SetBinContent(binx+1,biny+1,flux_content)
-                #flux_map[ebin].SetBinError(binx+1,biny+1,flux_stat_err)
-
                 delta_E = (energy_bin[ebin+1]-energy_bin[ebin])/(3.12e+00)
                 new_binx = expo_map[ebin].GetXaxis().FindBin(binx_center)
                 new_biny = expo_map[ebin].GetYaxis().FindBin(biny_center)
@@ -1419,6 +1416,7 @@ for epoch_idx in range(0,len(list_epoch)):
         print ('Not found %s'%(SourceFilePath))
 
 HistName = "Hist_OnData_SR_Skymap_Sum_ErecS%sto%s"%(int(energy_bin[0]),int(energy_bin[1]))
+print (HistName)
 
 nbins_x = InputFile.Get(HistName).GetNbinsX()
 nbins_y = InputFile.Get(HistName).GetNbinsY()
@@ -1542,18 +1540,18 @@ elif 'PSR_J1856_p0245' in source_name:
     region_name = 'HESS'
     do_fit = 1
 elif 'PSR_J2021_p4026' in source_name:
-    #region_x = [305.0200000]
-    #region_y = [40.7572222]
-    #region_r = [0.3]
-    #region_name = 'Paper'
+    region_x = [305.0200000]
+    region_y = [40.7572222]
+    region_r = [0.23]
+    region_name = 'Paper'
     #region_x = [305.37]
     #region_y = [40.45]
     #region_r = [0.5]
     #region_name = 'PSR'
-    region_x = [305.21]
-    region_y = [40.43]
-    region_r = [0.5]
-    region_name = 'SNR'
+    #region_x = [305.21]
+    #region_y = [40.43]
+    #region_r = [0.5]
+    #region_name = 'SNR'
 elif '2HWC_J1953_p294' in source_name:
     # G067.6+00.9
     region_x = [299.44]
